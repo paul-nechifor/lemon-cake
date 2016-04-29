@@ -6,6 +6,10 @@ A programming language.
 
     ./make
 
+## TODO
+
+- switch int to int64
+
 ## License
 
 ISC
