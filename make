@@ -25,11 +25,13 @@ run_tests() {
 test_out() {
     local input="$1" expected="$2"
     echo -n "Testing $input ... "
-    local output="$(./lc <<<"$input")"
-    if diff <(echo "$expected") <(echo "$output") &>/dev/null; then
-        echo 'ok'
+    local output="$(./lc <<<"$input" 2>/dev/null)"
+    if [[ "$expected" == "$output" ]]; then
+        echo "$(tput setaf 2)ok$(tput sgr0)"
     else
-        echo -e "failed\n    expected: '$expected'\n    actual: '$output'"
+        echo "$(tput setaf 1)failed$(tput sgr0)"
+        echo "    expected: $(tput setab 2)$expected$(tput sgr0)"
+        echo "    actual: $(tput setab 1)$output$(tput sgr0)"
     fi
 }
 
