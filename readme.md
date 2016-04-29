@@ -2,6 +2,10 @@
 
 A programming language.
 
+## Build it
+
+    ./make
+
 ## License
 
 ISC

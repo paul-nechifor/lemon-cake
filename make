@@ -6,6 +6,7 @@ main() {
     cd "$root"
     compile_all
     run_tests
+    wc -c < lc
 }
 
 compile_all() {
@@ -14,7 +15,7 @@ compile_all() {
     gcc -c lc_c.c
     ld -o lc -dynamic-linker /lib64/ld-linux-x86-64.so.2 -lc --entry=main *.o
     rm -fr *.o
-    strip -R .eh_frame -R .gnu.version -R .hash --strip-all --discard-all lc
+    strip -R .eh_frame -R .gnu.version -R .hash -R .comment --strip-all lc
 }
 
 run_tests() {
@@ -30,7 +31,6 @@ test_out() {
     else
         echo -e "failed\n    expected: '$expected'\n    actual: '$output'"
     fi
-
 }
 
 main "$@"
