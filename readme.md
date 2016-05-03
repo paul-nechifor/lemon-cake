@@ -9,6 +9,7 @@ A programming language.
 ## TODO
 
 - switch int to int64
+- use `dlopen` so fewer symbols are used.
 
 ## License
 

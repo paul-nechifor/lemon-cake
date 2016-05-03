@@ -6,7 +6,7 @@ main() {
     cd "$root"
     compile_all
     run_tests
-    wc -c < lc
+    echo "Binary size: $(wc -c < lc)"
 }
 
 compile_all() {
@@ -24,7 +24,7 @@ run_tests() {
 
 test_out() {
     local input="$1" expected="$2"
-    echo -n "Testing $input ... "
+    echo -n "Testing $(tr '\n' ' ' <<<"$input") ... "
     local output="$(./lc <<<"$input" 2>/dev/null)"
     if [[ "$expected" == "$output" ]]; then
         echo "$(tput setaf 2)ok$(tput sgr0)"
