@@ -1,3 +1,5 @@
+#include <ctype.h>
+#include <stdarg.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,27 +30,45 @@ typedef struct {
     };
 } object;
 
-object *create_int(char *s) {
+static void die(char *fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    vfprintf(stderr, fmt, ap);
+    fprintf(stderr, "\n");
+    va_end(ap);
+    exit(1);
+}
+
+object *create_int(char *s, int *i) {
+    char digit;
+    int num = 0;
+    while (isdigit(digit = s[(*i)++])) {
+        num = num * 10 + digit;
+    }
+
     object *ret = malloc(size_of_object_struct(int_value));
     ret->type = TYPE_INT;
     ret->int_value = atoi(s);
     return ret;
 }
 
-object *create_string(char *s) {
-    int i = 1;
-    while (s[i] != '"') {
-        i++;
+object *create_string(char *s, int *i) {
+    int start = *i;
+    int end = start;
+    while (s[end] != '"') {
+        end++;
     }
-    int chars = i - 1;
+    int chars = end - start;
 
     object *ret = malloc(size_of_object_struct(string_value));
     ret->type = TYPE_STRING;
     ret->string_value = malloc(sizeof(string_object));
     ret->string_value->length = chars;
     ret->string_value->value = malloc(sizeof(char *) * (chars + 1));
-    memcpy(ret->string_value->value, &s[1], chars);
+    memcpy(ret->string_value->value, &s[start], chars);
     ret->string_value->value[chars] = 0;
+
+    *i = end + 1;
 
     return ret;
 }
@@ -73,12 +93,30 @@ object *eval(object *o) {
     return o;
 }
 
-object *parse(char *s) {
-    if (s[0] > '0' && s[0] < '9') {
-        return create_int(s);
-    } else {
-        return create_string(s);
+object *parse_recursive(char *s, int *i, int len) {
+    char c;
+    for (;;) {
+        if (*i >= len) {
+            die("Stepping over the end of the code.");
+        }
+
+        c = s[(*i)++];
+
+        if (c == ' ' || c == '\n' || c == '\r' || c == '\t') {
+            continue;
+        }
+
+        if (isdigit(c)) {
+            return create_int(s, i);
+        }
+
+        return create_string(s, i);
     }
+}
+
+object *parse(char *s, int len) {
+    int i = 0;
+    return parse_recursive(s, &i, len);
 }
 
 void c_main() {
@@ -93,7 +131,7 @@ void c_main() {
             break;
         }
         fprintf(stderr, "< ");
-        print(eval(parse(line)));
+        print(eval(parse(line, len)));
     }
 
     free(line);

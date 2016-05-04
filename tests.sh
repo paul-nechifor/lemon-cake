@@ -11,3 +11,6 @@ test_out '321
 123' '321
 "str"
 123'
+
+test_out '  1234 ' '1234'
+test_out '     "a" ' '"a"'
