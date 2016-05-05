@@ -93,6 +93,10 @@ object *eval(object *o) {
     return o;
 }
 
+void discard_line(char *s, int *i) {
+    while (s[(*i)++] != '\n');
+}
+
 object *parse_recursive(char *s, int *i, int len) {
     char c;
     for (;;) {
@@ -103,6 +107,11 @@ object *parse_recursive(char *s, int *i, int len) {
         c = s[(*i)++];
 
         if (c == ' ' || c == '\n' || c == '\r' || c == '\t') {
+            continue;
+        }
+
+        if (c == '#') {
+            discard_line(s, i);
             continue;
         }
 
