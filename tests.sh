@@ -22,3 +22,5 @@ test_out ' "bc" #d' '"bc"'
 test_out ' "bcd" #asdf
 8' '"bcd"
 8'
+
+tests_done
