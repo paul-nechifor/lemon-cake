@@ -3,9 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define member_size(type, member) sizeof(((type *)0)->member)
-#define size_of_object_struct(member) (offsetof(object, member) + member_size(object, member))
-
 enum {
     TYPE_INT = 1,
     TYPE_STRING,
@@ -16,7 +13,7 @@ typedef struct {
     int length;
     // Contains `length` characters plus an aditional '\0' at the end.
     char *value;
-} string_object;
+} string_struct;
 
 typedef struct {
     int type;
@@ -28,21 +25,50 @@ static void die(char *msg) {
     exit(1);
 }
 
-object *create_int(char *s, int *i) {
+object *new_int(int n) {
+    object *o = malloc(sizeof(object));
+    o->type = TYPE_INT;
+    o->value = malloc(sizeof(int));
+    *((int *) o->value) = n;
+    return o;
+}
+
+void free_int(object *o) {
+    free(o->value);
+    free(o);
+}
+
+object *new_string(char *s, int chars) {
+    object *o = malloc(sizeof(object));
+    o->type = TYPE_STRING;
+
+    string_struct *ss = malloc(sizeof(string_struct));
+    ss->length = chars;
+    ss->value = malloc(sizeof(char) * (chars + 1));
+    memcpy(ss->value, s, chars);
+
+    o->value = ss;
+
+    return o;
+}
+
+void free_string(object *o) {
+    free(((string_struct *) o->value)->value);
+    free(o->value);
+    free(o);
+}
+
+object *read_int(char *s, int *i) {
     char digit;
     int num = 0;
     while (isdigit(digit = s[(*i)++])) {
         num = num * 10 + digit - '0';
     }
 
-    object *ret = malloc(sizeof(object));
-    ret->type = TYPE_INT;
-    ret->value = malloc(sizeof(int));
-    *((int *) ret->value) = num;
-    return ret;
+    return new_int(num);
 }
 
-object *create_string(char *s, int *i) {
+object *read_string(char *s, int *i) {
     int start = *i;
     int end = start;
     while (s[end] != '"') {
@@ -50,19 +76,11 @@ object *create_string(char *s, int *i) {
     }
     int chars = end - start;
 
-    object *ret = malloc(sizeof(object));
-    ret->type = TYPE_STRING;
-
-    string_object *so = malloc(sizeof(string_object));
-    so->length = chars;
-    so->value = malloc(sizeof(char) * (chars + 1));
-    memcpy(so->value, &s[start], chars);
-
-    ret->value = so;
+    object *o = new_string(&s[start], chars);
 
     *i = end + 1;
 
-    return ret;
+    return o;
 }
 
 void print(object *o) {
@@ -72,11 +90,11 @@ void print(object *o) {
             break;
 
         case TYPE_STRING:
-            printf("\"%s\"", ((string_object*) o->value)->value);
+            printf("\"%s\"", ((string_struct*) o->value)->value);
             break;
 
         default:
-            printf("Unknown type.");
+            printf("[Unknown type.]");
     }
     printf("\n");
 }
@@ -109,10 +127,25 @@ object *parse_recursive(char *s, int *i, int len) {
 
         if (isdigit(c)) {
             (*i)--;
-            return create_int(s, i);
+            return read_int(s, i);
         }
 
-        return create_string(s, i);
+        return read_string(s, i);
+    }
+}
+
+void free_object(object *o) {
+    switch (o->type) {
+        case TYPE_INT:
+            free_int(o);
+            break;
+
+        case TYPE_STRING:
+            free_string(o);
+            break;
+
+        default:
+            die("Free not implemented for this object type");
     }
 }
 
@@ -125,6 +158,7 @@ void c_main() {
     char *line = NULL;
     size_t len = 0;
     ssize_t read;
+    object *o;
 
     for (;;) {
         fprintf(stderr, "> ");
@@ -133,7 +167,9 @@ void c_main() {
             break;
         }
         fprintf(stderr, "< ");
-        print(eval(parse(line, len)));
+        o = eval(parse(line, len));
+        print(o);
+        free_object(o);
     }
 
     free(line);
