@@ -1,6 +1,4 @@
 #include <ctype.h>
-#include <stdarg.h>
-#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,20 +20,11 @@ typedef struct {
 
 typedef struct {
     int type;
-
-    union {
-        int int_value;
-
-        string_object *string_value;
-    };
+    void *value;
 } object;
 
-static void die(char *fmt, ...) {
-    va_list ap;
-    va_start(ap, fmt);
-    vfprintf(stderr, fmt, ap);
-    fprintf(stderr, "\n");
-    va_end(ap);
+static void die(char *msg) {
+    fprintf(stderr, "%s\n", msg);
     exit(1);
 }
 
@@ -43,12 +32,13 @@ object *create_int(char *s, int *i) {
     char digit;
     int num = 0;
     while (isdigit(digit = s[(*i)++])) {
-        num = num * 10 + digit;
+        num = num * 10 + digit - '0';
     }
 
-    object *ret = malloc(size_of_object_struct(int_value));
+    object *ret = malloc(sizeof(object));
     ret->type = TYPE_INT;
-    ret->int_value = atoi(s);
+    ret->value = malloc(sizeof(int));
+    *((int *) ret->value) = num;
     return ret;
 }
 
@@ -60,13 +50,15 @@ object *create_string(char *s, int *i) {
     }
     int chars = end - start;
 
-    object *ret = malloc(size_of_object_struct(string_value));
+    object *ret = malloc(sizeof(object));
     ret->type = TYPE_STRING;
-    ret->string_value = malloc(sizeof(string_object));
-    ret->string_value->length = chars;
-    ret->string_value->value = malloc(sizeof(char *) * (chars + 1));
-    memcpy(ret->string_value->value, &s[start], chars);
-    ret->string_value->value[chars] = 0;
+
+    string_object *so = malloc(sizeof(string_object));
+    so->length = chars;
+    so->value = malloc(sizeof(char) * (chars + 1));
+    memcpy(so->value, &s[start], chars);
+
+    ret->value = so;
 
     *i = end + 1;
 
@@ -76,11 +68,11 @@ object *create_string(char *s, int *i) {
 void print(object *o) {
     switch (o->type) {
         case TYPE_INT:
-            printf("%d", o->int_value);
+            printf("%d", *((int *) o->value));
             break;
 
         case TYPE_STRING:
-            printf("\"%s\"", o->string_value->value);
+            printf("\"%s\"", ((string_object*) o->value)->value);
             break;
 
         default:
@@ -116,6 +108,7 @@ object *parse_recursive(char *s, int *i, int len) {
         }
 
         if (isdigit(c)) {
+            (*i)--;
             return create_int(s, i);
         }
 
