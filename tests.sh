@@ -23,4 +23,8 @@ test_out ' "bcd" #asdf
 8' '"bcd"
 8'
 
+test_out '' 'null'
+test_out '# Just a comment.' 'null'
+test_out '    # Indented comment.' 'null'
+
 tests_done

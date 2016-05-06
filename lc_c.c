@@ -6,6 +6,7 @@
 enum {
     TYPE_INT = 1,
     TYPE_STRING,
+    TYPE_NULL,
 };
 
 typedef struct {
@@ -19,6 +20,8 @@ typedef struct {
     int type;
     void *value;
 } object;
+
+static object *null_instance;
 
 static void die(char *msg) {
     fprintf(stderr, "%s\n", msg);
@@ -93,6 +96,10 @@ void print(object *o) {
             printf("\"%s\"", ((string_struct*) o->value)->value);
             break;
 
+        case TYPE_NULL:
+            printf("null");
+            break;
+
         default:
             printf("[Unknown type.]");
     }
@@ -110,8 +117,12 @@ void discard_line(char *s, int *i) {
 object *parse_recursive(char *s, int *i, int len) {
     char c;
     for (;;) {
-        if (*i >= len) {
+        if (*i > len) {
             die("Stepping over the end of the code.");
+        }
+
+        if (*i == len) {
+            return null_instance;
         }
 
         c = s[(*i)++];
@@ -144,6 +155,9 @@ void free_object(object *o) {
             free_string(o);
             break;
 
+        case TYPE_NULL:
+            break;
+
         default:
             die("Free not implemented for this object type");
     }
@@ -159,6 +173,8 @@ void c_main() {
     size_t len = 0;
     ssize_t read;
     object *o;
+    null_instance = malloc(sizeof(object));
+    null_instance->type = TYPE_NULL;
 
     for (;;) {
         fprintf(stderr, "> ");
@@ -166,11 +182,14 @@ void c_main() {
         if (read == -1) {
             break;
         }
-        fprintf(stderr, "< ");
-        o = eval(parse(line, len));
+        o = eval(parse(line, strlen(line)));
         print(o);
         free_object(o);
     }
 
-    free(line);
+    if (line) {
+        free(line);
+    }
+
+    free(null_instance);
 }
