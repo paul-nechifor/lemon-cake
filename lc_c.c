@@ -3,10 +3,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define offsetof(st, m) ((size_t) ( (char *)&((st *)0)->m - (char *)0 ))
+
 enum {
     TYPE_INT = 1,
     TYPE_STRING,
     TYPE_NULL,
+    TYPE_LIST,
 };
 
 typedef struct {
@@ -21,7 +24,17 @@ typedef struct {
     void *value;
 } object;
 
+struct list_elem {
+    object *value;
+    struct list_elem *next;
+};
+struct list_elem;
+typedef struct list_elem list_elem;
+
 static object *null_instance;
+
+object *parse_recursive(char *s, int *i, int len);
+void print(object *o);
 
 static void die(char *msg) {
     fprintf(stderr, "%s\n", msg);
@@ -34,11 +47,6 @@ object *new_int(int n) {
     o->value = malloc(sizeof(int));
     *((int *) o->value) = n;
     return o;
-}
-
-void free_int(object *o) {
-    free(o->value);
-    free(o);
 }
 
 object *new_string(char *s, int chars) {
@@ -55,17 +63,34 @@ object *new_string(char *s, int chars) {
     return o;
 }
 
-void free_string(object *o) {
-    free(((string_struct *) o->value)->value);
-    free(o->value);
-    free(o);
+object *new_list() {
+    object *o = malloc(sizeof(object));
+    o->type = TYPE_LIST;
+
+    list_elem *le = malloc(sizeof(list_elem));
+    le->value = NULL;
+    le->next = NULL;
+
+    o->value = le;
+
+    return o;
+}
+
+void free_list(object *o) {
+    // TODO: Free lists.
 }
 
 object *read_int(char *s, int *i) {
     char digit;
     int num = 0;
-    while (isdigit(digit = s[(*i)++])) {
+
+    for (;;) {
+        digit = s[*i];
+        if (!isdigit(digit)) {
+            break;
+        }
         num = num * 10 + digit - '0';
+        (*i)++;
     }
 
     return new_int(num);
@@ -86,6 +111,52 @@ object *read_string(char *s, int *i) {
     return o;
 }
 
+object *read_list(char *s, int *i, int len) {
+    object *o = new_list(NULL, NULL);
+    object *read_obj;
+    list_elem** curr_elem_ptr = (list_elem **)(
+        ((char *) o) + offsetof(object, value)
+    );
+    list_elem* curr_elem;
+
+    for (;;) {
+        read_obj = parse_recursive(s, i, len);
+        if (read_obj == (object *) ')') {
+            break;
+        }
+
+        curr_elem = malloc(sizeof(list_elem));
+        curr_elem->value = read_obj;
+        curr_elem->next = NULL;
+        *curr_elem_ptr = curr_elem;
+        curr_elem_ptr = (list_elem **)(
+            ((char *)curr_elem) + offsetof(list_elem, next)
+        );
+    }
+
+    return o;
+}
+
+void print_list(object *o) {
+    list_elem *e;
+    int first_elem = 1;
+
+    printf("(");
+
+    e = (list_elem *) o->value;
+
+    for (e = (list_elem *)o->value; e && e->value; e = e->next) {
+        if (first_elem) {
+            first_elem = 0;
+        } else {
+            printf(" ");
+        }
+        print(e->value);
+    }
+
+    printf(")");
+}
+
 void print(object *o) {
     switch (o->type) {
         case TYPE_INT:
@@ -100,10 +171,13 @@ void print(object *o) {
             printf("null");
             break;
 
+        case TYPE_LIST:
+            print_list(o);
+            break;
+
         default:
             printf("[Unknown type.]");
     }
-    printf("\n");
 }
 
 object *eval(object *o) {
@@ -136,6 +210,14 @@ object *parse_recursive(char *s, int *i, int len) {
             continue;
         }
 
+        if (c == '(') {
+            return read_list(s, i, len);
+        }
+
+        if (c == ')') {
+            return (object *) ')';
+        }
+
         if (isdigit(c)) {
             (*i)--;
             return read_int(s, i);
@@ -145,27 +227,34 @@ object *parse_recursive(char *s, int *i, int len) {
     }
 }
 
-void free_object(object *o) {
-    switch (o->type) {
-        case TYPE_INT:
-            free_int(o);
-            break;
-
-        case TYPE_STRING:
-            free_string(o);
-            break;
-
-        case TYPE_NULL:
-            break;
-
-        default:
-            die("Free not implemented for this object type");
-    }
-}
-
 object *parse(char *s, int len) {
     int i = 0;
     return parse_recursive(s, &i, len);
+}
+
+void free_object(object *o) {
+    switch (o->type) {
+        case TYPE_INT:
+            break;
+
+        case TYPE_STRING:
+            free(((string_struct *) o->value)->value);
+            break;
+
+        case TYPE_NULL:
+            return;
+
+        case TYPE_LIST:
+            free_list(o);
+            break;
+
+        default:
+            die("Free not implemented for this object type.");
+    }
+    if (o->value) {
+        free(o->value);
+    }
+    free(o);
 }
 
 void c_main() {
@@ -175,6 +264,7 @@ void c_main() {
     object *o;
     null_instance = malloc(sizeof(object));
     null_instance->type = TYPE_NULL;
+    null_instance->value = NULL;
 
     for (;;) {
         fprintf(stderr, "> ");
@@ -184,6 +274,7 @@ void c_main() {
         }
         o = eval(parse(line, strlen(line)));
         print(o);
+        printf("\n");
         free_object(o);
     }
 

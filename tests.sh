@@ -23,8 +23,21 @@ test_out ' "bcd" #asdf
 8' '"bcd"
 8'
 
+# Test null.
 test_out '' 'null'
 test_out '# Just a comment.' 'null'
 test_out '    # Indented comment.' 'null'
+
+# Test lists.
+test_out '()' '()'
+test_out '  () # asdf' '()'
+test_out '(1)' '(1)'
+test_out '(1 )' '(1)'
+test_out '( 22 )' '(22)'
+test_out '  ( 22 ) ' '(22)'
+test_out '(1 2 3)' '(1 2 3)'
+test_out '(1 "asdf" 3)' '(1 "asdf" 3)'
+test_out '(1 (22 33) 3)' '(1 (22 33) 3)'
+test_out '((1 "df" ("asf") () ("bb" ) ) 123)' '((1 "df" ("asf") () ("bb")) 123)'
 
 tests_done
