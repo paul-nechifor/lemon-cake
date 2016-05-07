@@ -5,18 +5,24 @@ n_tests=0 n_ok=0 n_failed=0
 
 main() {
     cd "$root"
-    compile_all
+    if [[ "$1" ]]; then
+        sub_"$@"
+        return
+    fi
+    sub_compile
     run_tests
     echo "Binary size: $(wc -c < lc)"
 }
 
-compile_all() {
+sub_compile() {
     rm -fr *.o lc
     nasm -f elf64 lc.asm
     gcc -c lc_c.c
     ld -o lc -dynamic-linker /lib64/ld-linux-x86-64.so.2 -lc --entry=main *.o
+    if [[ ! "$debug" ]]; then
+        strip -R .eh_frame -R .gnu.version -R .hash -R .comment --strip-all lc
+    fi
     rm -fr *.o
-    strip -R .eh_frame -R .gnu.version -R .hash -R .comment --strip-all lc
 }
 
 run_tests() {
