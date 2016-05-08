@@ -1,9 +1,17 @@
-#include <ctype.h>
+#include <dlfcn.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #define offsetof(st, m) ((size_t) ( (char *)&((st *)0)->m - (char *)0 ))
+
+extern size_t (*c_strlen)(const char *str);
+extern void *(*c_malloc)(size_t size);
+extern int (*c_fprintf)(FILE *stream, const char *format, ...);
+extern void (*c_free)(void *ptr);
+extern void *(*c_memcpy)(void *destination, const void *source, size_t num);
+extern ssize_t (*c_getline)(char **lineptr, size_t *n, FILE *stream);
+extern void (*c_exit)(int status);
 
 enum {
     TYPE_INT = 1,
@@ -37,26 +45,26 @@ object *parse_recursive(char *s, int *i, int len);
 void print(object *o);
 
 static void die(char *msg) {
-    fprintf(stderr, "%s\n", msg);
-    exit(1);
+    c_fprintf(stderr, "%s\n", msg);
+    c_exit(1);
 }
 
 object *new_int(int n) {
-    object *o = malloc(sizeof(object));
+    object *o = c_malloc(sizeof(object));
     o->type = TYPE_INT;
-    o->value = malloc(sizeof(int));
+    o->value = c_malloc(sizeof(int));
     *((int *) o->value) = n;
     return o;
 }
 
 object *new_string(char *s, int chars) {
-    object *o = malloc(sizeof(object));
+    object *o = c_malloc(sizeof(object));
     o->type = TYPE_STRING;
 
-    string_struct *ss = malloc(sizeof(string_struct));
+    string_struct *ss = c_malloc(sizeof(string_struct));
     ss->length = chars;
-    ss->value = malloc(sizeof(char) * (chars + 1));
-    memcpy(ss->value, s, chars);
+    ss->value = c_malloc(sizeof(char) * (chars + 1));
+    c_memcpy(ss->value, s, chars);
 
     o->value = ss;
 
@@ -64,10 +72,10 @@ object *new_string(char *s, int chars) {
 }
 
 object *new_list() {
-    object *o = malloc(sizeof(object));
+    object *o = c_malloc(sizeof(object));
     o->type = TYPE_LIST;
 
-    list_elem *le = malloc(sizeof(list_elem));
+    list_elem *le = c_malloc(sizeof(list_elem));
     le->value = NULL;
     le->next = NULL;
 
@@ -86,7 +94,7 @@ object *read_int(char *s, int *i) {
 
     for (;;) {
         digit = s[*i];
-        if (!isdigit(digit)) {
+        if (digit < '0' || digit > '9') {
             break;
         }
         num = num * 10 + digit - '0';
@@ -125,7 +133,7 @@ object *read_list(char *s, int *i, int len) {
             break;
         }
 
-        curr_elem = malloc(sizeof(list_elem));
+        curr_elem = c_malloc(sizeof(list_elem));
         curr_elem->value = read_obj;
         curr_elem->next = NULL;
         *curr_elem_ptr = curr_elem;
@@ -141,7 +149,7 @@ void print_list(object *o) {
     list_elem *e;
     int first_elem = 1;
 
-    printf("(");
+    c_fprintf(stdout, "(");
 
     e = (list_elem *) o->value;
 
@@ -149,26 +157,26 @@ void print_list(object *o) {
         if (first_elem) {
             first_elem = 0;
         } else {
-            printf(" ");
+            c_fprintf(stdout, " ");
         }
         print(e->value);
     }
 
-    printf(")");
+    c_fprintf(stdout, ")");
 }
 
 void print(object *o) {
     switch (o->type) {
         case TYPE_INT:
-            printf("%d", *((int *) o->value));
+            c_fprintf(stdout, "%d", *((int *) o->value));
             break;
 
         case TYPE_STRING:
-            printf("\"%s\"", ((string_struct*) o->value)->value);
+            c_fprintf(stdout, "\"%s\"", ((string_struct*) o->value)->value);
             break;
 
         case TYPE_NULL:
-            printf("null");
+            c_fprintf(stdout, "null");
             break;
 
         case TYPE_LIST:
@@ -176,7 +184,7 @@ void print(object *o) {
             break;
 
         default:
-            printf("[Unknown type.]");
+            c_fprintf(stdout, "[Unknown type.]");
     }
 }
 
@@ -218,7 +226,7 @@ object *parse_recursive(char *s, int *i, int len) {
             return (object *) ')';
         }
 
-        if (isdigit(c)) {
+        if (c >= '0' && c <= '9') {
             (*i)--;
             return read_int(s, i);
         }
@@ -238,7 +246,7 @@ void free_object(object *o) {
             break;
 
         case TYPE_STRING:
-            free(((string_struct *) o->value)->value);
+            c_free(((string_struct *) o->value)->value);
             break;
 
         case TYPE_NULL:
@@ -252,35 +260,47 @@ void free_object(object *o) {
             die("Free not implemented for this object type.");
     }
     if (o->value) {
-        free(o->value);
+        c_free(o->value);
     }
-    free(o);
+    c_free(o);
 }
 
-void c_main() {
+void load_c_functions() {
+    void *c_handle = dlopen("libc.so", RTLD_LAZY);
+
+    *(void **) (&c_strlen) = dlsym(c_handle, "strlen");
+    *(void **) (&c_malloc) = dlsym(c_handle, "malloc");
+    *(void **) (&c_fprintf) = dlsym(c_handle, "fprintf");
+    *(void **) (&c_free) = dlsym(c_handle, "free");
+    *(void **) (&c_memcpy) = dlsym(c_handle, "memcpy");
+    *(void **) (&c_getline) = dlsym(c_handle, "getline");
+    *(void **) (&c_exit) = dlsym(c_handle, "exit");
+}
+
+void eval_lines() {
     char *line = NULL;
     size_t len = 0;
     ssize_t read;
     object *o;
-    null_instance = malloc(sizeof(object));
+    null_instance = c_malloc(sizeof(object));
     null_instance->type = TYPE_NULL;
     null_instance->value = NULL;
 
     for (;;) {
-        fprintf(stderr, "> ");
-        read = getline(&line, &len, stdin);
+        c_fprintf(stderr, "> ");
+        read = c_getline(&line, &len, stdin);
         if (read == -1) {
             break;
         }
-        o = eval(parse(line, strlen(line)));
+        o = eval(parse(line, c_strlen(line)));
         print(o);
-        printf("\n");
+        c_fprintf(stdout, "\n");
         free_object(o);
     }
 
     if (line) {
-        free(line);
+        c_free(line);
     }
 
-    free(null_instance);
+    c_free(null_instance);
 }
