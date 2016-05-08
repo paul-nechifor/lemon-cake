@@ -81,7 +81,15 @@ object *new_list() {
 }
 
 void free_list(object *o) {
-    // TODO: Free lists.
+    list_elem *elem = o->value;
+    list_elem *next;
+    while (elem) {
+        next = elem->next;
+        c_free(elem->value);
+        c_free(elem);
+        elem = next;
+    }
+    o->value = NULL; // So it's not double freed.
 }
 
 object *read_int(char *s, uint64_t *i) {
