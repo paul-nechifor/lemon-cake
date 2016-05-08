@@ -1,7 +1,6 @@
 #include <dlfcn.h>
+#include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #define offsetof(st, m) ((size_t) ( (char *)&((st *)0)->m - (char *)0 ))
 
@@ -21,13 +20,13 @@ enum {
 
 typedef struct {
     // The number of actual characters ('\0' is not included).
-    int length;
+    uint64_t length;
     // Contains `length` characters plus an aditional '\0' at the end.
     char *value;
 } string_struct;
 
 typedef struct {
-    int type;
+    uint64_t type;
     void *value;
 } object;
 
@@ -38,7 +37,7 @@ struct list_elem {
 struct list_elem;
 typedef struct list_elem list_elem;
 
-object *parse_recursive(char *s, int *i, int len);
+object *parse_recursive(char *s, uint64_t *i, uint64_t len);
 void print(object *o);
 
 static void die(char *msg) {
@@ -46,15 +45,15 @@ static void die(char *msg) {
     c_exit(1);
 }
 
-object *new_int(int n) {
+object *new_int(uint64_t n) {
     object *o = c_malloc(sizeof(object));
     o->type = TYPE_INT;
-    o->value = c_malloc(sizeof(int));
-    *((int *) o->value) = n;
+    o->value = c_malloc(sizeof(uint64_t));
+    *((uint64_t *) o->value) = n;
     return o;
 }
 
-object *new_string(char *s, int chars) {
+object *new_string(char *s, uint64_t chars) {
     object *o = c_malloc(sizeof(object));
     o->type = TYPE_STRING;
 
@@ -85,9 +84,9 @@ void free_list(object *o) {
     // TODO: Free lists.
 }
 
-object *read_int(char *s, int *i) {
+object *read_int(char *s, uint64_t *i) {
     char digit;
-    int num = 0;
+    uint64_t num = 0;
 
     for (;;) {
         digit = s[*i];
@@ -101,13 +100,13 @@ object *read_int(char *s, int *i) {
     return new_int(num);
 }
 
-object *read_string(char *s, int *i) {
-    int start = *i;
-    int end = start;
+object *read_string(char *s, uint64_t *i) {
+    uint64_t start = *i;
+    uint64_t end = start;
     while (s[end] != '"') {
         end++;
     }
-    int chars = end - start;
+    uint64_t chars = end - start;
 
     object *o = new_string(&s[start], chars);
 
@@ -116,7 +115,7 @@ object *read_string(char *s, int *i) {
     return o;
 }
 
-object *read_list(char *s, int *i, int len) {
+object *read_list(char *s, uint64_t *i, uint64_t len) {
     object *o = new_list(NULL, NULL);
     object *read_obj;
     list_elem** curr_elem_ptr = (list_elem **)(
@@ -144,7 +143,7 @@ object *read_list(char *s, int *i, int len) {
 
 void print_list(object *o) {
     list_elem *e;
-    int first_elem = 1;
+    uint64_t first_elem = 1;
 
     c_fprintf(stdout, "(");
 
@@ -165,7 +164,7 @@ void print_list(object *o) {
 void print(object *o) {
     switch (o->type) {
         case TYPE_INT:
-            c_fprintf(stdout, "%d", *((int *) o->value));
+            c_fprintf(stdout, "%d", *((uint64_t *) o->value));
             break;
 
         case TYPE_STRING:
@@ -185,11 +184,11 @@ object *eval(object *o) {
     return o;
 }
 
-void discard_line(char *s, int *i) {
+void discard_line(char *s, uint64_t *i) {
     while (s[(*i)++] != '\n');
 }
 
-object *parse_recursive(char *s, int *i, int len) {
+object *parse_recursive(char *s, uint64_t *i, uint64_t len) {
     char c;
     for (;;) {
         if (*i > len) {
@@ -228,8 +227,8 @@ object *parse_recursive(char *s, int *i, int len) {
     }
 }
 
-object *parse(char *s, int len) {
-    int i = 0;
+object *parse(char *s, uint64_t len) {
+    uint64_t i = 0;
     return parse_recursive(s, &i, len);
 }
 
