@@ -10,7 +10,6 @@ A programming language.
 
 - define `s1 s2 s4 s8 u1 u2 u4 u8` to `signed int 8 bits, ...`
 - switch int to si8
-- get rid of `null` and replace it with `()`.
 - free the list
 - redefine object to contain:
     - obj type

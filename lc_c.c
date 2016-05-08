@@ -16,7 +16,6 @@ extern void (*c_exit)(int status);
 enum {
     TYPE_INT = 1,
     TYPE_STRING,
-    TYPE_NULL,
     TYPE_LIST,
 };
 
@@ -38,8 +37,6 @@ struct list_elem {
 };
 struct list_elem;
 typedef struct list_elem list_elem;
-
-static object *null_instance;
 
 object *parse_recursive(char *s, int *i, int len);
 void print(object *o);
@@ -175,10 +172,6 @@ void print(object *o) {
             c_fprintf(stdout, "\"%s\"", ((string_struct*) o->value)->value);
             break;
 
-        case TYPE_NULL:
-            c_fprintf(stdout, "null");
-            break;
-
         case TYPE_LIST:
             print_list(o);
             break;
@@ -204,7 +197,7 @@ object *parse_recursive(char *s, int *i, int len) {
         }
 
         if (*i == len) {
-            return null_instance;
+            return new_list(NULL, NULL);
         }
 
         c = s[(*i)++];
@@ -249,9 +242,6 @@ void free_object(object *o) {
             c_free(((string_struct *) o->value)->value);
             break;
 
-        case TYPE_NULL:
-            return;
-
         case TYPE_LIST:
             free_list(o);
             break;
@@ -282,10 +272,6 @@ void eval_lines() {
     size_t len = 0;
     ssize_t read;
     object *o;
-    null_instance = c_malloc(sizeof(object));
-    null_instance->type = TYPE_NULL;
-    null_instance->value = NULL;
-
     for (;;) {
         c_fprintf(stderr, "> ");
         read = c_getline(&line, &len, stdin);
@@ -301,6 +287,4 @@ void eval_lines() {
     if (line) {
         c_free(line);
     }
-
-    c_free(null_instance);
 }

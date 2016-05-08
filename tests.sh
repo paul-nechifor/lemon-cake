@@ -24,9 +24,9 @@ test_out ' "bcd" #asdf
 8'
 
 # Test null.
-test_out '' 'null'
-test_out '# Just a comment.' 'null'
-test_out '    # Indented comment.' 'null'
+test_out '' '()'
+test_out '# Just a comment.' '()'
+test_out '    # Indented comment.' '()'
 
 # Test lists.
 test_out '()' '()'
