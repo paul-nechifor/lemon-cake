@@ -1,4 +1,3 @@
-#include <dlfcn.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -260,18 +259,6 @@ void free_object(object *o) {
         c_free(o->value);
     }
     c_free(o);
-}
-
-void load_c_functions() {
-    void *c_handle = dlopen("libc.so", RTLD_LAZY);
-
-    *(void **) (&c_strlen) = dlsym(c_handle, "strlen");
-    *(void **) (&c_malloc) = dlsym(c_handle, "malloc");
-    *(void **) (&c_fprintf) = dlsym(c_handle, "fprintf");
-    *(void **) (&c_free) = dlsym(c_handle, "free");
-    *(void **) (&c_memcpy) = dlsym(c_handle, "memcpy");
-    *(void **) (&c_getline) = dlsym(c_handle, "getline");
-    *(void **) (&c_exit) = dlsym(c_handle, "exit");
 }
 
 void eval_lines() {

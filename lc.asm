@@ -1,30 +1,12 @@
+; The system externals.
+extern dlopen
+extern dlsym
+
+; The LC externals (written in C).
 extern eval_lines
-extern load_c_functions
 
-
-section .data
-
-global c_strlen
-c_strlen: dq 0
-
-global c_malloc
-c_malloc: dq 0
-
-global c_fprintf
-c_fprintf: dq 0
-
-global c_free
-c_free: dq 0
-
-global c_memcpy
-c_memcpy: dq 0
-
-global c_getline
-c_getline: dq 0
-
-global c_exit
-c_exit: dq 0
-
+; The include files.
+%include "c_functions.asm"
 
 section .text
 
