@@ -1,45 +1,37 @@
+%macro function_string 1
+  %defstr str_value %1
+  %1_str: db str_value, 0
+%endmacro
+
+%macro function_pointer_and_name 1
+  global c_%1
+  c_%1:
+    dq 0
+    dq %1_str
+%endmacro
+
 section .data
 
 libcso_str: db "libc.so", 0
 
-strlen_str: db "strlen", 0
-malloc_str: db "malloc", 0
-fprintf_str: db "fprintf", 0
-free_str: db "free", 0
-memcpy_str: db "memcpy", 0
-getline_str: db "getline", 0
-exit_str: db "exit", 0
+function_string exit
+function_string fprintf
+function_string free
+function_string getline
+function_string malloc
+function_string memcpy
+function_string strlen
 
 
 first_function_to_load:
 
-global c_strlen
-c_strlen: dq 0
-dq strlen_str
-
-global c_malloc
-c_malloc: dq 0
-dq malloc_str
-
-global c_fprintf
-c_fprintf: dq 0
-dq fprintf_str
-
-global c_free
-c_free: dq 0
-dq free_str
-
-global c_memcpy
-c_memcpy: dq 0
-dq memcpy_str
-
-global c_getline
-c_getline: dq 0
-dq getline_str
-
-global c_exit
-c_exit: dq 0
-dq exit_str
+function_pointer_and_name exit
+function_pointer_and_name fprintf
+function_pointer_and_name free
+function_pointer_and_name getline
+function_pointer_and_name malloc
+function_pointer_and_name memcpy
+function_pointer_and_name strlen
 
 end_of_functions_to_load:
 

@@ -3,13 +3,13 @@
 
 #define offsetof(st, m) ((size_t) ( (char *)&((st *)0)->m - (char *)0 ))
 
-extern size_t (*c_strlen)(const char *str);
-extern void *(*c_malloc)(size_t size);
+extern void (*c_exit)(int status);
 extern int (*c_fprintf)(FILE *stream, const char *format, ...);
 extern void (*c_free)(void *ptr);
-extern void *(*c_memcpy)(void *destination, const void *source, size_t num);
 extern ssize_t (*c_getline)(char **lineptr, size_t *n, FILE *stream);
-extern void (*c_exit)(int status);
+extern void *(*c_malloc)(size_t size);
+extern void *(*c_memcpy)(void *destination, const void *source, size_t num);
+extern size_t (*c_strlen)(const char *str);
 
 enum {
     TYPE_INT = 1,
