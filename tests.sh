@@ -40,6 +40,15 @@ test_out '(1 "asdf" 3)' '(1 "asdf" 3)'
 test_out '(1 (22 33) 3)' '(1 (22 33) 3)'
 test_out '((1 "df" ("asf") () ("bb" ) ) 123)' '((1 "df" ("asf") () ("bb")) 123)'
 
+# Test symbols.
+test_out 'asdf' 'asdf'
+test_out '+' '+'
+test_out '<=>' '<=>'
+test_out '(asdf)' '(asdf)'
+test_out '(asdf 1 ab)' '(asdf 1 ab)'
+test_out '(a s d f "x" (1 ab))' '(a s d f "x" (1 ab))'
+test_out '(xx "yy")' '(xx "yy")'
+
 # Test add.
 test_out '("+" 1 2)' '3'
 

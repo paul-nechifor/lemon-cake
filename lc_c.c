@@ -16,6 +16,7 @@ enum {
     TYPE_INT = 1,
     TYPE_STRING,
     TYPE_LIST,
+    TYPE_SYMBOL,
 };
 
 typedef struct {
@@ -24,6 +25,17 @@ typedef struct {
     // Contains `length` characters plus an aditional '\0' at the end.
     char *value;
 } string_struct;
+
+typedef struct {
+    // The unique id for the symbol.
+    uint64_t id;
+    // The number of times this symbol is used. Will be freed on zero.
+    uint64_t count;
+    // The number of actual characters ('\0' is not included).
+    uint64_t length;
+    // Contains `length` characters plus an aditional '\0' at the end.
+    char *value;
+} symbol_struct;
 
 typedef struct {
     uint64_t type;
@@ -66,6 +78,30 @@ object *new_string(char *s, uint64_t chars) {
     o->value = ss;
 
     return o;
+}
+
+object *new_symbol(char *s, uint64_t chars) {
+    // TODO: Use unique symbols.
+    object *o = c_malloc(sizeof(object));
+    o->type = TYPE_SYMBOL;
+
+    symbol_struct *ss = c_malloc(sizeof(symbol_struct));
+    ss->id = 0;
+    ss->count = 1;
+    ss->length = chars;
+    ss->value = c_malloc(sizeof(char) * (chars + 1));
+    c_memcpy(ss->value, s, chars);
+
+    o->value = ss;
+
+    return o;
+}
+
+void free_symbol(object *o) {
+    // TODO: Only free if the ref count goes to 0.
+    c_free(((symbol_struct *) o->value)->value);
+    c_free(o->value);
+    c_free(o);
 }
 
 object *new_list() {
@@ -115,13 +151,28 @@ object *read_string(char *s, uint64_t *i) {
     while (s[end] != '"') {
         end++;
     }
-    uint64_t chars = end - start;
 
-    object *o = new_string(&s[start], chars);
+    object *o = new_string(&s[start], end - start);
 
     *i = end + 1;
 
     return o;
+}
+
+object *read_symbol(char *s, uint64_t *i) {
+    uint64_t start = *i;
+
+    char c;
+
+    for (;;) {
+        c = s[*i];
+        if (c == ' ' || c == '\n' || c == '\r' || c == '\t' || c == ')') {
+            break;
+        }
+        (*i)++;
+    }
+
+    return new_symbol(&s[start], *i - start);
 }
 
 object *read_list(char *s, uint64_t *i, uint64_t len) {
@@ -184,6 +235,10 @@ void print(object *o) {
             print_list(o);
             break;
 
+        case TYPE_SYMBOL:
+            c_fprintf(stdout, "%s", ((symbol_struct*) o->value)->value);
+            break;
+
         default:
             c_fprintf(stdout, "[Unknown type.]");
     }
@@ -216,6 +271,7 @@ object *eval(object *o) {
     switch (o->type) {
         case TYPE_INT:
         case TYPE_STRING:
+        case TYPE_SYMBOL:
             return o;
 
         case TYPE_LIST:
@@ -266,7 +322,13 @@ object *parse_recursive(char *s, uint64_t *i, uint64_t len) {
             return read_int(s, i);
         }
 
-        return read_string(s, i);
+        if (c == '"') {
+            return read_string(s, i);
+        }
+
+
+        (*i)--;
+        return read_symbol(s, i);
     }
 }
 
@@ -287,6 +349,11 @@ void free_object(object *o) {
         case TYPE_LIST:
             free_list(o);
             break;
+
+        case TYPE_SYMBOL:
+            free_symbol(o);
+            // return not break since symbols have special functionality.
+            return;
 
         default:
             die("Free not implemented for this object type.");

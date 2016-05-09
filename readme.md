@@ -15,6 +15,9 @@ A programming language.
     - ...unspecified data
   so that you can allocale with a single malloc, deallocate with a single free,
   and duplicate the object since you have the size.
+- use `'` for strings and `"` for quoting.
+- use unique symbols.
+- free symbols only when the ref count reaches 0.
 
 ## Reference
 
