@@ -74,6 +74,7 @@ object *new_string(char *s, uint64_t chars) {
     ss->length = chars;
     ss->value = c_malloc(sizeof(char) * (chars + 1));
     c_memcpy(ss->value, s, chars);
+    ss->value[chars] = '\0';
 
     o->value = ss;
 
@@ -91,6 +92,7 @@ object *new_symbol(char *s, uint64_t chars) {
     ss->length = chars;
     ss->value = c_malloc(sizeof(char) * (chars + 1));
     c_memcpy(ss->value, s, chars);
+    ss->value[chars] = '\0';
 
     o->value = ss;
 
@@ -244,6 +246,23 @@ void print(object *o) {
     }
 }
 
+object *add_numbers(list_elem *le) {
+    uint64_t ret = 0;
+    list_elem *next = le;
+    object *o;
+
+    do {
+        o = next->value;
+        if (o->type != TYPE_INT) {
+            die("Not int.");
+        }
+        ret += *(int *)o->value;
+        next = next->next;
+    } while (next);
+
+    return new_int(ret);
+}
+
 object *eval_list(object *o) {
     list_elem *le = o->value;
 
@@ -253,16 +272,17 @@ object *eval_list(object *o) {
     }
 
     object *first_elem = le->value;
-    if (first_elem->type != TYPE_STRING) {
+    if (first_elem->type != TYPE_SYMBOL) {
         return o;
     }
 
-    string_struct *name_struct = first_elem->value;
+    symbol_struct *name_struct = first_elem->value;
     char *name = name_struct->value;
 
     if (!c_strcmp(name, "+")) {
+        object *ret = add_numbers(le->next);
         free_object(o);
-        return new_int(3);
+        return ret;
     }
     return o;
 }

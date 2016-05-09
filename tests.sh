@@ -15,6 +15,13 @@ test_out '321
 # Test whitespace.
 test_out '  1234 ' '1234'
 test_out '     "a" ' '"a"'
+test_out '  12
+   12345  \
+
+       55    ' '12
+12345
+()
+55'
 
 # Test comments.
 test_out '"b"#c' '"b"'
@@ -48,8 +55,31 @@ test_out '(asdf)' '(asdf)'
 test_out '(asdf 1 ab)' '(asdf 1 ab)'
 test_out '(a s d f "x" (1 ab))' '(a s d f "x" (1 ab))'
 test_out '(xx "yy")' '(xx "yy")'
+test_out '(a b)
+(a b)
+(a b)' '(a b)
+(a b)
+(a b)'
+test_out '(aa bb cc)
+  (a c)
+( a b c ) # Nothing here
+(cc dd)' '(aa bb cc)
+(a c)
+(a b c)
+(cc dd)'
 
 # Test add.
-test_out '("+" 1 2)' '3'
+test_out '(+ 1 2)' '3'
+test_out '(+ 8 4)' '12'
+test_out '(+ 1 1)
+(+ 2 3)
+ ( + 44 11 ) #
+' '2
+5
+55
+()'
+test_out '(+ 1 2 3 4 5)
+(+ 3 3 3)' '15
+9'
 
 tests_done
