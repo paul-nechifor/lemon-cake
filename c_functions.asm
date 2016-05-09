@@ -20,6 +20,7 @@ function_string free
 function_string getline
 function_string malloc
 function_string memcpy
+function_string strcmp
 function_string strlen
 
 
@@ -31,6 +32,7 @@ function_pointer_and_name free
 function_pointer_and_name getline
 function_pointer_and_name malloc
 function_pointer_and_name memcpy
+function_pointer_and_name strcmp
 function_pointer_and_name strlen
 
 end_of_functions_to_load:

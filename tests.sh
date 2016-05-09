@@ -40,4 +40,7 @@ test_out '(1 "asdf" 3)' '(1 "asdf" 3)'
 test_out '(1 (22 33) 3)' '(1 (22 33) 3)'
 test_out '((1 "df" ("asf") () ("bb" ) ) 123)' '((1 "df" ("asf") () ("bb")) 123)'
 
+# Test add.
+test_out '("+" 1 2)' '3'
+
 tests_done

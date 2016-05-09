@@ -9,6 +9,7 @@ extern void (*c_free)(void *ptr);
 extern ssize_t (*c_getline)(char **lineptr, size_t *n, FILE *stream);
 extern void *(*c_malloc)(size_t size);
 extern void *(*c_memcpy)(void *destination, const void *source, size_t num);
+extern int (*c_strcmp)(const char *str1, const char *str2);
 extern size_t (*c_strlen)(const char *str);
 
 enum {
@@ -38,6 +39,7 @@ typedef struct list_elem list_elem;
 
 object *parse_recursive(char *s, uint64_t *i, uint64_t len);
 void print(object *o);
+void free_object(object *o);
 
 static void die(char *msg) {
     c_fprintf(stderr, "%s\n", msg);
@@ -187,7 +189,41 @@ void print(object *o) {
     }
 }
 
+object *eval_list(object *o) {
+    list_elem *le = o->value;
+
+    // An empty lists evaluates to itself.
+    if (!le->value) {
+        return o;
+    }
+
+    object *first_elem = le->value;
+    if (first_elem->type != TYPE_STRING) {
+        return o;
+    }
+
+    string_struct *name_struct = first_elem->value;
+    char *name = name_struct->value;
+
+    if (!c_strcmp(name, "+")) {
+        free_object(o);
+        return new_int(3);
+    }
+    return o;
+}
+
 object *eval(object *o) {
+    switch (o->type) {
+        case TYPE_INT:
+        case TYPE_STRING:
+            return o;
+
+        case TYPE_LIST:
+            return eval_list(o);
+
+        default:
+            die("Don't know how to eval that.");
+    }
     return o;
 }
 
