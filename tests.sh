@@ -87,4 +87,13 @@ test_out '(+ 1 2 (+ 3))' '6'
 test_out '(+ 1 2 (+ 3 4))' '10'
 test_out '(+ 1 1 (+ 1 (+ 1 (+ 1 1) 1 (+ 1 1))))' '9'
 
+test_out '(hash 0)' '0'
+test_out '(hash 1234)' '1234'
+test_out '(hash 2395873184555)' '2395873184555'
+test_out '(hash "a")' '177604'
+test_out '(hash "base")' '6382700272'
+test_out '(hash base)' '6382700272'
+test_out '(hash "besa")' '6382695920'
+test_out '(hash "Paul Nechifor")' '153306557046378463'
+
 tests_done

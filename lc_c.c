@@ -228,7 +228,7 @@ void print_list(object *o) {
 void print(object *o) {
     switch (o->type) {
         case TYPE_INT:
-            c_fprintf(stdout, "%d", *((uint64_t *) o->value));
+            c_fprintf(stdout, "%llu", *((uint64_t *) o->value));
             break;
 
         case TYPE_STRING:
@@ -315,24 +315,72 @@ object *clone_list(object *o) {
     return ret;
 }
 
+uint64_t hash_bytes(char *bytes, uint64_t n) {
+    uint64_t i;
+    uint64_t ret = 5381;
+
+    for (i = 0; i < n; i++) {
+        ret = ret * 33 ^ bytes[i];
+    }
+
+    return ret;
+}
+
+uint64_t hash_object(object *o) {
+    switch (o->type) {
+        case TYPE_INT:
+            return *((uint64_t *) o->value);
+
+        case TYPE_STRING:
+            {
+                string_struct *ss = o->value;
+                return hash_bytes(ss->value, ss->length);
+            }
+
+        case TYPE_SYMBOL:
+            {
+                symbol_struct *ss = o->value;
+                return hash_bytes(ss->value, ss->length);
+            }
+
+        case TYPE_LIST:
+            die("hash_object for list not implemented yet.");
+            break;
+
+        default:
+            die("Unknown type for hashing");
+    }
+}
+
+object *hash_func(object *args_list) {
+    return new_int(hash_object(((list_elem *) args_list->value)->value));
+}
+
 object *eval_list(object *o) {
     list_elem *le = o->value;
 
     // An empty lists evaluates to itself.
     if (!le->value) {
-        return clone_list(o);
+        goto return_cloned_list;
     }
 
     // If the first element isn't a symbol, return itself.
     object *first_elem = le->value;
     if (first_elem->type != TYPE_SYMBOL) {
-        return clone_list(o);
+        goto return_cloned_list;
     }
 
     symbol_struct *name_struct = first_elem->value;
     char *name = name_struct->value;
 
     object *args_list = eval_args_list(le->next);
+
+    if (!c_strcmp(name, "hash")) {
+        object *ret = hash_func(args_list);
+        free_object(o);
+        free_object(args_list);
+        return ret;
+    }
 
     if (!c_strcmp(name, "+")) {
         object *ret = add_numbers(args_list);
@@ -342,6 +390,8 @@ object *eval_list(object *o) {
     }
 
     free_object(args_list);
+
+return_cloned_list:
     return clone_list(o);
 }
 
