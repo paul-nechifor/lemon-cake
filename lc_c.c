@@ -52,6 +52,8 @@ typedef struct list_elem list_elem;
 object *parse_recursive(char *s, uint64_t *i, uint64_t len);
 void print(object *o);
 void free_object(object *o);
+object *eval(object *o);
+object *clone_object(object *o);
 
 static void die(char *msg) {
     c_fprintf(stderr, "%s\n", msg);
@@ -178,7 +180,7 @@ object *read_symbol(char *s, uint64_t *i) {
 }
 
 object *read_list(char *s, uint64_t *i, uint64_t len) {
-    object *o = new_list(NULL, NULL);
+    object *o = new_list();
     object *read_obj;
     list_elem** curr_elem_ptr = (list_elem **)(
         ((char *) o) + offsetof(object, value)
@@ -246,9 +248,9 @@ void print(object *o) {
     }
 }
 
-object *add_numbers(list_elem *le) {
+object *add_numbers(object *args_list) {
     uint64_t ret = 0;
-    list_elem *next = le;
+    list_elem *next = args_list->value;
     object *o;
 
     do {
@@ -263,28 +265,84 @@ object *add_numbers(list_elem *le) {
     return new_int(ret);
 }
 
+object *eval_args_list(list_elem *le) {
+    object *ret = new_list();
+    list_elem *unevaled = le;
+    list_elem *evaled = ret->value;
+
+    if (!unevaled) {
+        return ret;
+    }
+
+    for (;;) {
+        evaled->value = eval(unevaled->value);
+        unevaled = unevaled->next;
+
+        if (!unevaled) {
+            evaled->next = NULL;
+            break;
+        }
+
+        evaled->next = c_malloc(sizeof(list_elem));
+        evaled = evaled->next;
+    }
+
+    return ret;
+}
+
+object *clone_list(object *o) {
+    object *ret = new_list();
+    list_elem *uncloned = o->value;
+    list_elem *cloned = ret->value;
+
+    if (!uncloned->value) {
+        return ret;
+    }
+
+    for (;;) {
+        cloned->value = clone_object(uncloned->value);
+        uncloned = uncloned->next;
+
+        if (!uncloned) {
+            cloned->next = NULL;
+            break;
+        }
+
+        cloned->next = c_malloc(sizeof(list_elem));
+        cloned = cloned->next;
+    }
+
+    return ret;
+}
+
 object *eval_list(object *o) {
     list_elem *le = o->value;
 
     // An empty lists evaluates to itself.
     if (!le->value) {
-        return o;
+        return clone_list(o);
     }
 
+    // If the first element isn't a symbol, return itself.
     object *first_elem = le->value;
     if (first_elem->type != TYPE_SYMBOL) {
-        return o;
+        return clone_list(o);
     }
 
     symbol_struct *name_struct = first_elem->value;
     char *name = name_struct->value;
 
+    object *args_list = eval_args_list(le->next);
+
     if (!c_strcmp(name, "+")) {
-        object *ret = add_numbers(le->next);
+        object *ret = add_numbers(args_list);
         free_object(o);
+        free_object(args_list);
         return ret;
     }
-    return o;
+
+    free_object(args_list);
+    return clone_list(o);
 }
 
 object *eval(object *o) {
@@ -292,7 +350,7 @@ object *eval(object *o) {
         case TYPE_INT:
         case TYPE_STRING:
         case TYPE_SYMBOL:
-            return o;
+            return clone_object(o);
 
         case TYPE_LIST:
             return eval_list(o);
@@ -300,7 +358,31 @@ object *eval(object *o) {
         default:
             die("Don't know how to eval that.");
     }
-    return o;
+}
+
+object *clone_object(object *o) {
+    switch (o->type) {
+        case TYPE_INT:
+            return new_int(*((uint64_t *) o->value));
+
+        case TYPE_STRING:
+            {
+                string_struct *ss = o->value;
+                return new_string(ss->value, ss->length);
+            }
+
+        case TYPE_SYMBOL:
+            {
+                symbol_struct *ss = o->value;
+                return new_symbol(ss->value, ss->length);
+            }
+
+        case TYPE_LIST:
+            return clone_list(o);
+
+        default:
+            die("Don't know how to clone that.");
+    }
 }
 
 void discard_line(char *s, uint64_t *i) {
@@ -315,7 +397,7 @@ object *parse_recursive(char *s, uint64_t *i, uint64_t len) {
         }
 
         if (*i == len) {
-            return new_list(NULL, NULL);
+            return new_list();
         }
 
         c = s[(*i)++];

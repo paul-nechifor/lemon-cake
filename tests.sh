@@ -82,4 +82,9 @@ test_out '(+ 1 2 3 4 5)
 (+ 3 3 3)' '15
 9'
 
+# Test nested calls
+test_out '(+ 1 2 (+ 3))' '6'
+test_out '(+ 1 2 (+ 3 4))' '10'
+test_out '(+ 1 1 (+ 1 (+ 1 (+ 1 1) 1 (+ 1 1))))' '9'
+
 tests_done
