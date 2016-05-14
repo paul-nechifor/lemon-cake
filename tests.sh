@@ -96,4 +96,12 @@ test_out '(hash base)' '6382700272'
 test_out '(hash "besa")' '6382695920'
 test_out '(hash "Paul Nechifor")' '153306557046378463'
 
+test_out '(is 4 4)' '1'
+test_out '(is 4 3)' '0'
+test_out '(is "4" 4)' '0'
+test_out '(is 05 00005)' '1'
+test_out '(is "asdf" "asdf")' '1'
+test_out '(is "asde" "asdf")' '0'
+test_out '(is "asdf" "asdfe")' '0'
+
 tests_done

@@ -356,6 +356,41 @@ object *hash_func(object *args_list) {
     return new_int(hash_object(((list_elem *) args_list->value)->value));
 }
 
+uint64_t objects_equal(object *a, object *b) {
+    if (a->type != b->type) {
+        return 0;
+    }
+    switch (a->type) {
+        case TYPE_INT:
+            return *((uint64_t *) a->value) == *((uint64_t *) b->value);
+
+        case TYPE_STRING:
+            {
+                string_struct *ssa = a->value;
+                string_struct *ssb = b->value;
+                return !c_strcmp(ssa->value, ssb->value);
+            }
+
+        case TYPE_SYMBOL:
+            die("objects_equal for symbol not implemented yet.");
+
+        case TYPE_LIST:
+            die("objects_equal for list not implemented yet.");
+            break;
+
+        default:
+            die("Unknown type for hashing");
+    }
+    return 1;
+}
+
+object *is_func(object *args_list) {
+    list_elem *le1 = args_list->value;
+    list_elem *le2 = le1->next;
+
+    return new_int(objects_equal(le1->value, le2->value));
+}
+
 object *eval_list(object *o) {
     list_elem *le = o->value;
 
@@ -377,6 +412,13 @@ object *eval_list(object *o) {
 
     if (!c_strcmp(name, "hash")) {
         object *ret = hash_func(args_list);
+        free_object(o);
+        free_object(args_list);
+        return ret;
+    }
+
+    if (!c_strcmp(name, "is")) {
+        object *ret = is_func(args_list);
         free_object(o);
         free_object(args_list);
         return ret;
