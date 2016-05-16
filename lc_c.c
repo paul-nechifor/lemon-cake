@@ -358,8 +358,26 @@ object *hashcode_func(object *args_list) {
     return new_int(hashcode_object(((list_elem *) args_list->value)->value));
 }
 
-object *dict_func(object *args_list) {
-    return new_dict(1543);
+uint64_t next_prime_size(uint64_t n) {
+    if (n < 5) {
+        return 5;
+    }
+    if (n % 2 == 0) {
+        n++;
+    }
+    uint64_t i, max;
+    // I'm using n/2 instead of sqrt(n) here so I don't have to import math.h.
+    for (;;) {
+        max = n / 2;
+        for (i = 3; i <= max; i+=2) {
+            if (n % i == 0) {
+                goto next_number;
+            }
+        }
+        return n;
+next_number:;
+        n += 2;
+    }
 }
 
 uint64_t list_length(list_elem *le) {
@@ -378,6 +396,15 @@ uint64_t list_length(list_elem *le) {
     return len;
 }
 
+object *dict_func(object *args_list) {
+    uint64_t n_args = list_length(args_list->value);
+    if (n_args % 2) {
+        die("Need even number of args.");
+    }
+    object *d = new_dict(next_prime_size(n_args / 2));
+    return d;
+}
+
 object *len_func(object *args_list) {
     object *o = ((list_elem *) args_list->value)->value;
 
@@ -390,8 +417,18 @@ object *len_func(object *args_list) {
         case TYPE_LIST:
             return new_int(list_length(o->value));
 
+        case TYPE_DICT:
+            {
+                dict *d = o->value;
+                return new_int(d->n_filled);
+            }
+
     }
     die("Don't know how get the length for that type.");
+}
+
+object *list_func(object *args_list) {
+    return args_list;
 }
 
 uint64_t objects_equal(object *a, object *b) {
@@ -442,10 +479,9 @@ object *eval_list(object *o) {
         return o;
     }
 
-    // If the first element isn't a symbol, return itself.
     object *first_elem = le->value;
     if (first_elem->type != TYPE_SYMBOL) {
-        return o;
+        die("Cannot eval non-symbol-starting list.");
     }
 
     symbol_struct *name_struct = first_elem->value;
@@ -459,6 +495,10 @@ object *eval_list(object *o) {
 
     if (!c_strcmp(name, "len")) {
         return len_func(args_list);
+    }
+
+    if (!c_strcmp(name, "list")) {
+        return list_func(args_list);
     }
 
     if (!c_strcmp(name, "hashcode")) {

@@ -38,32 +38,32 @@ test_out '    # Indented comment.' '()'
 # Test lists.
 test_out '()' '()'
 test_out '  () # asdf' '()'
-test_out '(1)' '(1)'
-test_out '(1 )' '(1)'
-test_out '( 22 )' '(22)'
-test_out '  ( 22 ) ' '(22)'
-test_out '(1 2 3)' '(1 2 3)'
-test_out '(1 "asdf" 3)' '(1 "asdf" 3)'
-test_out '(1 (22 33) 3)' '(1 (22 33) 3)'
-test_out '((1 "df" ("asf") () ("bb" ) ) 123)' '((1 "df" ("asf") () ("bb")) 123)'
+test_out '(list 1)' '(1)'
+test_out '(list 1 )' '(1)'
+test_out '( list 22 )' '(22)'
+test_out '  ( list 22 ) ' '(22)'
+test_out '(list 1 2 3)' '(1 2 3)'
+test_out '(list 1 "asdf" 3)' '(1 "asdf" 3)'
+test_out '(list 1 (list 22 33) 3)' '(1 (22 33) 3)'
+test_out '(list (list 1 "df" (list "asf") () (list "bb" ) ) 123)' '((1 "df" ("asf") () ("bb")) 123)'
 
 # Test symbols.
 test_out 'asdf' 'asdf'
 test_out '+' '+'
 test_out '<=>' '<=>'
-test_out '(asdf)' '(asdf)'
-test_out '(asdf 1 ab)' '(asdf 1 ab)'
-test_out '(a s d f "x" (1 ab))' '(a s d f "x" (1 ab))'
-test_out '(xx "yy")' '(xx "yy")'
-test_out '(a b)
-(a b)
-(a b)' '(a b)
+test_out '(list asdf)' '(asdf)'
+test_out '(list asdf 1 ab)' '(asdf 1 ab)'
+test_out '(list a s d f "x" (list 1 ab))' '(a s d f "x" (1 ab))'
+test_out '(list xx "yy")' '(xx "yy")'
+test_out '(list a b)
+(list a b)
+(list a b)' '(a b)
 (a b)
 (a b)'
-test_out '(aa bb cc)
-  (a c)
-( a b c ) # Nothing here
-(cc dd)' '(aa bb cc)
+test_out '(list aa bb cc)
+  (list a c)
+( list a b c ) # Nothing here
+(list cc dd)' '(aa bb cc)
 (a c)
 (a b c)
 (cc dd)'
@@ -108,9 +108,13 @@ test_out '(len "a")' '1'
 test_out '(len "1234")' '4'
 test_out '(len "")' '0'
 test_out '(len ())' '0'
-test_out '(len (1))' '1'
-test_out '(len (1 2))' '2'
-test_out '(len (1 2 3))' '3'
+test_out '(len (list 1))' '1'
+test_out '(len (list 1 2))' '2'
+test_out '(len (list 1 2 3))' '3'
+test_out '(len (dict))' '0'
+
+test_out '(list 1 2 aaa)' '(1 2 aaa)'
+test_out '(list 1 (+ 1 2 3) "asdf")' '(1 6 "asdf")'
 
 test_out '(dict)' '(dict)'
 
