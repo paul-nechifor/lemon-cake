@@ -31,18 +31,20 @@ typedef struct {
 typedef struct {
     // The unique id for the symbol.
     uint64_t id;
-    // The number of times this symbol is used. Will be freed on zero.
-    uint64_t count;
     // The number of actual characters ('\0' is not included).
     uint64_t length;
     // Contains `length` characters plus an aditional '\0' at the end.
     char *value;
 } symbol_struct;
 
-typedef struct {
+struct object {
     uint64_t type;
+    uint64_t mark;
+    struct object *next_object;
     void *value;
-} object;
+};
+struct object;
+typedef struct object object;
 
 struct list_elem {
     object *value;
@@ -106,7 +108,6 @@ object *new_symbol(char *s, uint64_t chars) {
 
     symbol_struct *ss = c_malloc(sizeof(symbol_struct));
     ss->id = 0;
-    ss->count = 1;
     ss->length = chars;
     ss->value = c_malloc(sizeof(char) * (chars + 1));
     c_memcpy(ss->value, s, chars);
@@ -130,7 +131,6 @@ hash_table *new_hash_table(uint64_t size) {
 }
 
 void free_symbol(object *o) {
-    // TODO: Only free if the ref count goes to 0.
     c_free(((symbol_struct *) o->value)->value);
     c_free(o->value);
     c_free(o);
@@ -456,33 +456,23 @@ object *eval_list(object *o) {
 
     if (!c_strcmp(name, "hash")) {
         object *ret = hash_func(args_list);
-        free_object(o);
-        free_object(args_list);
         return ret;
     }
 
     if (!c_strcmp(name, "hashcode")) {
         object *ret = hashcode_func(args_list);
-        free_object(o);
-        free_object(args_list);
         return ret;
     }
 
     if (!c_strcmp(name, "is")) {
         object *ret = is_func(args_list);
-        free_object(o);
-        free_object(args_list);
         return ret;
     }
 
     if (!c_strcmp(name, "+")) {
         object *ret = add_numbers(args_list);
-        free_object(o);
-        free_object(args_list);
         return ret;
     }
-
-    free_object(args_list);
 
 return_cloned_list:
     return clone_list(o);
@@ -630,7 +620,6 @@ void eval_lines() {
         o = eval(parse(line, c_strlen(line)));
         print(o);
         c_fprintf(stdout, "\n");
-        free_object(o);
     }
 
     if (line) {
