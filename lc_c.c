@@ -71,7 +71,6 @@ object *parse_recursive(char *s, uint64_t *i, uint64_t len);
 void print(object *o);
 void free_object(object *o);
 object *eval(object *o);
-object *clone_object(object *o);
 
 static void die(char *msg) {
     c_fprintf(stderr, "%s\n", msg);
@@ -321,31 +320,6 @@ object *eval_args_list(list_elem *le) {
     return ret;
 }
 
-object *clone_list(object *o) {
-    object *ret = new_list();
-    list_elem *uncloned = o->value;
-    list_elem *cloned = ret->value;
-
-    if (!uncloned->value) {
-        return ret;
-    }
-
-    for (;;) {
-        cloned->value = clone_object(uncloned->value);
-        uncloned = uncloned->next;
-
-        if (!uncloned) {
-            cloned->next = NULL;
-            break;
-        }
-
-        cloned->next = c_malloc(sizeof(list_elem));
-        cloned = cloned->next;
-    }
-
-    return ret;
-}
-
 uint64_t hash_bytes(char *bytes, uint64_t n) {
     uint64_t i;
     uint64_t ret = 5381;
@@ -440,13 +414,13 @@ object *eval_list(object *o) {
 
     // An empty lists evaluates to itself.
     if (!le->value) {
-        goto return_cloned_list;
+        return o;
     }
 
     // If the first element isn't a symbol, return itself.
     object *first_elem = le->value;
     if (first_elem->type != TYPE_SYMBOL) {
-        goto return_cloned_list;
+        return o;
     }
 
     symbol_struct *name_struct = first_elem->value;
@@ -474,8 +448,7 @@ object *eval_list(object *o) {
         return ret;
     }
 
-return_cloned_list:
-    return clone_list(o);
+    return o;
 }
 
 object *eval(object *o) {
@@ -484,41 +457,13 @@ object *eval(object *o) {
         case TYPE_STRING:
         case TYPE_SYMBOL:
         case TYPE_HASH:
-            return clone_object(o);
+            return o;
 
         case TYPE_LIST:
             return eval_list(o);
 
         default:
             die("Don't know how to eval that.");
-    }
-}
-
-object *clone_object(object *o) {
-    switch (o->type) {
-        case TYPE_INT:
-            return new_int(*((uint64_t *) o->value));
-
-        case TYPE_STRING:
-            {
-                string_struct *ss = o->value;
-                return new_string(ss->value, ss->length);
-            }
-
-        case TYPE_SYMBOL:
-            {
-                symbol_struct *ss = o->value;
-                return new_symbol(ss->value, ss->length);
-            }
-
-        case TYPE_HASH:
-            die("clone_object for hash not implemented.");
-
-        case TYPE_LIST:
-            return clone_list(o);
-
-        default:
-            die("Don't know how to clone that.");
     }
 }
 
