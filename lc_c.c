@@ -9,6 +9,7 @@ extern void (*c_free)(void *ptr);
 extern ssize_t (*c_getline)(char **lineptr, size_t *n, FILE *stream);
 extern void *(*c_malloc)(size_t size);
 extern void *(*c_memcpy)(void *destination, const void *source, size_t num);
+extern void *(*c_memset)(void *ptr, int value, size_t num);
 extern int (*c_strcmp)(const char *str1, const char *str2);
 extern size_t (*c_strlen)(const char *str);
 
@@ -17,6 +18,7 @@ enum {
     TYPE_STRING,
     TYPE_LIST,
     TYPE_SYMBOL,
+    TYPE_HASH,
 };
 
 typedef struct {
@@ -48,6 +50,20 @@ struct list_elem {
 };
 struct list_elem;
 typedef struct list_elem list_elem;
+
+struct hash_table_pair {
+    object *key;
+    object *value;
+    struct hash_table_pair *next;
+};
+struct hash_table_pair;
+typedef struct hash_table_pair hash_table_pair;
+
+typedef struct {
+    uint64_t n_size;
+    uint64_t n_filled;
+    hash_table_pair *table;
+} hash_table;
 
 object *parse_recursive(char *s, uint64_t *i, uint64_t len);
 void print(object *o);
@@ -99,6 +115,18 @@ object *new_symbol(char *s, uint64_t chars) {
     o->value = ss;
 
     return o;
+}
+
+hash_table *new_hash_table(uint64_t size) {
+    hash_table *ret = c_malloc(sizeof(hash_table));
+
+    ret->n_size = size;
+    ret->n_filled = 0;
+    uint64_t n_table_bytes = sizeof(hash_table_pair) * ret->n_size;
+    ret->table = c_malloc(n_table_bytes);
+    c_memset(ret->table, 0, n_table_bytes);
+
+    return ret;
 }
 
 void free_symbol(object *o) {
@@ -243,6 +271,9 @@ void print(object *o) {
             c_fprintf(stdout, "%s", ((symbol_struct*) o->value)->value);
             break;
 
+        case TYPE_HASH:
+            c_fprintf(stdout, "[[hash]]");
+
         default:
             c_fprintf(stdout, "[Unknown type.]");
     }
@@ -326,7 +357,7 @@ uint64_t hash_bytes(char *bytes, uint64_t n) {
     return ret;
 }
 
-uint64_t hash_object(object *o) {
+uint64_t hashcode_object(object *o) {
     switch (o->type) {
         case TYPE_INT:
             return *((uint64_t *) o->value);
@@ -343,8 +374,12 @@ uint64_t hash_object(object *o) {
                 return hash_bytes(ss->value, ss->length);
             }
 
+        case TYPE_HASH:
+            die("hashcode_object for hash not implemented yet.");
+            break;
+
         case TYPE_LIST:
-            die("hash_object for list not implemented yet.");
+            die("hashcode_object for list not implemented yet.");
             break;
 
         default:
@@ -352,8 +387,12 @@ uint64_t hash_object(object *o) {
     }
 }
 
+object *hashcode_func(object *args_list) {
+    return new_int(hashcode_object(((list_elem *) args_list->value)->value));
+}
+
 object *hash_func(object *args_list) {
-    return new_int(hash_object(((list_elem *) args_list->value)->value));
+    return NULL;
 }
 
 uint64_t objects_equal(object *a, object *b) {
@@ -373,9 +412,14 @@ uint64_t objects_equal(object *a, object *b) {
 
         case TYPE_SYMBOL:
             die("objects_equal for symbol not implemented yet.");
+            break;
 
         case TYPE_LIST:
             die("objects_equal for list not implemented yet.");
+            break;
+
+        case TYPE_HASH:
+            die("objects_equal for hash not implemented yet.");
             break;
 
         default:
@@ -417,6 +461,13 @@ object *eval_list(object *o) {
         return ret;
     }
 
+    if (!c_strcmp(name, "hashcode")) {
+        object *ret = hashcode_func(args_list);
+        free_object(o);
+        free_object(args_list);
+        return ret;
+    }
+
     if (!c_strcmp(name, "is")) {
         object *ret = is_func(args_list);
         free_object(o);
@@ -442,6 +493,7 @@ object *eval(object *o) {
         case TYPE_INT:
         case TYPE_STRING:
         case TYPE_SYMBOL:
+        case TYPE_HASH:
             return clone_object(o);
 
         case TYPE_LIST:
@@ -468,6 +520,9 @@ object *clone_object(object *o) {
                 symbol_struct *ss = o->value;
                 return new_symbol(ss->value, ss->length);
             }
+
+        case TYPE_HASH:
+            die("clone_object for hash not implemented.");
 
         case TYPE_LIST:
             return clone_list(o);
@@ -548,6 +603,9 @@ void free_object(object *o) {
             free_symbol(o);
             // return not break since symbols have special functionality.
             return;
+
+        case TYPE_HASH:
+            die("Free not implemented for hash.");
 
         default:
             die("Free not implemented for this object type.");
