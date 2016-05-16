@@ -281,7 +281,7 @@ object *add_numbers(object *args_list) {
         if (o->type != TYPE_INT) {
             die("Not int.");
         }
-        ret += *(int *)o->value;
+        ret += *(uint64_t *)o->value;
         next = next->next;
     } while (next);
 
@@ -422,23 +422,19 @@ object *eval_list(object *o) {
     object *args_list = eval_args_list(le->next);
 
     if (!c_strcmp(name, "dict")) {
-        object *ret = dict_func(args_list);
-        return ret;
+        return dict_func(args_list);
     }
 
     if (!c_strcmp(name, "hashcode")) {
-        object *ret = hashcode_func(args_list);
-        return ret;
+        return hashcode_func(args_list);
     }
 
     if (!c_strcmp(name, "is")) {
-        object *ret = is_func(args_list);
-        return ret;
+        return is_func(args_list);
     }
 
     if (!c_strcmp(name, "+")) {
-        object *ret = add_numbers(args_list);
-        return ret;
+        return add_numbers(args_list);
     }
 
     return o;
