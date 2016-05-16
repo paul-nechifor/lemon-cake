@@ -117,5 +117,11 @@ test_out '(list 1 2 aaa)' '(1 2 aaa)'
 test_out '(list 1 (+ 1 2 3) "asdf")' '(1 6 "asdf")'
 
 test_out '(dict)' '(dict)'
+test_out '(dict a 1 bb 8 ccc 123)' '(dict bb 8 ccc 123 a 1)'
+
+test_out '(dict-add (dict) "name" "John")' '(dict "name" "John")'
+test_out '(dict-add (dict-add (dict) "name" "John") 1 2)' '(dict 1 2 "name" "John")'
+test_out '(dict-get (dict-add (dict) "name" "John") "name")' '"John"'
+test_out '(dict-get (dict-add (dict-add (dict) a 1) "a" 2) "a")' '2'
 
 tests_done

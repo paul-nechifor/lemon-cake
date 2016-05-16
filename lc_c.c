@@ -71,6 +71,8 @@ object *parse_recursive(char *s, uint64_t *i, uint64_t len);
 void print(object *o);
 void free_object(object *o);
 object *eval(object *o);
+uint64_t objects_equal(object *a, object *b);
+void dict_add(dict *d, object *key, object *value);
 
 static void die(char *msg) {
     c_fprintf(stderr, "%s\n", msg);
@@ -244,6 +246,33 @@ void print_list(object *o) {
     c_fprintf(stdout, ")");
 }
 
+void print_dict(object *o) {
+    c_fprintf(stdout, "(dict");
+
+    dict *d = o->value;
+    dict_pair *table = d->table;
+    dict_pair *pair;
+
+    uint64_t i;
+    for (i = 0; i < d->n_size; i++) {
+        pair = &table[i];
+        for (;;) {
+            if (pair->value) {
+                c_fprintf(stdout, " ");
+                print(pair->key);
+                c_fprintf(stdout, " ");
+                print(pair->value);
+            }
+            if (!pair->next) {
+                break;
+            }
+            pair = pair->next;
+        }
+    }
+
+    c_fprintf(stdout, ")");
+}
+
 void print(object *o) {
     switch (o->type) {
         case TYPE_INT:
@@ -263,7 +292,7 @@ void print(object *o) {
             break;
 
         case TYPE_DICT:
-            c_fprintf(stdout, "(dict)");
+            print_dict(o);
             break;
 
         default:
@@ -401,8 +430,86 @@ object *dict_func(object *args_list) {
     if (n_args % 2) {
         die("Need even number of args.");
     }
-    object *d = new_dict(next_prime_size(n_args / 2));
+    object *dobj = new_dict(next_prime_size(n_args / 2));
+    dict *d = dobj->value;
+    object *key, value;
+
+    list_elem *le = args_list->value;
+
+    while (le && le->value) {
+        key = le->value;
+        le = le->next;
+        dict_add(d, key, le->value);
+        le = le->next;
+    }
+
+    return dobj;
+}
+
+void dict_add(dict *d, object *key, object *value) {
+    uint64_t hash = hashcode_object(key);
+
+    if (d->n_filled + 1 >= d->n_size) {
+        die("Fuck, need to grow it.");
+    }
+
+    dict_pair *pair = &d->table[hash % d->n_size];
+
+    for (;;) {
+        if (!pair->value) {
+            pair->key = key;
+            pair->value = value;
+            return;
+        }
+
+        if (objects_equal(key, pair->key)) {
+            return;
+        }
+
+        if (!pair->next) {
+            pair->next = c_malloc(sizeof(dict_pair));
+            pair = pair->next;
+            pair->key = key;
+            pair->value = value;
+            pair->next = NULL;
+            return;
+        }
+
+        pair = pair->next;
+    }
+}
+
+object *dict_get(dict *d, object *key) {
+    uint64_t hash = hashcode_object(key);
+    dict_pair *pair = &d->table[hash % d->n_size];
+    for (;;) {
+        if (objects_equal(key, pair->key)) {
+            return pair->value;
+        }
+        if (!pair->next) {
+            return new_list();
+        }
+        pair = pair->next;
+    }
+}
+
+object *dict_add_func(object *args_list) {
+    list_elem *le = args_list->value;
+    object *d = le->value;
+    le = le->next;
+    object *key = le->value;
+    le = le->next;
+    object *value = le->value;
+    dict_add(d->value, key, value);
     return d;
+}
+
+object *dict_get_func(object *args_list) {
+    list_elem *le = args_list->value;
+    object *d = le->value;
+    le = le->next;
+    object *key = le->value;
+    return dict_get(d->value, key);
 }
 
 object *len_func(object *args_list) {
@@ -447,7 +554,11 @@ uint64_t objects_equal(object *a, object *b) {
             }
 
         case TYPE_SYMBOL:
-            die("objects_equal for symbol not implemented yet.");
+            {
+                symbol_struct *ssa = a->value;
+                symbol_struct *ssb = b->value;
+                return !c_strcmp(ssa->value, ssb->value);
+            }
             break;
 
         case TYPE_LIST:
@@ -491,6 +602,14 @@ object *eval_list(object *o) {
 
     if (!c_strcmp(name, "dict")) {
         return dict_func(args_list);
+    }
+
+    if (!c_strcmp(name, "dict-add")) {
+        return dict_add_func(args_list);
+    }
+
+    if (!c_strcmp(name, "dict-get")) {
+        return dict_get_func(args_list);
     }
 
     if (!c_strcmp(name, "len")) {
