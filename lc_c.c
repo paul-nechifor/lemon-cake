@@ -67,10 +67,15 @@ typedef struct {
     dict_pair *table;
 } dict;
 
-object *parse_recursive(char *s, uint64_t *i, uint64_t len);
+typedef struct {
+    object *env;
+    object *last_object;
+} vm_state;
+
+object *parse_recursive(vm_state *vms, char *s, uint64_t *i, uint64_t len);
 void print(object *o);
 void free_object(object *o);
-object *eval(object *o);
+object *eval(vm_state *vms, object *o);
 uint64_t objects_equal(object *a, object *b);
 void dict_add(dict *d, object *key, object *value);
 
@@ -79,32 +84,33 @@ static void die(char *msg) {
     c_exit(1);
 }
 
-object *new_object(uint64_t type, void *value) {
+object *new_object(vm_state *vms, uint64_t type, void *value) {
     object *o = c_malloc(sizeof(object));
     o->type = type;
     o->value = value;
     o->mark = 0;
-    o->next_object = NULL; // TODO
+    o->next_object = vms->last_object;
+    vms->last_object = o;
     return o;
 }
 
-object *new_int(uint64_t n) {
+object *new_int(vm_state *vms, uint64_t n) {
     uint64_t *i = c_malloc(sizeof(uint64_t));
     *i = n;
-    return new_object(TYPE_INT, i);
+    return new_object(vms, TYPE_INT, i);
 }
 
-object *new_string(char *s, uint64_t chars) {
+object *new_string(vm_state *vms, char *s, uint64_t chars) {
     string_struct *ss = c_malloc(sizeof(string_struct));
     ss->length = chars;
     ss->value = c_malloc(sizeof(char) * (chars + 1));
     c_memcpy(ss->value, s, chars);
     ss->value[chars] = '\0';
 
-    return new_object(TYPE_STRING, ss);
+    return new_object(vms, TYPE_STRING, ss);
 }
 
-object *new_symbol(char *s, uint64_t chars) {
+object *new_symbol(vm_state *vms, char *s, uint64_t chars) {
     // TODO: Use unique symbols.
     symbol_struct *ss = c_malloc(sizeof(symbol_struct));
     ss->id = 0;
@@ -113,10 +119,10 @@ object *new_symbol(char *s, uint64_t chars) {
     c_memcpy(ss->value, s, chars);
     ss->value[chars] = '\0';
 
-    return new_object(TYPE_SYMBOL, ss);
+    return new_object(vms, TYPE_SYMBOL, ss);
 }
 
-object *new_dict(uint64_t size) {
+object *new_dict(vm_state *vms, uint64_t size) {
     dict *d = c_malloc(sizeof(dict));
 
     d->n_size = size;
@@ -125,7 +131,7 @@ object *new_dict(uint64_t size) {
     d->table = c_malloc(n_table_bytes);
     c_memset(d->table, 0, n_table_bytes);
 
-    return new_object(TYPE_DICT, d);
+    return new_object(vms, TYPE_DICT, d);
 }
 
 void free_symbol(object *o) {
@@ -134,12 +140,12 @@ void free_symbol(object *o) {
     c_free(o);
 }
 
-object *new_list() {
+object *new_list(vm_state *vms) {
     list_elem *le = c_malloc(sizeof(list_elem));
     le->value = NULL;
     le->next = NULL;
 
-    return new_object(TYPE_LIST, le);
+    return new_object(vms, TYPE_LIST, le);
 }
 
 void free_list(object *o) {
@@ -154,7 +160,7 @@ void free_list(object *o) {
     o->value = NULL; // So it's not double freed.
 }
 
-object *read_int(char *s, uint64_t *i) {
+object *read_int(vm_state *vms, char *s, uint64_t *i) {
     char digit;
     uint64_t num = 0;
 
@@ -167,24 +173,24 @@ object *read_int(char *s, uint64_t *i) {
         (*i)++;
     }
 
-    return new_int(num);
+    return new_int(vms, num);
 }
 
-object *read_string(char *s, uint64_t *i) {
+object *read_string(vm_state *vms, char *s, uint64_t *i) {
     uint64_t start = *i;
     uint64_t end = start;
     while (s[end] != '"') {
         end++;
     }
 
-    object *o = new_string(&s[start], end - start);
+    object *o = new_string(vms, &s[start], end - start);
 
     *i = end + 1;
 
     return o;
 }
 
-object *read_symbol(char *s, uint64_t *i) {
+object *read_symbol(vm_state *vms, char *s, uint64_t *i) {
     uint64_t start = *i;
 
     char c;
@@ -197,11 +203,11 @@ object *read_symbol(char *s, uint64_t *i) {
         (*i)++;
     }
 
-    return new_symbol(&s[start], *i - start);
+    return new_symbol(vms, &s[start], *i - start);
 }
 
-object *read_list(char *s, uint64_t *i, uint64_t len) {
-    object *o = new_list();
+object *read_list(vm_state *vms, char *s, uint64_t *i, uint64_t len) {
+    object *o = new_list(vms);
     object *read_obj;
     list_elem** curr_elem_ptr = (list_elem **)(
         ((char *) o) + offsetof(object, value)
@@ -209,7 +215,7 @@ object *read_list(char *s, uint64_t *i, uint64_t len) {
     list_elem* curr_elem;
 
     for (;;) {
-        read_obj = parse_recursive(s, i, len);
+        read_obj = parse_recursive(vms, s, i, len);
         if (read_obj == (object *) ')') {
             break;
         }
@@ -300,7 +306,7 @@ void print(object *o) {
     }
 }
 
-object *add_numbers(object *args_list) {
+object *add_numbers(vm_state *vms, object *args_list) {
     uint64_t ret = 0;
     list_elem *next = args_list->value;
     object *o;
@@ -314,11 +320,11 @@ object *add_numbers(object *args_list) {
         next = next->next;
     } while (next);
 
-    return new_int(ret);
+    return new_int(vms, ret);
 }
 
-object *eval_args_list(list_elem *le) {
-    object *ret = new_list();
+object *eval_args_list(vm_state *vms, list_elem *le) {
+    object *ret = new_list(vms);
     list_elem *unevaled = le;
     list_elem *evaled = ret->value;
 
@@ -327,7 +333,7 @@ object *eval_args_list(list_elem *le) {
     }
 
     for (;;) {
-        evaled->value = eval(unevaled->value);
+        evaled->value = eval(vms, unevaled->value);
         unevaled = unevaled->next;
 
         if (!unevaled) {
@@ -383,8 +389,8 @@ uint64_t hashcode_object(object *o) {
     }
 }
 
-object *hashcode_func(object *args_list) {
-    return new_int(hashcode_object(((list_elem *) args_list->value)->value));
+object *hashcode_func(vm_state *vms, object *args_list) {
+    return new_int(vms, hashcode_object(((list_elem *) args_list->value)->value));
 }
 
 uint64_t next_prime_size(uint64_t n) {
@@ -425,12 +431,12 @@ uint64_t list_length(list_elem *le) {
     return len;
 }
 
-object *dict_func(object *args_list) {
+object *dict_func(vm_state *vms, object *args_list) {
     uint64_t n_args = list_length(args_list->value);
     if (n_args % 2) {
         die("Need even number of args.");
     }
-    object *dobj = new_dict(next_prime_size(n_args / 2));
+    object *dobj = new_dict(vms, next_prime_size(n_args / 2));
     dict *d = dobj->value;
     object *key, value;
 
@@ -479,7 +485,7 @@ void dict_add(dict *d, object *key, object *value) {
     }
 }
 
-object *dict_get(dict *d, object *key) {
+object *dict_get(vm_state *vms, dict *d, object *key) {
     uint64_t hash = hashcode_object(key);
     dict_pair *pair = &d->table[hash % d->n_size];
     for (;;) {
@@ -487,7 +493,7 @@ object *dict_get(dict *d, object *key) {
             return pair->value;
         }
         if (!pair->next) {
-            return new_list();
+            return new_list(vms);
         }
         pair = pair->next;
     }
@@ -504,30 +510,30 @@ object *dict_add_func(object *args_list) {
     return d;
 }
 
-object *dict_get_func(object *args_list) {
+object *dict_get_func(vm_state *vms, object *args_list) {
     list_elem *le = args_list->value;
     object *d = le->value;
     le = le->next;
     object *key = le->value;
-    return dict_get(d->value, key);
+    return dict_get(vms, d->value, key);
 }
 
-object *len_func(object *args_list) {
+object *len_func(vm_state *vms, object *args_list) {
     object *o = ((list_elem *) args_list->value)->value;
 
     switch (o->type) {
         case TYPE_STRING:
             {
                 string_struct *ss = o->value;
-                return new_int(ss->length);
+                return new_int(vms, ss->length);
             }
         case TYPE_LIST:
-            return new_int(list_length(o->value));
+            return new_int(vms, list_length(o->value));
 
         case TYPE_DICT:
             {
                 dict *d = o->value;
-                return new_int(d->n_filled);
+                return new_int(vms, d->n_filled);
             }
 
     }
@@ -575,14 +581,14 @@ uint64_t objects_equal(object *a, object *b) {
     return 1;
 }
 
-object *is_func(object *args_list) {
+object *is_func(vm_state *vms, object *args_list) {
     list_elem *le1 = args_list->value;
     list_elem *le2 = le1->next;
 
-    return new_int(objects_equal(le1->value, le2->value));
+    return new_int(vms, objects_equal(le1->value, le2->value));
 }
 
-object *eval_list(object *o) {
+object *eval_list(vm_state *vms, object *o) {
     list_elem *le = o->value;
 
     // An empty lists evaluates to itself.
@@ -598,10 +604,10 @@ object *eval_list(object *o) {
     symbol_struct *name_struct = first_elem->value;
     char *name = name_struct->value;
 
-    object *args_list = eval_args_list(le->next);
+    object *args_list = eval_args_list(vms, le->next);
 
     if (!c_strcmp(name, "dict")) {
-        return dict_func(args_list);
+        return dict_func(vms, args_list);
     }
 
     if (!c_strcmp(name, "dict-add")) {
@@ -609,11 +615,11 @@ object *eval_list(object *o) {
     }
 
     if (!c_strcmp(name, "dict-get")) {
-        return dict_get_func(args_list);
+        return dict_get_func(vms, args_list);
     }
 
     if (!c_strcmp(name, "len")) {
-        return len_func(args_list);
+        return len_func(vms, args_list);
     }
 
     if (!c_strcmp(name, "list")) {
@@ -621,21 +627,21 @@ object *eval_list(object *o) {
     }
 
     if (!c_strcmp(name, "hashcode")) {
-        return hashcode_func(args_list);
+        return hashcode_func(vms, args_list);
     }
 
     if (!c_strcmp(name, "is")) {
-        return is_func(args_list);
+        return is_func(vms, args_list);
     }
 
     if (!c_strcmp(name, "+")) {
-        return add_numbers(args_list);
+        return add_numbers(vms, args_list);
     }
 
     return o;
 }
 
-object *eval(object *o) {
+object *eval(vm_state *vms, object *o) {
     switch (o->type) {
         case TYPE_INT:
         case TYPE_STRING:
@@ -644,7 +650,7 @@ object *eval(object *o) {
             return o;
 
         case TYPE_LIST:
-            return eval_list(o);
+            return eval_list(vms, o);
 
         default:
             die("Don't know how to eval that.");
@@ -655,7 +661,7 @@ void discard_line(char *s, uint64_t *i) {
     while (s[(*i)++] != '\n');
 }
 
-object *parse_recursive(char *s, uint64_t *i, uint64_t len) {
+object *parse_recursive(vm_state *vms, char *s, uint64_t *i, uint64_t len) {
     char c;
     for (;;) {
         if (*i > len) {
@@ -663,7 +669,7 @@ object *parse_recursive(char *s, uint64_t *i, uint64_t len) {
         }
 
         if (*i == len) {
-            return new_list();
+            return new_list(vms);
         }
 
         c = s[(*i)++];
@@ -678,7 +684,7 @@ object *parse_recursive(char *s, uint64_t *i, uint64_t len) {
         }
 
         if (c == '(') {
-            return read_list(s, i, len);
+            return read_list(vms, s, i, len);
         }
 
         if (c == ')') {
@@ -687,22 +693,22 @@ object *parse_recursive(char *s, uint64_t *i, uint64_t len) {
 
         if (c >= '0' && c <= '9') {
             (*i)--;
-            return read_int(s, i);
+            return read_int(vms, s, i);
         }
 
         if (c == '"') {
-            return read_string(s, i);
+            return read_string(vms, s, i);
         }
 
 
         (*i)--;
-        return read_symbol(s, i);
+        return read_symbol(vms, s, i);
     }
 }
 
-object *parse(char *s, uint64_t len) {
+object *parse(vm_state *vms, char *s, uint64_t len) {
     uint64_t i = 0;
-    return parse_recursive(s, &i, len);
+    return parse_recursive(vms, s, &i, len);
 }
 
 void free_object(object *o) {
@@ -735,18 +741,27 @@ void free_object(object *o) {
     c_free(o);
 }
 
+vm_state *start_vm() {
+    vm_state *vms = c_malloc(sizeof(vm_state));
+    vms->last_object = NULL;
+    vms->env = new_dict(vms, 4969);
+    return vms;
+}
+
 void eval_lines() {
     char *line = NULL;
     size_t len = 0;
     ssize_t read;
     object *o;
+    vm_state *vms = start_vm();
+
     for (;;) {
         c_fprintf(stderr, "> ");
         read = c_getline(&line, &len, stdin);
         if (read == -1) {
             break;
         }
-        o = eval(parse(line, c_strlen(line)));
+        o = eval(vms, parse(vms, line, c_strlen(line)));
         print(o);
         c_fprintf(stdout, "\n");
     }
@@ -754,4 +769,6 @@ void eval_lines() {
     if (line) {
         c_free(line);
     }
+
+    // TODO Free vms;
 }
