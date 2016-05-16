@@ -18,7 +18,7 @@ enum {
     TYPE_STRING,
     TYPE_LIST,
     TYPE_SYMBOL,
-    TYPE_HASH,
+    TYPE_DICT,
 };
 
 typedef struct {
@@ -53,19 +53,19 @@ struct list_elem {
 struct list_elem;
 typedef struct list_elem list_elem;
 
-struct hash_table_pair {
+struct dict_pair {
     object *key;
     object *value;
-    struct hash_table_pair *next;
+    struct dict_pair *next;
 };
-struct hash_table_pair;
-typedef struct hash_table_pair hash_table_pair;
+struct dict_pair;
+typedef struct dict_pair dict_pair;
 
 typedef struct {
     uint64_t n_size;
     uint64_t n_filled;
-    hash_table_pair *table;
-} hash_table;
+    dict_pair *table;
+} dict;
 
 object *parse_recursive(char *s, uint64_t *i, uint64_t len);
 void print(object *o);
@@ -77,34 +77,33 @@ static void die(char *msg) {
     c_exit(1);
 }
 
-object *new_int(uint64_t n) {
+object *new_object(uint64_t type, void *value) {
     object *o = c_malloc(sizeof(object));
-    o->type = TYPE_INT;
-    o->value = c_malloc(sizeof(uint64_t));
-    *((uint64_t *) o->value) = n;
+    o->type = type;
+    o->value = value;
+    o->mark = 0;
+    o->next_object = NULL; // TODO
     return o;
 }
 
-object *new_string(char *s, uint64_t chars) {
-    object *o = c_malloc(sizeof(object));
-    o->type = TYPE_STRING;
+object *new_int(uint64_t n) {
+    uint64_t *i = c_malloc(sizeof(uint64_t));
+    *i = n;
+    return new_object(TYPE_INT, i);
+}
 
+object *new_string(char *s, uint64_t chars) {
     string_struct *ss = c_malloc(sizeof(string_struct));
     ss->length = chars;
     ss->value = c_malloc(sizeof(char) * (chars + 1));
     c_memcpy(ss->value, s, chars);
     ss->value[chars] = '\0';
 
-    o->value = ss;
-
-    return o;
+    return new_object(TYPE_STRING, ss);
 }
 
 object *new_symbol(char *s, uint64_t chars) {
     // TODO: Use unique symbols.
-    object *o = c_malloc(sizeof(object));
-    o->type = TYPE_SYMBOL;
-
     symbol_struct *ss = c_malloc(sizeof(symbol_struct));
     ss->id = 0;
     ss->length = chars;
@@ -112,21 +111,19 @@ object *new_symbol(char *s, uint64_t chars) {
     c_memcpy(ss->value, s, chars);
     ss->value[chars] = '\0';
 
-    o->value = ss;
-
-    return o;
+    return new_object(TYPE_SYMBOL, ss);
 }
 
-hash_table *new_hash_table(uint64_t size) {
-    hash_table *ret = c_malloc(sizeof(hash_table));
+object *new_dict(uint64_t size) {
+    dict *d = c_malloc(sizeof(dict));
 
-    ret->n_size = size;
-    ret->n_filled = 0;
-    uint64_t n_table_bytes = sizeof(hash_table_pair) * ret->n_size;
-    ret->table = c_malloc(n_table_bytes);
-    c_memset(ret->table, 0, n_table_bytes);
+    d->n_size = size;
+    d->n_filled = 0;
+    uint64_t n_table_bytes = sizeof(dict_pair) * d->n_size;
+    d->table = c_malloc(n_table_bytes);
+    c_memset(d->table, 0, n_table_bytes);
 
-    return ret;
+    return new_object(TYPE_DICT, d);
 }
 
 void free_symbol(object *o) {
@@ -136,16 +133,11 @@ void free_symbol(object *o) {
 }
 
 object *new_list() {
-    object *o = c_malloc(sizeof(object));
-    o->type = TYPE_LIST;
-
     list_elem *le = c_malloc(sizeof(list_elem));
     le->value = NULL;
     le->next = NULL;
 
-    o->value = le;
-
-    return o;
+    return new_object(TYPE_LIST, le);
 }
 
 void free_list(object *o) {
@@ -270,8 +262,9 @@ void print(object *o) {
             c_fprintf(stdout, "%s", ((symbol_struct*) o->value)->value);
             break;
 
-        case TYPE_HASH:
-            c_fprintf(stdout, "[[hash]]");
+        case TYPE_DICT:
+            c_fprintf(stdout, "(dict)");
+            break;
 
         default:
             c_fprintf(stdout, "[Unknown type.]");
@@ -348,8 +341,8 @@ uint64_t hashcode_object(object *o) {
                 return hash_bytes(ss->value, ss->length);
             }
 
-        case TYPE_HASH:
-            die("hashcode_object for hash not implemented yet.");
+        case TYPE_DICT:
+            die("hashcode_object for dict not implemented yet.");
             break;
 
         case TYPE_LIST:
@@ -365,8 +358,8 @@ object *hashcode_func(object *args_list) {
     return new_int(hashcode_object(((list_elem *) args_list->value)->value));
 }
 
-object *hash_func(object *args_list) {
-    return NULL;
+object *dict_func(object *args_list) {
+    return new_dict(1543);
 }
 
 uint64_t objects_equal(object *a, object *b) {
@@ -392,12 +385,12 @@ uint64_t objects_equal(object *a, object *b) {
             die("objects_equal for list not implemented yet.");
             break;
 
-        case TYPE_HASH:
-            die("objects_equal for hash not implemented yet.");
+        case TYPE_DICT:
+            die("objects_equal for dict not implemented yet.");
             break;
 
         default:
-            die("Unknown type for hashing");
+            die("Unknown type for checking equality");
     }
     return 1;
 }
@@ -428,8 +421,8 @@ object *eval_list(object *o) {
 
     object *args_list = eval_args_list(le->next);
 
-    if (!c_strcmp(name, "hash")) {
-        object *ret = hash_func(args_list);
+    if (!c_strcmp(name, "dict")) {
+        object *ret = dict_func(args_list);
         return ret;
     }
 
@@ -456,7 +449,7 @@ object *eval(object *o) {
         case TYPE_INT:
         case TYPE_STRING:
         case TYPE_SYMBOL:
-        case TYPE_HASH:
+        case TYPE_DICT:
             return o;
 
         case TYPE_LIST:
@@ -539,8 +532,8 @@ void free_object(object *o) {
             // return not break since symbols have special functionality.
             return;
 
-        case TYPE_HASH:
-            die("Free not implemented for hash.");
+        case TYPE_DICT:
+            die("Free not implemented for dict.");
 
         default:
             die("Free not implemented for this object type.");

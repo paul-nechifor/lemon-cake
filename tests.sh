@@ -104,4 +104,6 @@ test_out '(is "asdf" "asdf")' '1'
 test_out '(is "asde" "asdf")' '0'
 test_out '(is "asdf" "asdfe")' '0'
 
+test_out '(dict)' '(dict)'
+
 tests_done
