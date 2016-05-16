@@ -104,6 +104,14 @@ test_out '(is "asdf" "asdf")' '1'
 test_out '(is "asde" "asdf")' '0'
 test_out '(is "asdf" "asdfe")' '0'
 
+test_out '(len "a")' '1'
+test_out '(len "1234")' '4'
+test_out '(len "")' '0'
+test_out '(len ())' '0'
+test_out '(len (1))' '1'
+test_out '(len (1 2))' '2'
+test_out '(len (1 2 3))' '3'
+
 test_out '(dict)' '(dict)'
 
 tests_done

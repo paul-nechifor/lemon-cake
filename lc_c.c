@@ -362,6 +362,38 @@ object *dict_func(object *args_list) {
     return new_dict(1543);
 }
 
+uint64_t list_length(list_elem *le) {
+    if (!le->value) {
+        return 0;
+    }
+
+    uint64_t len = 1;
+    list_elem *next = le->next;
+
+    while (next) {
+        next = next->next;
+        len++;
+    }
+
+    return len;
+}
+
+object *len_func(object *args_list) {
+    object *o = ((list_elem *) args_list->value)->value;
+
+    switch (o->type) {
+        case TYPE_STRING:
+            {
+                string_struct *ss = o->value;
+                return new_int(ss->length);
+            }
+        case TYPE_LIST:
+            return new_int(list_length(o->value));
+
+    }
+    die("Don't know how get the length for that type.");
+}
+
 uint64_t objects_equal(object *a, object *b) {
     if (a->type != b->type) {
         return 0;
@@ -423,6 +455,10 @@ object *eval_list(object *o) {
 
     if (!c_strcmp(name, "dict")) {
         return dict_func(args_list);
+    }
+
+    if (!c_strcmp(name, "len")) {
+        return len_func(args_list);
     }
 
     if (!c_strcmp(name, "hashcode")) {
