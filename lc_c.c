@@ -72,6 +72,8 @@ typedef struct {
     object *last_object;
 } vm_state;
 
+typedef object *func_pointer_t(vm_state *, object *);
+
 object *parse_recursive(vm_state *vms, char *s, uint64_t *i, uint64_t len);
 void print(object *o);
 void free_object(object *o);
@@ -489,6 +491,9 @@ object *dict_get(vm_state *vms, dict *d, object *key) {
     uint64_t hash = hashcode_object(key);
     dict_pair *pair = &d->table[hash % d->n_size];
     for (;;) {
+        if (!pair->value) {
+            return new_list(vms);
+        }
         if (objects_equal(key, pair->key)) {
             return pair->value;
         }
@@ -499,7 +504,7 @@ object *dict_get(vm_state *vms, dict *d, object *key) {
     }
 }
 
-object *dict_add_func(object *args_list) {
+object *dict_add_func(vm_state *vms, object *args_list) {
     list_elem *le = args_list->value;
     object *d = le->value;
     le = le->next;
@@ -518,29 +523,38 @@ object *dict_get_func(vm_state *vms, object *args_list) {
     return dict_get(vms, d->value, key);
 }
 
-object *len_func(vm_state *vms, object *args_list) {
-    object *o = ((list_elem *) args_list->value)->value;
-
+uint64_t obj_len_func(object *o) {
     switch (o->type) {
         case TYPE_STRING:
             {
                 string_struct *ss = o->value;
-                return new_int(vms, ss->length);
+                return ss->length;
+            }
+        case TYPE_SYMBOL:
+            {
+                symbol_struct *ss = o->value;
+                return ss->length;
             }
         case TYPE_LIST:
-            return new_int(vms, list_length(o->value));
+            return list_length(o->value);
 
         case TYPE_DICT:
             {
                 dict *d = o->value;
-                return new_int(vms, d->n_filled);
+                return d->n_filled;
             }
+        case TYPE_INT:
+            return *((uint64_t *) o->value);
 
     }
     die("Don't know how get the length for that type.");
 }
 
-object *list_func(object *args_list) {
+object *len_func(vm_state *vms, object *args_list) {
+    return new_int(vms, obj_len_func(((list_elem *) args_list->value)->value));
+}
+
+object *list_func(vm_state *vms, object *args_list) {
     return args_list;
 }
 
@@ -601,44 +615,15 @@ object *eval_list(vm_state *vms, object *o) {
         die("Cannot eval non-symbol-starting list.");
     }
 
-    symbol_struct *name_struct = first_elem->value;
-    char *name = name_struct->value;
-
     object *args_list = eval_args_list(vms, le->next);
+    object *func_pointer = dict_get(vms, vms->env->value, first_elem);
 
-    if (!c_strcmp(name, "dict")) {
-        return dict_func(vms, args_list);
+    if (!obj_len_func(func_pointer)) {
+        die("Couldn't find that function.");
     }
 
-    if (!c_strcmp(name, "dict-add")) {
-        return dict_add_func(args_list);
-    }
-
-    if (!c_strcmp(name, "dict-get")) {
-        return dict_get_func(vms, args_list);
-    }
-
-    if (!c_strcmp(name, "len")) {
-        return len_func(vms, args_list);
-    }
-
-    if (!c_strcmp(name, "list")) {
-        return list_func(args_list);
-    }
-
-    if (!c_strcmp(name, "hashcode")) {
-        return hashcode_func(vms, args_list);
-    }
-
-    if (!c_strcmp(name, "is")) {
-        return is_func(vms, args_list);
-    }
-
-    if (!c_strcmp(name, "+")) {
-        return add_numbers(vms, args_list);
-    }
-
-    return o;
+    uint64_t ptr = *((uint64_t *) func_pointer->value);
+    return ((func_pointer_t *) ptr)(vms, args_list);
 }
 
 object *eval(vm_state *vms, object *o) {
@@ -741,10 +726,44 @@ void free_object(object *o) {
     c_free(o);
 }
 
+char *builtin_names[] = {
+    "dict",
+    "dict-add",
+    "dict-get",
+    "len",
+    "list",
+    "hashcode",
+    "is",
+    "+",
+};
+uint64_t builtin_pointers[] = {
+    (uint64_t) dict_func,
+    (uint64_t) dict_add_func,
+    (uint64_t) dict_get_func,
+    (uint64_t) len_func,
+    (uint64_t) list_func,
+    (uint64_t) hashcode_func,
+    (uint64_t) is_func,
+    (uint64_t) add_numbers,
+};
+
 vm_state *start_vm() {
     vm_state *vms = c_malloc(sizeof(vm_state));
     vms->last_object = NULL;
-    vms->env = new_dict(vms, 4969);
+    vms->env = new_dict(vms, 4969); // TODO Change this to nested dicts
+
+    dict *d = vms->env->value;
+    uint64_t n_builtins = sizeof(builtin_pointers) / sizeof(uint64_t);
+    uint64_t i;
+
+    for (i = 0; i < n_builtins; i++) {
+        dict_add(
+            d,
+            new_symbol(vms, builtin_names[i], c_strlen(builtin_names[i])),
+            new_int(vms, builtin_pointers[i])
+        );
+    }
+
     return vms;
 }
 
