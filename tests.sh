@@ -124,4 +124,9 @@ test_out '(dict-add (dict-add (dict) "name" "John") 1 2)' '(dict 1 2 "name" "Joh
 test_out '(dict-get (dict-add (dict) "name" "John") "name")' '"John"'
 test_out '(dict-get (dict-add (dict-add (dict) a 1) "a" 2) "a")' '2'
 
+test_out '(list-append (list) 1)' '(1)'
+test_out '(list-append (list 3) 1)' '(3 1)'
+test_out '(list-append (list 1 2) 3)' '(1 2 3)'
+test_out '(list-append () ())' '(())'
+
 tests_done

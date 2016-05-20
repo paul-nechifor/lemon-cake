@@ -325,6 +325,32 @@ object *add_numbers(vm_state *vms, object *args_list) {
     return new_int(vms, ret);
 }
 
+void list_append(vm_state *vms, list_elem *list, object *o) {
+    if (!list->value) {
+        list->value = o;
+        return;
+    }
+
+    list_elem *le = list;
+
+    while (le->next) {
+        le = le->next;
+    }
+
+    le->next = c_malloc(sizeof(list_elem));
+    le = le->next;
+    le->value = o;
+    le->next = NULL;
+}
+
+object *list_append_func(vm_state *vms, object *args_list) {
+    list_elem *list = args_list->value;
+    object *list_obj = list->value;
+    object *item = list->next->value;
+    list_append(vms, list_obj->value, item);
+    return list_obj;
+}
+
 object *eval_args_list(vm_state *vms, list_elem *le) {
     object *ret = new_list(vms);
     list_elem *unevaled = le;
@@ -732,6 +758,7 @@ char *builtin_names[] = {
     "dict-get",
     "len",
     "list",
+    "list-append",
     "hashcode",
     "is",
     "+",
@@ -742,6 +769,7 @@ uint64_t builtin_pointers[] = {
     (uint64_t) dict_get_func,
     (uint64_t) len_func,
     (uint64_t) list_func,
+    (uint64_t) list_append_func,
     (uint64_t) hashcode_func,
     (uint64_t) is_func,
     (uint64_t) add_numbers,
