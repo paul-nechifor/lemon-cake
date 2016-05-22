@@ -8,16 +8,14 @@ A programming language.
 
 ## TODO
 
+- set variables
+- read variables
+- change list type to have `head` and `tail`.
 - define `s1 s2 s4 s8 u1 u2 u4 u8` to `signed int 8 bits, ...`
-- redefine object to contain:
-    - obj type
-    - whole obj size
-    - ...unspecified data
-  so that you can allocale with a single malloc, deallocate with a single free,
-  and duplicate the object since you have the size.
 - use `'` for strings and `"` for quoting.
 - use unique symbols.
-- free symbols only when the ref count reaches 0.
+- use the symbol code for hashing.
+- be able to run multiple lines.
 
 ## Reference
 

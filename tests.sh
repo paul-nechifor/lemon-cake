@@ -130,3 +130,17 @@ test_out '(list-append (list 1 2) 3)' '(1 2 3)'
 test_out '(list-append () ())' '(())'
 
 tests_done
+
+exit
+
+test_out 'len' '(builtin 1234)'
+
+test_out '(at (list 0 1 2) 0)' '0'
+test_out '(at (list 0 1 2) 1)' '1'
+test_out '(at (list 0 1 2) 2)' '2'
+
+test_out '(do (multi-assign (a b c) (1 2 3)) (list c a b))' '(3 1 2)'
+
+test_out '((func 4))' '4'
+
+test_out '((func (+ 1 (head args))) 2 3 4)' '3'

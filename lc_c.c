@@ -19,6 +19,7 @@ enum {
     TYPE_LIST,
     TYPE_SYMBOL,
     TYPE_DICT,
+    TYPE_BUILTIN_FUNC,
 };
 
 typedef struct {
@@ -74,6 +75,10 @@ typedef struct {
 
 typedef object *func_pointer_t(vm_state *, object *);
 
+typedef struct {
+    func_pointer_t *func;
+} func_struct;
+
 object *parse_recursive(vm_state *vms, char *s, uint64_t *i, uint64_t len);
 void print(object *o);
 void free_object(object *o);
@@ -100,6 +105,10 @@ object *new_int(vm_state *vms, uint64_t n) {
     uint64_t *i = c_malloc(sizeof(uint64_t));
     *i = n;
     return new_object(vms, TYPE_INT, i);
+}
+
+object *new_builtin_func(vm_state *vms, func_pointer_t *func) {
+    return new_object(vms, TYPE_BUILTIN_FUNC, func);
 }
 
 object *new_string(vm_state *vms, char *s, uint64_t chars) {
@@ -301,6 +310,10 @@ void print(object *o) {
 
         case TYPE_DICT:
             print_dict(o);
+            break;
+
+        case TYPE_BUILTIN_FUNC:
+            c_fprintf(stdout, "(builtin %llu)", o->value);
             break;
 
         default:
@@ -569,9 +582,6 @@ uint64_t obj_len_func(object *o) {
                 dict *d = o->value;
                 return d->n_filled;
             }
-        case TYPE_INT:
-            return *((uint64_t *) o->value);
-
     }
     die("Don't know how get the length for that type.");
 }
@@ -631,7 +641,7 @@ object *is_func(vm_state *vms, object *args_list) {
 object *eval_list(vm_state *vms, object *o) {
     list_elem *le = o->value;
 
-    // An empty lists evaluates to itself.
+    // An empty list evaluates to itself.
     if (!le->value) {
         return o;
     }
@@ -644,12 +654,11 @@ object *eval_list(vm_state *vms, object *o) {
     object *args_list = eval_args_list(vms, le->next);
     object *func_pointer = dict_get(vms, vms->env->value, first_elem);
 
-    if (!obj_len_func(func_pointer)) {
-        die("Couldn't find that function.");
+    if (func_pointer->type == TYPE_BUILTIN_FUNC) {
+        return ((func_pointer_t *) func_pointer->value)(vms, args_list);
     }
 
-    uint64_t ptr = *((uint64_t *) func_pointer->value);
-    return ((func_pointer_t *) ptr)(vms, args_list);
+    die("That's not a function.");
 }
 
 object *eval(vm_state *vms, object *o) {
@@ -763,16 +772,16 @@ char *builtin_names[] = {
     "is",
     "+",
 };
-uint64_t builtin_pointers[] = {
-    (uint64_t) dict_func,
-    (uint64_t) dict_add_func,
-    (uint64_t) dict_get_func,
-    (uint64_t) len_func,
-    (uint64_t) list_func,
-    (uint64_t) list_append_func,
-    (uint64_t) hashcode_func,
-    (uint64_t) is_func,
-    (uint64_t) add_numbers,
+func_pointer_t *builtin_pointers[] = {
+    dict_func,
+    dict_add_func,
+    dict_get_func,
+    len_func,
+    list_func,
+    list_append_func,
+    hashcode_func,
+    is_func,
+    add_numbers,
 };
 
 vm_state *start_vm() {
@@ -788,7 +797,7 @@ vm_state *start_vm() {
         dict_add(
             d,
             new_symbol(vms, builtin_names[i], c_strlen(builtin_names[i])),
-            new_int(vms, builtin_pointers[i])
+            new_builtin_func(vms, builtin_pointers[i])
         );
     }
 
