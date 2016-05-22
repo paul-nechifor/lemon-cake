@@ -48,22 +48,22 @@ test_out '(list 1 (list 22 33) 3)' '(1 (22 33) 3)'
 test_out '(list (list 1 "df" (list "asf") () (list "bb" ) ) 123)' '((1 "df" ("asf") () ("bb")) 123)'
 
 # Test symbols.
-test_out 'asdf' 'asdf'
-test_out '+' '+'
-test_out '<=>' '<=>'
-test_out '(list asdf)' '(asdf)'
-test_out '(list asdf 1 ab)' '(asdf 1 ab)'
-test_out '(list a s d f "x" (list 1 ab))' '(a s d f "x" (1 ab))'
-test_out '(list xx "yy")' '(xx "yy")'
-test_out '(list a b)
-(list a b)
-(list a b)' '(a b)
+test_out '(quote asdf)' 'asdf'
+test_out '+' '(builtin 4195401)'
+test_out '(quote <=>)' '<=>'
+test_out '(list (quote asdf))' '(asdf)'
+test_out '(list (quote asdf) 1 (quote ab))' '(asdf 1 ab)'
+test_out '(list (quote a) (quote s) (quote d) (quote f) "x" (list 1 (quote ab)))' '(a s d f "x" (1 ab))'
+test_out '(list (quote xx) "yy")' '(xx "yy")'
+test_out '(list (quote a) (quote b))
+(list (quote a) (quote b))
+(list (quote a) (quote b))' '(a b)
 (a b)
 (a b)'
-test_out '(list aa bb cc)
-  (list a c)
-( list a b c ) # Nothing here
-(list cc dd)' '(aa bb cc)
+test_out '(list (quote aa) (quote bb) (quote cc))
+  (list (quote a) (quote c))
+( list (quote a) (quote b) (quote c) ) # Nothing here
+(list (quote cc) (quote dd))' '(aa bb cc)
 (a c)
 (a b c)
 (cc dd)'
@@ -92,7 +92,7 @@ test_out '(hashcode 1234)' '1234'
 test_out '(hashcode 2395873184555)' '2395873184555'
 test_out '(hashcode "a")' '177604'
 test_out '(hashcode "base")' '6382700272'
-test_out '(hashcode base)' '6382700272'
+test_out '(hashcode (quote base))' '6382700272'
 test_out '(hashcode "besa")' '6382695920'
 test_out '(hashcode "Paul Nechifor")' '153306557046378463'
 
@@ -113,27 +113,30 @@ test_out '(len (list 1 2))' '2'
 test_out '(len (list 1 2 3))' '3'
 test_out '(len (dict))' '0'
 
-test_out '(list 1 2 aaa)' '(1 2 aaa)'
+test_out '(list 1 2 (quote aaa))' '(1 2 aaa)'
 test_out '(list 1 (+ 1 2 3) "asdf")' '(1 6 "asdf")'
 
 test_out '(dict)' '(dict)'
-test_out '(dict a 1 bb 8 ccc 123)' '(dict bb 8 ccc 123 a 1)'
+test_out '(dict (quote a) 1 (quote bb) 8 (quote ccc) 123)' '(dict bb 8 ccc 123 a 1)'
 
 test_out '(dict-add (dict) "name" "John")' '(dict "name" "John")'
 test_out '(dict-add (dict-add (dict) "name" "John") 1 2)' '(dict 1 2 "name" "John")'
 test_out '(dict-get (dict-add (dict) "name" "John") "name")' '"John"'
-test_out '(dict-get (dict-add (dict-add (dict) a 1) "a" 2) "a")' '2'
+test_out '(dict-get (dict-add (dict-add (dict) (quote a) 1) "a" 2) "a")' '2'
 
 test_out '(list-append (list) 1)' '(1)'
 test_out '(list-append (list 3) 1)' '(3 1)'
 test_out '(list-append (list 1 2) 3)' '(1 2 3)'
 test_out '(list-append () ())' '(())'
 
+test_out '(quote x)' 'x'
+test_out '(quote (a b))' '(a b)'
+
 tests_done
 
 exit
 
-test_out 'len' '(builtin 1234)'
+test_out 'len' '(builtin 4196857)'
 
 test_out '(at (list 0 1 2) 0)' '0'
 test_out '(at (list 0 1 2) 1)' '1'

@@ -20,6 +20,7 @@ enum {
     TYPE_SYMBOL,
     TYPE_DICT,
     TYPE_BUILTIN_FUNC,
+    TYPE_CONSTRUCT,
 };
 
 typedef struct {
@@ -109,6 +110,10 @@ object *new_int(vm_state *vms, uint64_t n) {
 
 object *new_builtin_func(vm_state *vms, func_pointer_t *func) {
     return new_object(vms, TYPE_BUILTIN_FUNC, func);
+}
+
+object *new_construct(vm_state *vms, func_pointer_t *func) {
+    return new_object(vms, TYPE_CONSTRUCT, func);
 }
 
 object *new_string(vm_state *vms, char *s, uint64_t chars) {
@@ -594,6 +599,10 @@ object *list_func(vm_state *vms, object *args_list) {
     return args_list;
 }
 
+object *quote_func(vm_state *vms, object *args_list) {
+    return ((list_elem *) args_list->value)->next->value;
+}
+
 uint64_t objects_equal(object *a, object *b) {
     if (a->type != b->type) {
         return 0;
@@ -651,8 +660,14 @@ object *eval_list(vm_state *vms, object *o) {
         die("Cannot eval non-symbol-starting list.");
     }
 
-    object *args_list = eval_args_list(vms, le->next);
     object *func_pointer = dict_get(vms, vms->env->value, first_elem);
+
+    if (func_pointer->type == TYPE_CONSTRUCT) {
+        // Passing the whole list for now. TODO: send the tail instead.
+        return ((func_pointer_t *) func_pointer->value)(vms, o);
+    }
+
+    object *args_list = eval_args_list(vms, le->next);
 
     if (func_pointer->type == TYPE_BUILTIN_FUNC) {
         return ((func_pointer_t *) func_pointer->value)(vms, args_list);
@@ -665,9 +680,11 @@ object *eval(vm_state *vms, object *o) {
     switch (o->type) {
         case TYPE_INT:
         case TYPE_STRING:
-        case TYPE_SYMBOL:
         case TYPE_DICT:
             return o;
+
+        case TYPE_SYMBOL:
+            return dict_get(vms, vms->env->value, o);
 
         case TYPE_LIST:
             return eval_list(vms, o);
@@ -719,7 +736,6 @@ object *parse_recursive(vm_state *vms, char *s, uint64_t *i, uint64_t len) {
         if (c == '"') {
             return read_string(vms, s, i);
         }
-
 
         (*i)--;
         return read_symbol(vms, s, i);
@@ -784,20 +800,37 @@ func_pointer_t *builtin_pointers[] = {
     add_numbers,
 };
 
+char *construct_names[] = {
+    "quote",
+};
+func_pointer_t *construct_pointers[] = {
+    quote_func,
+};
+
 vm_state *start_vm() {
     vm_state *vms = c_malloc(sizeof(vm_state));
     vms->last_object = NULL;
     vms->env = new_dict(vms, 4969); // TODO Change this to nested dicts
 
     dict *d = vms->env->value;
-    uint64_t n_builtins = sizeof(builtin_pointers) / sizeof(uint64_t);
+    uint64_t n_pointers = sizeof(builtin_pointers) / sizeof(uint64_t);
     uint64_t i;
 
-    for (i = 0; i < n_builtins; i++) {
+    for (i = 0; i < n_pointers; i++) {
         dict_add(
             d,
             new_symbol(vms, builtin_names[i], c_strlen(builtin_names[i])),
             new_builtin_func(vms, builtin_pointers[i])
+        );
+    }
+
+    n_pointers = sizeof(construct_pointers) / sizeof(uint64_t);
+
+    for (i = 0; i < n_pointers; i++) {
+        dict_add(
+            d,
+            new_symbol(vms, construct_names[i], c_strlen(construct_names[i])),
+            new_construct(vms, construct_pointers[i])
         );
     }
 
