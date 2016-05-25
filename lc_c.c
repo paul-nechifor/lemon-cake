@@ -357,6 +357,16 @@ object *list_append_func(vm_state *vms, object *args_list) {
     return p->head;
 }
 
+object *head_func(vm_state *vms, object *args_list) {
+    object *arg1 = ((pair_struct *) args_list->value)->head;
+    return ((pair_struct *) arg1->value)->head;
+}
+
+object *tail_func(vm_state *vms, object *args_list) {
+    object *arg1 = ((pair_struct *) args_list->value)->head;
+    return ((pair_struct *) arg1->value)->tail;
+}
+
 object *eval_args_list(vm_state *vms, object *list) {
     object *ret = new_pair(vms);
     pair_struct *unevaled = list->value;
@@ -766,11 +776,13 @@ void free_object(object *o) {
 
 char *builtin_names[] = {
     "dict",
-    "dict-add",
-    "dict-get",
+    "dict-add", // TODO: Rename to set.
+    "dict-get", // TODO: Rename to get.
     "len",
     "list",
-    "list-append",
+    "list-append", // TODO: Rename to append.
+    "head",
+    "tail",
     "hashcode",
     "is",
     "+",
@@ -782,6 +794,8 @@ func_pointer_t *builtin_pointers[] = {
     len_func,
     list_func,
     list_append_func,
+    head_func,
+    tail_func,
     hashcode_func,
     is_func,
     plus_func,
