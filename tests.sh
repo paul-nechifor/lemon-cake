@@ -38,6 +38,7 @@ test_out '    # Indented comment.' '()'
 # Test lists.
 test_out '()' '()'
 test_out '  () # asdf' '()'
+test_out '(list )' '()'
 test_out '(list 1)' '(1)'
 test_out '(list 1 )' '(1)'
 test_out '( list 22 )' '(22)'
@@ -49,7 +50,6 @@ test_out '(list (list 1 "df" (list "asf") () (list "bb" ) ) 123)' '((1 "df" ("as
 
 # Test symbols.
 test_out '(quote asdf)' 'asdf'
-test_out '+' '(builtin 4195401)'
 test_out '(quote <=>)' '<=>'
 test_out '(list (quote asdf))' '(asdf)'
 test_out '(list (quote asdf) 1 (quote ab))' '(asdf 1 ab)'

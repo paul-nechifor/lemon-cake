@@ -38,9 +38,10 @@ test_out() {
         echo "$(af 2)ok$(sgr)"
         ((n_ok++)) || true
     else
+        local full_output="$(./lc <<<"$input" 2>&1)"
         echo "$(af 1)failed$(sgr)"
         echo "    $(af 2)expected$(sgr): $(ab 2)$expected$(sgr)"
-        echo "    $(af 1)actual$(sgr): $(ab 1)$output$(sgr)"
+        echo "    $(af 1)actual$(sgr): $(ab 1)$full_output$(sgr)"
         ((n_failed++)) || true
     fi
 }

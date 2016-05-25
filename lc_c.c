@@ -55,6 +55,11 @@ struct list_elem {
 struct list_elem;
 typedef struct list_elem list_elem;
 
+typedef struct {
+    object *head;
+    object *tail;
+} pair_struct;
+
 struct dict_pair {
     object *key;
     object *value;
@@ -164,16 +169,11 @@ object *new_list(vm_state *vms) {
     return new_object(vms, TYPE_LIST, le);
 }
 
-void free_list(object *o) {
-    list_elem *elem = o->value;
-    list_elem *next;
-    while (elem) {
-        next = elem->next;
-        c_free(elem->value);
-        c_free(elem);
-        elem = next;
-    }
-    o->value = NULL; // So it's not double freed.
+object *new_pair(vm_state *vms) {
+    pair_struct *p = c_malloc(sizeof(pair_struct));
+    p->head = NULL;
+    p->tail = NULL;
+    return new_object(vms, TYPE_LIST, p);
 }
 
 object *read_int(vm_state *vms, char *s, uint64_t *i) {
@@ -223,48 +223,46 @@ object *read_symbol(vm_state *vms, char *s, uint64_t *i) {
 }
 
 object *read_list(vm_state *vms, char *s, uint64_t *i, uint64_t len) {
-    object *o = new_list(vms);
-    object *read_obj;
-    list_elem** curr_elem_ptr = (list_elem **)(
-        ((char *) o) + offsetof(object, value)
-    );
-    list_elem* curr_elem;
+    object *o = new_pair(vms);
+
+    object *read_obj = parse_recursive(vms, s, i, len);
+    if (read_obj == (object *) ')') {
+        return o;
+    }
+
+    pair_struct *tail = o->value;
+    tail->head = read_obj;
+    tail->tail = new_pair(vms);
 
     for (;;) {
         read_obj = parse_recursive(vms, s, i, len);
         if (read_obj == (object *) ')') {
-            break;
+            return o;
         }
 
-        curr_elem = c_malloc(sizeof(list_elem));
-        curr_elem->value = read_obj;
-        curr_elem->next = NULL;
-        *curr_elem_ptr = curr_elem;
-        curr_elem_ptr = (list_elem **)(
-            ((char *)curr_elem) + offsetof(list_elem, next)
-        );
+        tail = tail->tail->value;
+        tail->head = read_obj;
+        tail->tail = new_pair(vms);
     }
-
-    return o;
 }
 
 void print_list(object *o) {
-    list_elem *e;
+    c_fprintf(stdout, "(");
     uint64_t first_elem = 1;
 
-    c_fprintf(stdout, "(");
+    pair_struct *pair = o->value;
 
-    e = (list_elem *) o->value;
-
-    for (e = (list_elem *)o->value; e && e->value; e = e->next) {
+    while (pair->head) {
         if (first_elem) {
             first_elem = 0;
         } else {
             c_fprintf(stdout, " ");
         }
-        print(e->value);
+        print(pair->head);
+        pair = pair->tail->value;
     }
 
+end_print_list:
     c_fprintf(stdout, ")");
 }
 
@@ -326,69 +324,59 @@ void print(object *o) {
     }
 }
 
-object *add_numbers(vm_state *vms, object *args_list) {
+object *plus_func(vm_state *vms, object *args_list) {
     uint64_t ret = 0;
-    list_elem *next = args_list->value;
+
+    pair_struct *pair = args_list->value;
     object *o;
 
-    do {
-        o = next->value;
+    while (pair->head) {
+        o = pair->head;
         if (o->type != TYPE_INT) {
             die("Not int.");
         }
         ret += *(uint64_t *)o->value;
-        next = next->next;
-    } while (next);
+        pair = pair->tail->value;
+    }
 
     return new_int(vms, ret);
 }
 
-void list_append(vm_state *vms, list_elem *list, object *o) {
-    if (!list->value) {
-        list->value = o;
-        return;
+void list_append(vm_state *vms, object *list, object *o) {
+    pair_struct *p = list->value;
+    while (p->head) {
+        p = p->tail->value;
     }
-
-    list_elem *le = list;
-
-    while (le->next) {
-        le = le->next;
-    }
-
-    le->next = c_malloc(sizeof(list_elem));
-    le = le->next;
-    le->value = o;
-    le->next = NULL;
+    p->head = o;
+    p->tail = new_pair(vms);
 }
 
 object *list_append_func(vm_state *vms, object *args_list) {
-    list_elem *list = args_list->value;
-    object *list_obj = list->value;
-    object *item = list->next->value;
-    list_append(vms, list_obj->value, item);
-    return list_obj;
+    pair_struct *p = args_list->value;
+    list_append(vms, p->head, ((pair_struct *) p->tail->value)->head);
+    return p->head;
 }
 
-object *eval_args_list(vm_state *vms, list_elem *le) {
-    object *ret = new_list(vms);
-    list_elem *unevaled = le;
-    list_elem *evaled = ret->value;
+object *eval_args_list(vm_state *vms, object *list) {
+    object *ret = new_pair(vms);
+    pair_struct *unevaled = list->value;
 
-    if (!unevaled) {
+    if (!unevaled->head) {
         return ret;
     }
 
-    for (;;) {
-        evaled->value = eval(vms, unevaled->value);
-        unevaled = unevaled->next;
+    pair_struct *evaled = ret->value;
 
-        if (!unevaled) {
-            evaled->next = NULL;
+    for (;;) {
+        evaled->head = eval(vms, unevaled->head);
+        evaled->tail = new_pair(vms);
+        unevaled = unevaled->tail->value;
+
+        if (!unevaled->head) {
             break;
         }
 
-        evaled->next = c_malloc(sizeof(list_elem));
-        evaled = evaled->next;
+        evaled = evaled->tail->value;
     }
 
     return ret;
@@ -436,7 +424,8 @@ uint64_t hashcode_object(object *o) {
 }
 
 object *hashcode_func(vm_state *vms, object *args_list) {
-    return new_int(vms, hashcode_object(((list_elem *) args_list->value)->value));
+    pair_struct *pair = args_list->value;
+    return new_int(vms, hashcode_object(pair->head));
 }
 
 uint64_t next_prime_size(uint64_t n) {
@@ -461,20 +450,16 @@ next_number:;
     }
 }
 
-uint64_t list_length(list_elem *le) {
-    if (!le->value) {
-        return 0;
+uint64_t list_length(pair_struct *p) {
+    uint64_t ret = 0;
+    pair_struct *pair = p;
+
+    while (pair->head) {
+        ret++;
+        pair = pair->tail->value;
     }
 
-    uint64_t len = 1;
-    list_elem *next = le->next;
-
-    while (next) {
-        next = next->next;
-        len++;
-    }
-
-    return len;
+    return ret;
 }
 
 object *dict_func(vm_state *vms, object *args_list) {
@@ -484,15 +469,15 @@ object *dict_func(vm_state *vms, object *args_list) {
     }
     object *dobj = new_dict(vms, next_prime_size(n_args / 2));
     dict *d = dobj->value;
-    object *key, value;
+    object *key;
 
-    list_elem *le = args_list->value;
+    pair_struct *p = args_list->value;
 
-    while (le && le->value) {
-        key = le->value;
-        le = le->next;
-        dict_add(d, key, le->value);
-        le = le->next;
+    while (p->head) {
+        key = p->head;
+        p = p->tail->value;
+        dict_add(d, key, p->head);
+        p = p->tail->value;
     }
 
     return dobj;
@@ -549,21 +534,21 @@ object *dict_get(vm_state *vms, dict *d, object *key) {
 }
 
 object *dict_add_func(vm_state *vms, object *args_list) {
-    list_elem *le = args_list->value;
-    object *d = le->value;
-    le = le->next;
-    object *key = le->value;
-    le = le->next;
-    object *value = le->value;
+    pair_struct *p = args_list->value;
+    object *d = p->head;
+    p = p->tail->value;
+    object *key = p->head;
+    p = p->tail->value;
+    object *value = p->head;
     dict_add(d->value, key, value);
     return d;
 }
 
 object *dict_get_func(vm_state *vms, object *args_list) {
-    list_elem *le = args_list->value;
-    object *d = le->value;
-    le = le->next;
-    object *key = le->value;
+    pair_struct *p = args_list->value;
+    object *d = p->head;
+    p = p->tail->value;
+    object *key = p->head;
     return dict_get(vms, d->value, key);
 }
 
@@ -592,7 +577,8 @@ uint64_t obj_len_func(object *o) {
 }
 
 object *len_func(vm_state *vms, object *args_list) {
-    return new_int(vms, obj_len_func(((list_elem *) args_list->value)->value));
+    pair_struct *pair = args_list->value;
+    return new_int(vms, obj_len_func(pair->head));
 }
 
 object *list_func(vm_state *vms, object *args_list) {
@@ -600,7 +586,10 @@ object *list_func(vm_state *vms, object *args_list) {
 }
 
 object *quote_func(vm_state *vms, object *args_list) {
-    return ((list_elem *) args_list->value)->next->value;
+    if (!args_list) {
+        return new_pair(vms);
+    }
+    return ((pair_struct *)args_list->value)->head;
 }
 
 uint64_t objects_equal(object *a, object *b) {
@@ -644,18 +633,21 @@ object *is_func(vm_state *vms, object *args_list) {
     list_elem *le1 = args_list->value;
     list_elem *le2 = le1->next;
 
-    return new_int(vms, objects_equal(le1->value, le2->value));
+    pair_struct *pair1 = args_list->value;
+    pair_struct *pair2 = pair1->tail->value;
+
+    return new_int(vms, objects_equal(pair1->head, pair2->head));
 }
 
 object *eval_list(vm_state *vms, object *o) {
-    list_elem *le = o->value;
+    pair_struct *head = o->value;
 
     // An empty list evaluates to itself.
-    if (!le->value) {
+    if (!head->head) {
         return o;
     }
 
-    object *first_elem = le->value;
+    object *first_elem = head->head;
     if (first_elem->type != TYPE_SYMBOL) {
         die("Cannot eval non-symbol-starting list.");
     }
@@ -663,11 +655,10 @@ object *eval_list(vm_state *vms, object *o) {
     object *func_pointer = dict_get(vms, vms->env->value, first_elem);
 
     if (func_pointer->type == TYPE_CONSTRUCT) {
-        // Passing the whole list for now. TODO: send the tail instead.
-        return ((func_pointer_t *) func_pointer->value)(vms, o);
+        return ((func_pointer_t *) func_pointer->value)(vms, head->tail);
     }
 
-    object *args_list = eval_args_list(vms, le->next);
+    object *args_list = eval_args_list(vms, head->tail);
 
     if (func_pointer->type == TYPE_BUILTIN_FUNC) {
         return ((func_pointer_t *) func_pointer->value)(vms, args_list);
@@ -756,10 +747,6 @@ void free_object(object *o) {
             c_free(((string_struct *) o->value)->value);
             break;
 
-        case TYPE_LIST:
-            free_list(o);
-            break;
-
         case TYPE_SYMBOL:
             free_symbol(o);
             // return not break since symbols have special functionality.
@@ -797,7 +784,7 @@ func_pointer_t *builtin_pointers[] = {
     list_append_func,
     hashcode_func,
     is_func,
-    add_numbers,
+    plus_func,
 };
 
 char *construct_names[] = {
