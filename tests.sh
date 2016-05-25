@@ -138,9 +138,13 @@ exit
 
 test_out 'len' '(builtin 4196857)'
 
-test_out '(at (list 0 1 2) 0)' '0'
-test_out '(at (list 0 1 2) 1)' '1'
-test_out '(at (list 0 1 2) 2)' '2'
+test_out '(head (list 0 1 2))' '0'
+test_out '(head (list 0 1 2))' '0'
+test_out '(tail (list 0 1 2))' '(1 2)'
+test_out '(head (tail (list 0 1 2)))' '1'
+test_out '(tail (tail (list 0 1 2)))' '(2)'
+test_out '(head (tail (tail (list 0 1 2))))' '2'
+test_out '(tail (tail (tail (list 0 1 2))))' '()'
 
 test_out '(do (multi-assign (a b c) (1 2 3)) (list c a b))' '(3 1 2)'
 

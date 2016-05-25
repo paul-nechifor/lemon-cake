@@ -1,4 +1,4 @@
-# Lemon Cake
+# LemonCake
 
 A programming language.
 
@@ -8,14 +8,14 @@ A programming language.
 
 ## TODO
 
-- set variables
-- read variables
-- change list type to have `head` and `tail`.
-- define `s1 s2 s4 s8 u1 u2 u4 u8` to `signed int 8 bits, ...`
-- use `'` for strings and `"` for quoting.
-- use unique symbols.
-- use the symbol code for hashing.
-- be able to run multiple lines.
+- Use `@` for quoting instead of `'` in Lisp.
+- Set variables.
+- Read variables.
+- Use `'` for strings.
+- Use unique symbols.
+- Use the symbol code for hashing.
+- Be able to run multiple lines.
+- Define `s1 s2 s4 s8 u1 u2 u4 u8` to `signed int 8 bits, ...`
 
 ## Reference
 
