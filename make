@@ -11,7 +11,6 @@ main() {
     fi
     sub_compile
     run_tests
-    echo "Binary size: $(wc -c < lc)"
 }
 
 sub_compile() {
@@ -48,6 +47,7 @@ test_out() {
 
 tests_done() {
     echo "results: ok($n_ok), failed($n_failed)"
+    echo "Binary size: $(wc -c < lc)"
 }
 
 sgr() { tput sgr0; }

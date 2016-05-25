@@ -48,13 +48,6 @@ struct object {
 struct object;
 typedef struct object object;
 
-struct list_elem {
-    object *value;
-    struct list_elem *next;
-};
-struct list_elem;
-typedef struct list_elem list_elem;
-
 typedef struct {
     object *head;
     object *tail;
@@ -159,14 +152,6 @@ void free_symbol(object *o) {
     c_free(((symbol_struct *) o->value)->value);
     c_free(o->value);
     c_free(o);
-}
-
-object *new_list(vm_state *vms) {
-    list_elem *le = c_malloc(sizeof(list_elem));
-    le->value = NULL;
-    le->next = NULL;
-
-    return new_object(vms, TYPE_LIST, le);
 }
 
 object *new_pair(vm_state *vms) {
@@ -531,13 +516,13 @@ object *dict_get(vm_state *vms, dict *d, object *key) {
     dict_pair *pair = &d->table[hash % d->n_size];
     for (;;) {
         if (!pair->value) {
-            return new_list(vms);
+            return new_pair(vms);
         }
         if (objects_equal(key, pair->key)) {
             return pair->value;
         }
         if (!pair->next) {
-            return new_list(vms);
+            return new_pair(vms);
         }
         pair = pair->next;
     }
@@ -640,9 +625,6 @@ uint64_t objects_equal(object *a, object *b) {
 }
 
 object *is_func(vm_state *vms, object *args_list) {
-    list_elem *le1 = args_list->value;
-    list_elem *le2 = le1->next;
-
     pair_struct *pair1 = args_list->value;
     pair_struct *pair2 = pair1->tail->value;
 
@@ -707,7 +689,7 @@ object *parse_recursive(vm_state *vms, char *s, uint64_t *i, uint64_t len) {
         }
 
         if (*i == len) {
-            return new_list(vms);
+            return new_pair(vms);
         }
 
         c = s[(*i)++];
