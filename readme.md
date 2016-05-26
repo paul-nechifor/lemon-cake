@@ -8,6 +8,7 @@ A programming language.
 
 ## TODO
 
+- Switch to a different object structure.
 - Use `@` for quoting instead of `'` in Lisp.
 - Set variables.
 - Read variables.

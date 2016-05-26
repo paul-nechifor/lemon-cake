@@ -23,6 +23,25 @@ enum {
     TYPE_CONSTRUCT,
 };
 
+struct object_t {
+    uint64_t type;
+    uint64_t mark;
+    struct object_t *next_object;
+
+    union {
+        // TYPE_INT
+        uint64_t value;
+
+        // TYPE_LIST
+        struct {
+            struct object_t* head;
+            struct object_t* tail;
+        };
+    };
+};
+struct object_t;
+typedef struct object_t object_t;
+
 typedef struct {
     // The number of actual characters ('\0' is not included).
     uint64_t length;
