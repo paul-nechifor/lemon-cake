@@ -6,6 +6,10 @@ A programming language.
 
     ./make
 
+## Run all the tests
+
+    all=1 ./make
+
 ## TODO
 
 - Switch to a different object structure.
