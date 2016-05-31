@@ -30,7 +30,7 @@ struct object_t {
 
     union {
         // TYPE_INT
-        uint64_t value;
+        uint64_t int_value;
 
         // TYPE_LIST
         struct {
@@ -119,10 +119,20 @@ object *new_object(vm_state *vms, uint64_t type, void *value) {
     return o;
 }
 
-object *new_int(vm_state *vms, uint64_t n) {
-    uint64_t *i = c_malloc(sizeof(uint64_t));
-    *i = n;
-    return new_object(vms, TYPE_INT, i);
+object_t *new_object_t(vm_state *vms, uint64_t type) {
+    object_t *o = c_malloc(sizeof(object_t));
+    o->type = type;
+    o->mark = 0;
+    // TODO: Remove these casts.
+    o->next_object = (object_t *) vms->last_object;
+    vms->last_object = (object *) o;
+    return o;
+}
+
+object_t *new_int(vm_state *vms, uint64_t n) {
+    object_t *ret = new_object_t(vms, TYPE_INT);
+    ret->int_value = n;
+    return ret;
 }
 
 object *new_builtin_func(vm_state *vms, func_pointer_t *func) {
@@ -180,7 +190,7 @@ object *new_pair(vm_state *vms) {
     return new_object(vms, TYPE_LIST, p);
 }
 
-object *read_int(vm_state *vms, char *s, uint64_t *i) {
+object_t *read_int(vm_state *vms, char *s, uint64_t *i) {
     char digit;
     uint64_t num = 0;
 
@@ -298,9 +308,10 @@ void print_dict(object *o) {
 }
 
 void print(object *o) {
+    object_t *ot = (object_t *) o; // TODO: Remove this variable.
     switch (o->type) {
         case TYPE_INT:
-            c_fprintf(stdout, "%llu", *((uint64_t *) o->value));
+            c_fprintf(stdout, "%llu", ot->int_value);
             break;
 
         case TYPE_STRING:
@@ -328,18 +339,18 @@ void print(object *o) {
     }
 }
 
-object *plus_func(vm_state *vms, object *args_list) {
+object_t *plus_func(vm_state *vms, object *args_list) {
     uint64_t ret = 0;
 
     pair_struct *pair = args_list->value;
-    object *o;
+    object_t *o;
 
     while (pair->head) {
-        o = pair->head;
+        o = (object_t *) pair->head; // TODO: Remove cast.
         if (o->type != TYPE_INT) {
             die("Not int.");
         }
-        ret += *(uint64_t *)o->value;
+        ret += o->int_value;
         pair = pair->tail->value;
     }
 
@@ -408,9 +419,10 @@ uint64_t hash_bytes(char *bytes, uint64_t n) {
 }
 
 uint64_t hashcode_object(object *o) {
+    object_t *ot = (object_t *) o; // TODO: Remove cast.
     switch (o->type) {
         case TYPE_INT:
-            return *((uint64_t *) o->value);
+            return ot->int_value;
 
         case TYPE_STRING:
             {
@@ -437,7 +449,7 @@ uint64_t hashcode_object(object *o) {
     }
 }
 
-object *hashcode_func(vm_state *vms, object *args_list) {
+object_t *hashcode_func(vm_state *vms, object *args_list) {
     pair_struct *pair = args_list->value;
     return new_int(vms, hashcode_object(pair->head));
 }
@@ -590,7 +602,7 @@ uint64_t obj_len_func(object *o) {
     die("Don't know how get the length for that type.");
 }
 
-object *len_func(vm_state *vms, object *args_list) {
+object_t *len_func(vm_state *vms, object *args_list) {
     pair_struct *pair = args_list->value;
     return new_int(vms, obj_len_func(pair->head));
 }
@@ -610,9 +622,12 @@ uint64_t objects_equal(object *a, object *b) {
     if (a->type != b->type) {
         return 0;
     }
+    // TODO: Remove these variables;
+    object_t *at = (object_t *) a;
+    object_t *bt = (object_t *) b;
     switch (a->type) {
         case TYPE_INT:
-            return *((uint64_t *) a->value) == *((uint64_t *) b->value);
+            return at->int_value == bt->int_value;
 
         case TYPE_STRING:
             {
@@ -643,7 +658,7 @@ uint64_t objects_equal(object *a, object *b) {
     return 1;
 }
 
-object *is_func(vm_state *vms, object *args_list) {
+object_t *is_func(vm_state *vms, object *args_list) {
     pair_struct *pair1 = args_list->value;
     pair_struct *pair2 = pair1->tail->value;
 
@@ -732,7 +747,7 @@ object *parse_recursive(vm_state *vms, char *s, uint64_t *i, uint64_t len) {
 
         if (c >= '0' && c <= '9') {
             (*i)--;
-            return read_int(vms, s, i);
+            return (object *) read_int(vms, s, i); // TODO: Remove cast.
         }
 
         if (c == '"') {
@@ -789,17 +804,18 @@ char *builtin_names[] = {
     "+",
 };
 func_pointer_t *builtin_pointers[] = {
+    // TODO: Remove all these casts.
     dict_func,
     dict_add_func,
     dict_get_func,
-    len_func,
+    (func_pointer_t *) len_func,
     list_func,
     list_append_func,
     head_func,
     tail_func,
-    hashcode_func,
-    is_func,
-    plus_func,
+    (func_pointer_t *) hashcode_func,
+    (func_pointer_t *) is_func,
+    (func_pointer_t *) plus_func,
 };
 
 char *construct_names[] = {
