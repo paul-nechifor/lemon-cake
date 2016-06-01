@@ -40,6 +40,16 @@ struct object_t {
             char *string_pointer;
         };
 
+        // TYPE_SYMBOL
+        struct {
+            // The unique id for the symbol.
+            uint64_t symbol_id;
+            // The number of actual characters ('\0' is not included).
+            uint64_t symbol_length;
+            // Contains `length` characters plus an aditional '\0' at the end.
+            char *symbol_pointer;
+        };
+
         // TYPE_LIST
         struct {
             struct object_t* head;
@@ -49,15 +59,6 @@ struct object_t {
 };
 struct object_t;
 typedef struct object_t object_t;
-
-typedef struct {
-    // The unique id for the symbol.
-    uint64_t id;
-    // The number of actual characters ('\0' is not included).
-    uint64_t length;
-    // Contains `length` characters plus an aditional '\0' at the end.
-    char *value;
-} symbol_struct;
 
 struct object {
     uint64_t type;
@@ -148,16 +149,15 @@ object_t *new_string(vm_state *vms, char *s, uint64_t chars) {
     return ret;
 }
 
-object *new_symbol(vm_state *vms, char *s, uint64_t chars) {
+object_t *new_symbol(vm_state *vms, char *s, uint64_t chars) {
     // TODO: Use unique symbols.
-    symbol_struct *ss = c_malloc(sizeof(symbol_struct));
-    ss->id = 0;
-    ss->length = chars;
-    ss->value = c_malloc(sizeof(char) * (chars + 1));
-    c_memcpy(ss->value, s, chars);
-    ss->value[chars] = '\0';
-
-    return new_object(vms, TYPE_SYMBOL, ss);
+    object_t *ret = new_object_t(vms, TYPE_SYMBOL);
+    ret->symbol_id = 0;
+    ret->symbol_length = chars;
+    ret->symbol_pointer = c_malloc(sizeof(char) * (chars + 1));
+    c_memcpy(ret->symbol_pointer, s, chars);
+    ret->symbol_pointer[chars] = '\0';
+    return ret;
 }
 
 object *new_dict(vm_state *vms, uint64_t size) {
@@ -170,12 +170,6 @@ object *new_dict(vm_state *vms, uint64_t size) {
     c_memset(d->table, 0, n_table_bytes);
 
     return new_object(vms, TYPE_DICT, d);
-}
-
-void free_symbol(object *o) {
-    c_free(((symbol_struct *) o->value)->value);
-    c_free(o->value);
-    c_free(o);
 }
 
 object_t *new_pair(vm_state *vms) {
@@ -215,7 +209,7 @@ object_t *read_string(vm_state *vms, char *s, uint64_t *i) {
     return o;
 }
 
-object *read_symbol(vm_state *vms, char *s, uint64_t *i) {
+object_t *read_symbol(vm_state *vms, char *s, uint64_t *i) {
     uint64_t start = *i;
 
     char c;
@@ -307,6 +301,7 @@ void print_dict(object *o) {
 
 void print(object *o) {
     object_t *ot = (object_t *) o; // TODO: Remove this variable.
+
     switch (o->type) {
         case TYPE_INT:
             c_fprintf(stdout, "%llu", ot->int_value);
@@ -321,7 +316,7 @@ void print(object *o) {
             break;
 
         case TYPE_SYMBOL:
-            c_fprintf(stdout, "%s", ((symbol_struct*) o->value)->value);
+            c_fprintf(stdout, "%s", ot->symbol_pointer);
             break;
 
         case TYPE_DICT:
@@ -415,6 +410,7 @@ uint64_t hash_bytes(char *bytes, uint64_t n) {
 
 uint64_t hashcode_object(object *o) {
     object_t *ot = (object_t *) o; // TODO: Remove cast.
+
     switch (o->type) {
         case TYPE_INT:
             return ot->int_value;
@@ -423,10 +419,7 @@ uint64_t hashcode_object(object *o) {
             return hash_bytes(ot->string_pointer, ot->string_length);
 
         case TYPE_SYMBOL:
-            {
-                symbol_struct *ss = o->value;
-                return hash_bytes(ss->value, ss->length);
-            }
+            return hash_bytes(ot->symbol_pointer, ot->symbol_length);
 
         case TYPE_DICT:
             die("hashcode_object for dict not implemented yet.");
@@ -572,10 +565,7 @@ uint64_t obj_len_func(object *o) {
         case TYPE_STRING:
             return ot->string_length;
         case TYPE_SYMBOL:
-            {
-                symbol_struct *ss = o->value;
-                return ss->length;
-            }
+            return ot->symbol_length;
         case TYPE_LIST:
             return list_length((object_t *) o); // TODO: RC
 
@@ -618,12 +608,7 @@ uint64_t objects_equal(object *a, object *b) {
             return !c_strcmp(at->string_pointer, bt->string_pointer);
 
         case TYPE_SYMBOL:
-            {
-                symbol_struct *ssa = a->value;
-                symbol_struct *ssb = b->value;
-                return !c_strcmp(ssa->value, ssb->value);
-            }
-            break;
+            return !c_strcmp(at->symbol_pointer, bt->symbol_pointer);
 
         case TYPE_LIST:
             die("objects_equal for list not implemented yet.");
@@ -733,7 +718,7 @@ object *parse_recursive(vm_state *vms, char *s, uint64_t *i, uint64_t len) {
         }
 
         (*i)--;
-        return read_symbol(vms, s, i);
+        return (object *) read_symbol(vms, s, i); // TODO: RC
     }
 }
 
@@ -754,7 +739,7 @@ void free_object(object *o) {
             break;
 
         case TYPE_SYMBOL:
-            free_symbol(o);
+            c_free(ot->symbol_pointer);
             // return not break since symbols have special functionality.
             return;
 
@@ -817,7 +802,7 @@ vm_state *start_vm() {
     for (i = 0; i < n_pointers; i++) {
         dict_add(
             d,
-            new_symbol(vms, builtin_names[i], c_strlen(builtin_names[i])),
+            (object *) new_symbol(vms, builtin_names[i], c_strlen(builtin_names[i])), // TODO: RC
             new_builtin_func(vms, builtin_pointers[i])
         );
     }
@@ -827,7 +812,7 @@ vm_state *start_vm() {
     for (i = 0; i < n_pointers; i++) {
         dict_add(
             d,
-            new_symbol(vms, construct_names[i], c_strlen(construct_names[i])),
+            (object *) new_symbol(vms, construct_names[i], c_strlen(construct_names[i])), // TODO: RC
             new_construct(vms, construct_pointers[i])
         );
     }
