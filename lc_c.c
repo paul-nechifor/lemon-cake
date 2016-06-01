@@ -67,11 +67,6 @@ struct object {
 struct object;
 typedef struct object object;
 
-typedef struct {
-    object *head;
-    object *tail;
-} pair_struct;
-
 struct dict_pair {
     object *key;
     object *value;
@@ -183,11 +178,11 @@ void free_symbol(object *o) {
     c_free(o);
 }
 
-object *new_pair(vm_state *vms) {
-    pair_struct *p = c_malloc(sizeof(pair_struct));
-    p->head = NULL;
-    p->tail = NULL;
-    return new_object(vms, TYPE_LIST, p);
+object_t *new_pair(vm_state *vms) {
+    object_t *ret = new_object_t(vms, TYPE_LIST);
+    ret->head = NULL;
+    ret->tail = NULL;
+    return ret;
 }
 
 object_t *read_int(vm_state *vms, char *s, uint64_t *i) {
@@ -236,25 +231,27 @@ object *read_symbol(vm_state *vms, char *s, uint64_t *i) {
     return new_symbol(vms, &s[start], *i - start);
 }
 
-object *read_list(vm_state *vms, char *s, uint64_t *i, uint64_t len) {
-    object *o = new_pair(vms);
+object_t *read_list(vm_state *vms, char *s, uint64_t *i, uint64_t len) {
+    object_t *o = new_pair(vms);
 
-    object *read_obj = parse_recursive(vms, s, i, len);
-    if (read_obj == (object *) ')') {
+    // TODO: Remove cast.
+    object_t *read_obj = (object_t *) parse_recursive(vms, s, i, len);
+    if (read_obj == (object_t *) ')') {
         return o;
     }
 
-    pair_struct *tail = o->value;
+    object_t *tail = o;
     tail->head = read_obj;
     tail->tail = new_pair(vms);
 
     for (;;) {
-        read_obj = parse_recursive(vms, s, i, len);
-        if (read_obj == (object *) ')') {
+        // TODO: Remove cast.
+        read_obj = (object_t *) parse_recursive(vms, s, i, len);
+        if (read_obj == (object_t *) ')') {
             return o;
         }
 
-        tail = tail->tail->value;
+        tail = tail->tail;
         tail->head = read_obj;
         tail->tail = new_pair(vms);
     }
@@ -264,7 +261,8 @@ void print_list(object *o) {
     c_fprintf(stdout, "(");
     uint64_t first_elem = 1;
 
-    pair_struct *pair = o->value;
+    // TODO: Remove cast.
+    object_t *pair = (object_t *) o;
 
     while (pair->head) {
         if (first_elem) {
@@ -272,8 +270,8 @@ void print_list(object *o) {
         } else {
             c_fprintf(stdout, " ");
         }
-        print(pair->head);
-        pair = pair->tail->value;
+        print((object *) pair->head); // TODO: Remove cast.
+        pair = pair->tail;
     }
 
 end_print_list:
@@ -342,7 +340,7 @@ void print(object *o) {
 object_t *plus_func(vm_state *vms, object *args_list) {
     uint64_t ret = 0;
 
-    pair_struct *pair = args_list->value;
+    object_t *pair = (object_t *) args_list; // TODO: Remove cast.
     object_t *o;
 
     while (pair->head) {
@@ -351,57 +349,54 @@ object_t *plus_func(vm_state *vms, object *args_list) {
             die("Not int.");
         }
         ret += o->int_value;
-        pair = pair->tail->value;
+        pair = pair->tail;
     }
 
     return new_int(vms, ret);
 }
 
-void list_append(vm_state *vms, object *list, object *o) {
-    pair_struct *p = list->value;
+void list_append(vm_state *vms, object_t *list, object_t *o) {
+    object_t *p = list;
     while (p->head) {
-        p = p->tail->value;
+        p = p->tail;
     }
     p->head = o;
     p->tail = new_pair(vms);
 }
 
-object *list_append_func(vm_state *vms, object *args_list) {
-    pair_struct *p = args_list->value;
-    list_append(vms, p->head, ((pair_struct *) p->tail->value)->head);
-    return p->head;
+object_t *list_append_func(vm_state *vms, object_t *args_list) {
+    list_append(vms, args_list->head, args_list->tail->head);
+    return args_list->head;
 }
 
-object *head_func(vm_state *vms, object *args_list) {
-    object *arg1 = ((pair_struct *) args_list->value)->head;
-    return ((pair_struct *) arg1->value)->head;
+object_t *head_func(vm_state *vms, object_t *args_list) {
+    return args_list->head->head;
 }
 
-object *tail_func(vm_state *vms, object *args_list) {
-    object *arg1 = ((pair_struct *) args_list->value)->head;
-    return ((pair_struct *) arg1->value)->tail;
+object_t *tail_func(vm_state *vms, object_t *args_list) {
+    return args_list->head->tail;
 }
 
-object *eval_args_list(vm_state *vms, object *list) {
-    object *ret = new_pair(vms);
-    pair_struct *unevaled = list->value;
+object_t *eval_args_list(vm_state *vms, object_t *list) {
+    object_t *ret = new_pair(vms);
+    object_t *unevaled = list;
 
     if (!unevaled->head) {
         return ret;
     }
 
-    pair_struct *evaled = ret->value;
+    object_t *evaled = ret;
 
     for (;;) {
-        evaled->head = eval(vms, unevaled->head);
+        evaled->head = (object_t *) eval(vms, (object *) unevaled->head); // TODO: RC
         evaled->tail = new_pair(vms);
-        unevaled = unevaled->tail->value;
+        unevaled = unevaled->tail;
 
         if (!unevaled->head) {
             break;
         }
 
-        evaled = evaled->tail->value;
+        evaled = evaled->tail;
     }
 
     return ret;
@@ -449,9 +444,8 @@ uint64_t hashcode_object(object *o) {
     }
 }
 
-object_t *hashcode_func(vm_state *vms, object *args_list) {
-    pair_struct *pair = args_list->value;
-    return new_int(vms, hashcode_object(pair->head));
+object_t *hashcode_func(vm_state *vms, object_t *args_list) {
+    return (object_t *) new_int(vms, hashcode_object((object *) args_list->head)); // TODO: RC
 }
 
 uint64_t next_prime_size(uint64_t n) {
@@ -476,20 +470,20 @@ next_number:;
     }
 }
 
-uint64_t list_length(pair_struct *p) {
+uint64_t list_length(object_t *p) {
     uint64_t ret = 0;
-    pair_struct *pair = p;
+    object_t *pair = p;
 
     while (pair->head) {
         ret++;
-        pair = pair->tail->value;
+        pair = pair->tail;
     }
 
     return ret;
 }
 
-object *dict_func(vm_state *vms, object *args_list) {
-    uint64_t n_args = list_length(args_list->value);
+object *dict_func(vm_state *vms, object_t *args_list) {
+    uint64_t n_args = list_length(args_list);
     if (n_args % 2) {
         die("Need even number of args.");
     }
@@ -497,13 +491,13 @@ object *dict_func(vm_state *vms, object *args_list) {
     dict *d = dobj->value;
     object *key;
 
-    pair_struct *p = args_list->value;
+    object_t *p = args_list;
 
     while (p->head) {
-        key = p->head;
-        p = p->tail->value;
-        dict_add(d, key, p->head);
-        p = p->tail->value;
+        key = (object *) p->head;
+        p = p->tail;
+        dict_add(d, key, (object *) p->head); // TODO: RC
+        p = p->tail;
     }
 
     return dobj;
@@ -547,35 +541,31 @@ object *dict_get(vm_state *vms, dict *d, object *key) {
     dict_pair *pair = &d->table[hash % d->n_size];
     for (;;) {
         if (!pair->value) {
-            return new_pair(vms);
+            return (object *) new_pair(vms); // TODO: RC
         }
         if (objects_equal(key, pair->key)) {
             return pair->value;
         }
         if (!pair->next) {
-            return new_pair(vms);
+            return (object *) new_pair(vms); // TODO: RC
         }
         pair = pair->next;
     }
 }
 
-object *dict_add_func(vm_state *vms, object *args_list) {
-    pair_struct *p = args_list->value;
-    object *d = p->head;
-    p = p->tail->value;
-    object *key = p->head;
-    p = p->tail->value;
-    object *value = p->head;
-    dict_add(d->value, key, value);
-    return d;
+object *dict_add_func(vm_state *vms, object_t *args_list) {
+    object_t *p = args_list;
+    object_t *d = p->head;
+    p = p->tail;
+    object_t *key = p->head;
+    p = p->tail;
+    object_t *value = p->head;
+    dict_add(((object *) d)->value, (object *) key, (object *) value); // TODO: RC
+    return (object *) d; // TODO: RC
 }
 
-object *dict_get_func(vm_state *vms, object *args_list) {
-    pair_struct *p = args_list->value;
-    object *d = p->head;
-    p = p->tail->value;
-    object *key = p->head;
-    return dict_get(vms, d->value, key);
+object *dict_get_func(vm_state *vms, object_t *args_list) {
+    return dict_get(vms, ((object *) args_list->head)->value, (object *) args_list->tail->head); // TODO: RC
 }
 
 uint64_t obj_len_func(object *o) {
@@ -591,7 +581,7 @@ uint64_t obj_len_func(object *o) {
                 return ss->length;
             }
         case TYPE_LIST:
-            return list_length(o->value);
+            return list_length((object_t *) o); // TODO: RC
 
         case TYPE_DICT:
             {
@@ -602,20 +592,19 @@ uint64_t obj_len_func(object *o) {
     die("Don't know how get the length for that type.");
 }
 
-object_t *len_func(vm_state *vms, object *args_list) {
-    pair_struct *pair = args_list->value;
-    return new_int(vms, obj_len_func(pair->head));
+object_t *len_func(vm_state *vms, object_t *args_list) {
+    return new_int(vms, obj_len_func((object *) args_list->head)); // TODO: RC
 }
 
 object *list_func(vm_state *vms, object *args_list) {
     return args_list;
 }
 
-object *quote_func(vm_state *vms, object *args_list) {
+object *quote_func(vm_state *vms, object_t *args_list) {
     if (!args_list) {
-        return new_pair(vms);
+        return (object *) new_pair(vms); // TODO: RC
     }
-    return ((pair_struct *)args_list->value)->head;
+    return (object *) args_list->head; // TODO: RC
 }
 
 uint64_t objects_equal(object *a, object *b) {
@@ -658,36 +647,33 @@ uint64_t objects_equal(object *a, object *b) {
     return 1;
 }
 
-object_t *is_func(vm_state *vms, object *args_list) {
-    pair_struct *pair1 = args_list->value;
-    pair_struct *pair2 = pair1->tail->value;
-
-    return new_int(vms, objects_equal(pair1->head, pair2->head));
+object_t *is_func(vm_state *vms, object_t *args_list) {
+    return new_int(vms, objects_equal((object *) args_list->head, (object *) args_list->tail->head));
 }
 
-object *eval_list(vm_state *vms, object *o) {
-    pair_struct *head = o->value;
+object_t *eval_list(vm_state *vms, object_t *o) {
+    object_t *head = o;
 
     // An empty list evaluates to itself.
     if (!head->head) {
         return o;
     }
 
-    object *first_elem = head->head;
+    object_t *first_elem = head->head;
     if (first_elem->type != TYPE_SYMBOL) {
         die("Cannot eval non-symbol-starting list.");
     }
 
-    object *func_pointer = dict_get(vms, vms->env->value, first_elem);
+    object *func_pointer = dict_get(vms, vms->env->value, (object *) first_elem); // TODO: RC
 
     if (func_pointer->type == TYPE_CONSTRUCT) {
-        return ((func_pointer_t *) func_pointer->value)(vms, head->tail);
+        return (object_t *) ((func_pointer_t *) func_pointer->value)(vms, (object *) head->tail); // TODO: RC
     }
 
-    object *args_list = eval_args_list(vms, head->tail);
+    object_t *args_list = eval_args_list(vms, head->tail);
 
     if (func_pointer->type == TYPE_BUILTIN_FUNC) {
-        return ((func_pointer_t *) func_pointer->value)(vms, args_list);
+        return (object_t *) ((func_pointer_t *) func_pointer->value)(vms, (object *) args_list); // TODO: RC
     }
 
     die("That's not a function.");
@@ -704,7 +690,7 @@ object *eval(vm_state *vms, object *o) {
             return dict_get(vms, vms->env->value, o);
 
         case TYPE_LIST:
-            return eval_list(vms, o);
+            return (object *) eval_list(vms, (object_t *) o); // TODO: Remove cast.
 
         default:
             die("Don't know how to eval that.");
@@ -723,7 +709,7 @@ object *parse_recursive(vm_state *vms, char *s, uint64_t *i, uint64_t len) {
         }
 
         if (*i == len) {
-            return new_pair(vms);
+            return (object *) new_pair(vms); // TODO: RC
         }
 
         c = s[(*i)++];
@@ -738,7 +724,7 @@ object *parse_recursive(vm_state *vms, char *s, uint64_t *i, uint64_t len) {
         }
 
         if (c == '(') {
-            return read_list(vms, s, i, len);
+            return (object *) read_list(vms, s, i, len); // TODO: RC
         }
 
         if (c == ')') {
@@ -805,14 +791,14 @@ char *builtin_names[] = {
 };
 func_pointer_t *builtin_pointers[] = {
     // TODO: Remove all these casts.
-    dict_func,
-    dict_add_func,
-    dict_get_func,
+    (func_pointer_t *) dict_func,
+    (func_pointer_t *) dict_add_func,
+    (func_pointer_t *) dict_get_func,
     (func_pointer_t *) len_func,
     list_func,
-    list_append_func,
-    head_func,
-    tail_func,
+    (func_pointer_t *) list_append_func,
+    (func_pointer_t *) head_func,
+    (func_pointer_t *) tail_func,
     (func_pointer_t *) hashcode_func,
     (func_pointer_t *) is_func,
     (func_pointer_t *) plus_func,
@@ -822,7 +808,7 @@ char *construct_names[] = {
     "quote",
 };
 func_pointer_t *construct_pointers[] = {
-    quote_func,
+    (func_pointer_t *) quote_func,
 };
 
 vm_state *start_vm() {
