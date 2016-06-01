@@ -32,6 +32,14 @@ struct object_t {
         // TYPE_INT
         uint64_t int_value;
 
+        // TYPE_STRING
+        struct {
+            // The number of actual characters ('\0' is not included).
+            uint64_t string_length;
+            // Contains `length` characters plus an aditional '\0' at the end.
+            char *string_pointer;
+        };
+
         // TYPE_LIST
         struct {
             struct object_t* head;
@@ -41,13 +49,6 @@ struct object_t {
 };
 struct object_t;
 typedef struct object_t object_t;
-
-typedef struct {
-    // The number of actual characters ('\0' is not included).
-    uint64_t length;
-    // Contains `length` characters plus an aditional '\0' at the end.
-    char *value;
-} string_struct;
 
 typedef struct {
     // The unique id for the symbol.
@@ -138,14 +139,13 @@ object *new_construct(vm_state *vms, func_pointer_t *func) {
     return new_object(vms, TYPE_CONSTRUCT, func);
 }
 
-object *new_string(vm_state *vms, char *s, uint64_t chars) {
-    string_struct *ss = c_malloc(sizeof(string_struct));
-    ss->length = chars;
-    ss->value = c_malloc(sizeof(char) * (chars + 1));
-    c_memcpy(ss->value, s, chars);
-    ss->value[chars] = '\0';
-
-    return new_object(vms, TYPE_STRING, ss);
+object_t *new_string(vm_state *vms, char *s, uint64_t chars) {
+    object_t *ret = new_object_t(vms, TYPE_STRING);
+    ret->string_length = chars;
+    ret->string_pointer = c_malloc(sizeof(char) * (chars + 1));
+    c_memcpy(ret->string_pointer, s, chars);
+    ret->string_pointer[chars] = '\0';
+    return ret;
 }
 
 object *new_symbol(vm_state *vms, char *s, uint64_t chars) {
@@ -201,14 +201,14 @@ object_t *read_int(vm_state *vms, char *s, uint64_t *i) {
     return new_int(vms, num);
 }
 
-object *read_string(vm_state *vms, char *s, uint64_t *i) {
+object_t *read_string(vm_state *vms, char *s, uint64_t *i) {
     uint64_t start = *i;
     uint64_t end = start;
     while (s[end] != '"') {
         end++;
     }
 
-    object *o = new_string(vms, &s[start], end - start);
+    object_t *o = new_string(vms, &s[start], end - start);
 
     *i = end + 1;
 
@@ -313,7 +313,7 @@ void print(object *o) {
             break;
 
         case TYPE_STRING:
-            c_fprintf(stdout, "\"%s\"", ((string_struct*) o->value)->value);
+            c_fprintf(stdout, "\"%s\"", ot->string_pointer);
             break;
 
         case TYPE_LIST:
@@ -420,10 +420,7 @@ uint64_t hashcode_object(object *o) {
             return ot->int_value;
 
         case TYPE_STRING:
-            {
-                string_struct *ss = o->value;
-                return hash_bytes(ss->value, ss->length);
-            }
+            return hash_bytes(ot->string_pointer, ot->string_length);
 
         case TYPE_SYMBOL:
             {
@@ -569,12 +566,11 @@ object *dict_get_func(vm_state *vms, object_t *args_list) {
 }
 
 uint64_t obj_len_func(object *o) {
+    object_t *ot = (object_t *) o; // TODO: Remove cast.
+
     switch (o->type) {
         case TYPE_STRING:
-            {
-                string_struct *ss = o->value;
-                return ss->length;
-            }
+            return ot->string_length;
         case TYPE_SYMBOL:
             {
                 symbol_struct *ss = o->value;
@@ -619,11 +615,7 @@ uint64_t objects_equal(object *a, object *b) {
             return at->int_value == bt->int_value;
 
         case TYPE_STRING:
-            {
-                string_struct *ssa = a->value;
-                string_struct *ssb = b->value;
-                return !c_strcmp(ssa->value, ssb->value);
-            }
+            return !c_strcmp(at->string_pointer, bt->string_pointer);
 
         case TYPE_SYMBOL:
             {
@@ -737,7 +729,7 @@ object *parse_recursive(vm_state *vms, char *s, uint64_t *i, uint64_t len) {
         }
 
         if (c == '"') {
-            return read_string(vms, s, i);
+            return (object *) read_string(vms, s, i); // TODO: RC
         }
 
         (*i)--;
@@ -751,12 +743,14 @@ object *parse(vm_state *vms, char *s, uint64_t len) {
 }
 
 void free_object(object *o) {
+    object_t *ot = (object_t *) o; // TODO: Remove this variable.
+
     switch (o->type) {
         case TYPE_INT:
             break;
 
         case TYPE_STRING:
-            c_free(((string_struct *) o->value)->value);
+            c_free(ot->string_pointer);
             break;
 
         case TYPE_SYMBOL:
