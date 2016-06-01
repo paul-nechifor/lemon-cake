@@ -23,6 +23,10 @@ enum {
     TYPE_CONSTRUCT,
 };
 
+struct object_t;
+struct vm_state;
+typedef struct object_t *func_pointer_t(struct vm_state *, struct object_t *);
+
 struct object_t {
     uint64_t type;
     uint64_t mark;
@@ -55,9 +59,14 @@ struct object_t {
             struct object_t* head;
             struct object_t* tail;
         };
+
+        // TYPE_BUILTIN_FUNC
+        func_pointer_t *builtin;
+
+        // TYPE_CONSTRUCT
+        func_pointer_t *construct;
     };
 };
-struct object_t;
 typedef struct object_t object_t;
 
 struct object {
@@ -83,16 +92,11 @@ typedef struct {
     dict_pair *table;
 } dict;
 
-typedef struct {
+struct vm_state {
     object *env;
     object *last_object;
-} vm_state;
-
-typedef object *func_pointer_t(vm_state *, object *);
-
-typedef struct {
-    func_pointer_t *func;
-} func_struct;
+};
+typedef struct vm_state vm_state;
 
 object *parse_recursive(vm_state *vms, char *s, uint64_t *i, uint64_t len);
 void print(object *o);
@@ -582,7 +586,7 @@ object_t *len_func(vm_state *vms, object_t *args_list) {
     return new_int(vms, obj_len_func((object *) args_list->head)); // TODO: RC
 }
 
-object *list_func(vm_state *vms, object *args_list) {
+object_t *list_func(vm_state *vms, object_t *args_list) {
     return args_list;
 }
 
@@ -641,16 +645,16 @@ object_t *eval_list(vm_state *vms, object_t *o) {
         die("Cannot eval non-symbol-starting list.");
     }
 
-    object *func_pointer = dict_get(vms, vms->env->value, (object *) first_elem); // TODO: RC
+    object_t *func_pointer = (object_t *) dict_get(vms, vms->env->value, (object *) first_elem); // TODO: RC
 
     if (func_pointer->type == TYPE_CONSTRUCT) {
-        return (object_t *) ((func_pointer_t *) func_pointer->value)(vms, (object *) head->tail); // TODO: RC
+        return (object_t *) ((func_pointer_t *) func_pointer->construct)(vms, head->tail); // TODO: RC
     }
 
     object_t *args_list = eval_args_list(vms, head->tail);
 
     if (func_pointer->type == TYPE_BUILTIN_FUNC) {
-        return (object_t *) ((func_pointer_t *) func_pointer->value)(vms, (object *) args_list); // TODO: RC
+        return (object_t *) ((func_pointer_t *) func_pointer->builtin)(vms, args_list); // TODO: RC
     }
 
     die("That's not a function.");
@@ -774,7 +778,7 @@ func_pointer_t *builtin_pointers[] = {
     (func_pointer_t *) dict_add_func,
     (func_pointer_t *) dict_get_func,
     (func_pointer_t *) len_func,
-    list_func,
+    (func_pointer_t *) list_func,
     (func_pointer_t *) list_append_func,
     (func_pointer_t *) head_func,
     (func_pointer_t *) tail_func,
