@@ -590,11 +590,11 @@ object_t *list_func(vm_state *vms, object_t *args_list) {
     return args_list;
 }
 
-object *quote_func(vm_state *vms, object_t *args_list) {
+object_t *quote_func(vm_state *vms, object_t *args_list) {
     if (!args_list) {
-        return (object *) new_pair(vms); // TODO: RC
+        return new_pair(vms);
     }
-    return (object *) args_list->head; // TODO: RC
+    return args_list->head;
 }
 
 uint64_t objects_equal(object *a, object *b) {
@@ -777,13 +777,13 @@ func_pointer_t *builtin_pointers[] = {
     (func_pointer_t *) dict_func,
     (func_pointer_t *) dict_add_func,
     (func_pointer_t *) dict_get_func,
-    (func_pointer_t *) len_func,
-    (func_pointer_t *) list_func,
-    (func_pointer_t *) list_append_func,
-    (func_pointer_t *) head_func,
-    (func_pointer_t *) tail_func,
-    (func_pointer_t *) hashcode_func,
-    (func_pointer_t *) is_func,
+    len_func,
+    list_func,
+    list_append_func,
+    head_func,
+    tail_func,
+    hashcode_func,
+    is_func,
     (func_pointer_t *) plus_func,
 };
 
@@ -791,7 +791,7 @@ char *construct_names[] = {
     "quote",
 };
 func_pointer_t *construct_pointers[] = {
-    (func_pointer_t *) quote_func,
+    quote_func,
 };
 
 vm_state *start_vm() {
