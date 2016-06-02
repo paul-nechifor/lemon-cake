@@ -15,7 +15,6 @@ A programming language.
 - Use `@` for quoting instead of `'` in Lisp.
 - Set variables.
 - Read variables.
-- Use `'` for strings.
 - Use unique symbols.
 - Use the symbol code for hashing.
 - Be able to run multiple lines.

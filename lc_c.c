@@ -185,7 +185,7 @@ object_t *read_int(vm_state *vms, char *s, uint64_t *i) {
 object_t *read_string(vm_state *vms, char *s, uint64_t *i) {
     uint64_t start = *i;
     uint64_t end = start;
-    while (s[end] != '"') {
+    while (s[end] != '\'') {
         end++;
     }
 
@@ -290,7 +290,7 @@ void print(object_t *o) {
             break;
 
         case TYPE_STRING:
-            c_fprintf(stdout, "\"%s\"", o->string_pointer);
+            c_fprintf(stdout, "\'%s\'", o->string_pointer);
             break;
 
         case TYPE_LIST:
@@ -683,7 +683,7 @@ object_t *parse_recursive(vm_state *vms, char *s, uint64_t *i, uint64_t len) {
             return read_int(vms, s, i);
         }
 
-        if (c == '"') {
+        if (c == '\'') {
             return read_string(vms, s, i);
         }
 
