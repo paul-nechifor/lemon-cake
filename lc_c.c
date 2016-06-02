@@ -25,6 +25,7 @@ enum {
 
 struct object_t;
 struct vm_state;
+struct dict_pair;
 typedef struct object_t *func_pointer_t(struct vm_state *, struct object_t *);
 
 struct object_t {
@@ -60,6 +61,13 @@ struct object_t {
             struct object_t* tail;
         };
 
+        // TYPE_DICT
+        struct {
+            uint64_t dict_n_size;
+            uint64_t dict_n_filled;
+            struct dict_pair *dict_table;
+        };
+
         // TYPE_BUILTIN_FUNC
         func_pointer_t *builtin;
 
@@ -69,64 +77,37 @@ struct object_t {
 };
 typedef struct object_t object_t;
 
-struct object {
-    uint64_t type;
-    uint64_t mark;
-    struct object *next_object;
-    void *value;
-};
-struct object;
-typedef struct object object;
-
 struct dict_pair {
-    object *key;
-    object *value;
+    object_t *key;
+    object_t *value;
     struct dict_pair *next;
 };
-struct dict_pair;
 typedef struct dict_pair dict_pair;
 
-typedef struct {
-    uint64_t n_size;
-    uint64_t n_filled;
-    dict_pair *table;
-} dict;
-
 struct vm_state {
-    object *env;
-    object *last_object;
+    object_t *env;
+    object_t *last_object;
 };
 typedef struct vm_state vm_state;
 
-object *parse_recursive(vm_state *vms, char *s, uint64_t *i, uint64_t len);
-void print(object *o);
-void free_object(object *o);
-object *eval(vm_state *vms, object *o);
-uint64_t objects_equal(object *a, object *b);
-void dict_add(dict *d, object *key, object *value);
+object_t *parse_recursive(vm_state *vms, char *s, uint64_t *i, uint64_t len);
+void print(object_t *o);
+void free_object(object_t *o);
+object_t *eval(vm_state *vms, object_t *o);
+uint64_t objects_equal(object_t *a, object_t *b);
+void dict_add(object_t *d, object_t *key, object_t *value);
 
 static void die(char *msg) {
     c_fprintf(stderr, "%s\n", msg);
     c_exit(1);
 }
 
-object *new_object(vm_state *vms, uint64_t type, void *value) {
-    object *o = c_malloc(sizeof(object));
-    o->type = type;
-    o->value = value;
-    o->mark = 0;
-    o->next_object = vms->last_object;
-    vms->last_object = o;
-    return o;
-}
-
 object_t *new_object_t(vm_state *vms, uint64_t type) {
     object_t *o = c_malloc(sizeof(object_t));
     o->type = type;
     o->mark = 0;
-    // TODO: Remove these casts.
-    o->next_object = (object_t *) vms->last_object;
-    vms->last_object = (object *) o;
+    o->next_object = vms->last_object;
+    vms->last_object = o;
     return o;
 }
 
@@ -136,12 +117,16 @@ object_t *new_int(vm_state *vms, uint64_t n) {
     return ret;
 }
 
-object *new_builtin_func(vm_state *vms, func_pointer_t *func) {
-    return new_object(vms, TYPE_BUILTIN_FUNC, func);
+object_t *new_builtin_func(vm_state *vms, func_pointer_t *func) {
+    object_t *ret = new_object_t(vms, TYPE_BUILTIN_FUNC);
+    ret->builtin = func;
+    return ret;
 }
 
-object *new_construct(vm_state *vms, func_pointer_t *func) {
-    return new_object(vms, TYPE_CONSTRUCT, func);
+object_t *new_construct(vm_state *vms, func_pointer_t *func) {
+    object_t *ret = new_object_t(vms, TYPE_CONSTRUCT);
+    ret->construct = func;
+    return ret;
 }
 
 object_t *new_string(vm_state *vms, char *s, uint64_t chars) {
@@ -164,16 +149,14 @@ object_t *new_symbol(vm_state *vms, char *s, uint64_t chars) {
     return ret;
 }
 
-object *new_dict(vm_state *vms, uint64_t size) {
-    dict *d = c_malloc(sizeof(dict));
-
-    d->n_size = size;
-    d->n_filled = 0;
-    uint64_t n_table_bytes = sizeof(dict_pair) * d->n_size;
-    d->table = c_malloc(n_table_bytes);
-    c_memset(d->table, 0, n_table_bytes);
-
-    return new_object(vms, TYPE_DICT, d);
+object_t *new_dict(vm_state *vms, uint64_t size) {
+    object_t *ret = new_object_t(vms, TYPE_DICT);
+    ret->dict_n_size = size;
+    ret->dict_n_filled = 0;
+    uint64_t n_table_bytes = sizeof(dict_pair) * ret->dict_n_size;
+    ret->dict_table = c_malloc(n_table_bytes);
+    c_memset(ret->dict_table, 0, n_table_bytes);
+    return ret;
 }
 
 object_t *new_pair(vm_state *vms) {
@@ -232,8 +215,7 @@ object_t *read_symbol(vm_state *vms, char *s, uint64_t *i) {
 object_t *read_list(vm_state *vms, char *s, uint64_t *i, uint64_t len) {
     object_t *o = new_pair(vms);
 
-    // TODO: Remove cast.
-    object_t *read_obj = (object_t *) parse_recursive(vms, s, i, len);
+    object_t *read_obj = parse_recursive(vms, s, i, len);
     if (read_obj == (object_t *) ')') {
         return o;
     }
@@ -243,8 +225,7 @@ object_t *read_list(vm_state *vms, char *s, uint64_t *i, uint64_t len) {
     tail->tail = new_pair(vms);
 
     for (;;) {
-        // TODO: Remove cast.
-        read_obj = (object_t *) parse_recursive(vms, s, i, len);
+        read_obj = parse_recursive(vms, s, i, len);
         if (read_obj == (object_t *) ')') {
             return o;
         }
@@ -255,12 +236,11 @@ object_t *read_list(vm_state *vms, char *s, uint64_t *i, uint64_t len) {
     }
 }
 
-void print_list(object *o) {
+void print_list(object_t *o) {
     c_fprintf(stdout, "(");
     uint64_t first_elem = 1;
 
-    // TODO: Remove cast.
-    object_t *pair = (object_t *) o;
+    object_t *pair = o;
 
     while (pair->head) {
         if (first_elem) {
@@ -268,7 +248,7 @@ void print_list(object *o) {
         } else {
             c_fprintf(stdout, " ");
         }
-        print((object *) pair->head); // TODO: Remove cast.
+        print(pair->head);
         pair = pair->tail;
     }
 
@@ -276,15 +256,15 @@ end_print_list:
     c_fprintf(stdout, ")");
 }
 
-void print_dict(object *o) {
+void print_dict(object_t *o) {
     c_fprintf(stdout, "(dict");
 
-    dict *d = o->value;
-    dict_pair *table = d->table;
+    dict_pair *table = o->dict_table;
     dict_pair *pair;
 
     uint64_t i;
-    for (i = 0; i < d->n_size; i++) {
+    uint64_t size = o->dict_n_size;
+    for (i = 0; i < size; i++) {
         pair = &table[i];
         for (;;) {
             if (pair->value) {
@@ -303,16 +283,14 @@ void print_dict(object *o) {
     c_fprintf(stdout, ")");
 }
 
-void print(object *o) {
-    object_t *ot = (object_t *) o; // TODO: Remove this variable.
-
+void print(object_t *o) {
     switch (o->type) {
         case TYPE_INT:
-            c_fprintf(stdout, "%llu", ot->int_value);
+            c_fprintf(stdout, "%llu", o->int_value);
             break;
 
         case TYPE_STRING:
-            c_fprintf(stdout, "\"%s\"", ot->string_pointer);
+            c_fprintf(stdout, "\"%s\"", o->string_pointer);
             break;
 
         case TYPE_LIST:
@@ -320,7 +298,7 @@ void print(object *o) {
             break;
 
         case TYPE_SYMBOL:
-            c_fprintf(stdout, "%s", ot->symbol_pointer);
+            c_fprintf(stdout, "%s", o->symbol_pointer);
             break;
 
         case TYPE_DICT:
@@ -328,7 +306,7 @@ void print(object *o) {
             break;
 
         case TYPE_BUILTIN_FUNC:
-            c_fprintf(stdout, "(builtin %llu)", o->value);
+            c_fprintf(stdout, "(builtin %llu)", o->builtin);
             break;
 
         default:
@@ -336,14 +314,14 @@ void print(object *o) {
     }
 }
 
-object_t *plus_func(vm_state *vms, object *args_list) {
+object_t *plus_func(vm_state *vms, object_t *args_list) {
     uint64_t ret = 0;
 
-    object_t *pair = (object_t *) args_list; // TODO: Remove cast.
+    object_t *pair = args_list;
     object_t *o;
 
     while (pair->head) {
-        o = (object_t *) pair->head; // TODO: Remove cast.
+        o = pair->head;
         if (o->type != TYPE_INT) {
             die("Not int.");
         }
@@ -387,7 +365,7 @@ object_t *eval_args_list(vm_state *vms, object_t *list) {
     object_t *evaled = ret;
 
     for (;;) {
-        evaled->head = (object_t *) eval(vms, (object *) unevaled->head); // TODO: RC
+        evaled->head = eval(vms, unevaled->head);
         evaled->tail = new_pair(vms);
         unevaled = unevaled->tail;
 
@@ -412,18 +390,16 @@ uint64_t hash_bytes(char *bytes, uint64_t n) {
     return ret;
 }
 
-uint64_t hashcode_object(object *o) {
-    object_t *ot = (object_t *) o; // TODO: Remove cast.
-
+uint64_t hashcode_object(object_t *o) {
     switch (o->type) {
         case TYPE_INT:
-            return ot->int_value;
+            return o->int_value;
 
         case TYPE_STRING:
-            return hash_bytes(ot->string_pointer, ot->string_length);
+            return hash_bytes(o->string_pointer, o->string_length);
 
         case TYPE_SYMBOL:
-            return hash_bytes(ot->symbol_pointer, ot->symbol_length);
+            return hash_bytes(o->symbol_pointer, o->symbol_length);
 
         case TYPE_DICT:
             die("hashcode_object for dict not implemented yet.");
@@ -439,7 +415,7 @@ uint64_t hashcode_object(object *o) {
 }
 
 object_t *hashcode_func(vm_state *vms, object_t *args_list) {
-    return (object_t *) new_int(vms, hashcode_object((object *) args_list->head)); // TODO: RC
+    return new_int(vms, hashcode_object(args_list->head));
 }
 
 uint64_t next_prime_size(uint64_t n) {
@@ -476,35 +452,34 @@ uint64_t list_length(object_t *p) {
     return ret;
 }
 
-object *dict_func(vm_state *vms, object_t *args_list) {
+object_t *dict_func(vm_state *vms, object_t *args_list) {
     uint64_t n_args = list_length(args_list);
     if (n_args % 2) {
         die("Need even number of args.");
     }
-    object *dobj = new_dict(vms, next_prime_size(n_args / 2));
-    dict *d = dobj->value;
-    object *key;
+    object_t *dobj = new_dict(vms, next_prime_size(n_args / 2));
+    object_t *key;
 
     object_t *p = args_list;
 
     while (p->head) {
-        key = (object *) p->head;
+        key = p->head;
         p = p->tail;
-        dict_add(d, key, (object *) p->head); // TODO: RC
+        dict_add(dobj, key, p->head);
         p = p->tail;
     }
 
     return dobj;
 }
 
-void dict_add(dict *d, object *key, object *value) {
+void dict_add(object_t *d, object_t *key, object_t *value) {
     uint64_t hash = hashcode_object(key);
 
-    if (d->n_filled + 1 >= d->n_size) {
+    if (d->dict_n_filled + 1 >= d->dict_n_size) {
         die("Fuck, need to grow it.");
     }
 
-    dict_pair *pair = &d->table[hash % d->n_size];
+    dict_pair *pair = &d->dict_table[hash % d->dict_n_size];
 
     for (;;) {
         if (!pair->value) {
@@ -530,60 +505,54 @@ void dict_add(dict *d, object *key, object *value) {
     }
 }
 
-object *dict_get(vm_state *vms, dict *d, object *key) {
+object_t *dict_get(vm_state *vms, object_t *d, object_t *key) {
     uint64_t hash = hashcode_object(key);
-    dict_pair *pair = &d->table[hash % d->n_size];
+    dict_pair *pair = &d->dict_table[hash % d->dict_n_size];
     for (;;) {
         if (!pair->value) {
-            return (object *) new_pair(vms); // TODO: RC
+            return new_pair(vms);
         }
         if (objects_equal(key, pair->key)) {
             return pair->value;
         }
         if (!pair->next) {
-            return (object *) new_pair(vms); // TODO: RC
+            return new_pair(vms);
         }
         pair = pair->next;
     }
 }
 
-object *dict_add_func(vm_state *vms, object_t *args_list) {
+object_t *dict_add_func(vm_state *vms, object_t *args_list) {
     object_t *p = args_list;
     object_t *d = p->head;
     p = p->tail;
     object_t *key = p->head;
     p = p->tail;
     object_t *value = p->head;
-    dict_add(((object *) d)->value, (object *) key, (object *) value); // TODO: RC
-    return (object *) d; // TODO: RC
+    dict_add(d, key, value);
+    return d;
 }
 
-object *dict_get_func(vm_state *vms, object_t *args_list) {
-    return dict_get(vms, ((object *) args_list->head)->value, (object *) args_list->tail->head); // TODO: RC
+object_t *dict_get_func(vm_state *vms, object_t *args_list) {
+    return dict_get(vms, args_list->head, args_list->tail->head);
 }
 
-uint64_t obj_len_func(object *o) {
-    object_t *ot = (object_t *) o; // TODO: Remove cast.
-
+uint64_t obj_len_func(object_t *o) {
     switch (o->type) {
         case TYPE_STRING:
-            return ot->string_length;
+            return o->string_length;
         case TYPE_SYMBOL:
-            return ot->symbol_length;
+            return o->symbol_length;
         case TYPE_LIST:
-            return list_length((object_t *) o); // TODO: RC
-
+            return list_length(o);
         case TYPE_DICT:
-            {
-                dict *d = o->value;
-                return d->n_filled;
-            }
+            return o->dict_n_filled;
     }
     die("Don't know how get the length for that type.");
 }
 
 object_t *len_func(vm_state *vms, object_t *args_list) {
-    return new_int(vms, obj_len_func((object *) args_list->head)); // TODO: RC
+    return new_int(vms, obj_len_func(args_list->head));
 }
 
 object_t *list_func(vm_state *vms, object_t *args_list) {
@@ -597,22 +566,19 @@ object_t *quote_func(vm_state *vms, object_t *args_list) {
     return args_list->head;
 }
 
-uint64_t objects_equal(object *a, object *b) {
+uint64_t objects_equal(object_t *a, object_t *b) {
     if (a->type != b->type) {
         return 0;
     }
-    // TODO: Remove these variables;
-    object_t *at = (object_t *) a;
-    object_t *bt = (object_t *) b;
     switch (a->type) {
         case TYPE_INT:
-            return at->int_value == bt->int_value;
+            return a->int_value == b->int_value;
 
         case TYPE_STRING:
-            return !c_strcmp(at->string_pointer, bt->string_pointer);
+            return !c_strcmp(a->string_pointer, b->string_pointer);
 
         case TYPE_SYMBOL:
-            return !c_strcmp(at->symbol_pointer, bt->symbol_pointer);
+            return !c_strcmp(a->symbol_pointer, b->symbol_pointer);
 
         case TYPE_LIST:
             die("objects_equal for list not implemented yet.");
@@ -629,7 +595,7 @@ uint64_t objects_equal(object *a, object *b) {
 }
 
 object_t *is_func(vm_state *vms, object_t *args_list) {
-    return new_int(vms, objects_equal((object *) args_list->head, (object *) args_list->tail->head));
+    return new_int(vms, objects_equal(args_list->head, args_list->tail->head));
 }
 
 object_t *eval_list(vm_state *vms, object_t *o) {
@@ -645,22 +611,22 @@ object_t *eval_list(vm_state *vms, object_t *o) {
         die("Cannot eval non-symbol-starting list.");
     }
 
-    object_t *func_pointer = (object_t *) dict_get(vms, vms->env->value, (object *) first_elem); // TODO: RC
+    object_t *func_pointer = dict_get(vms, vms->env, first_elem);
 
     if (func_pointer->type == TYPE_CONSTRUCT) {
-        return (object_t *) ((func_pointer_t *) func_pointer->construct)(vms, head->tail); // TODO: RC
+        return (func_pointer->construct)(vms, head->tail);
     }
 
     object_t *args_list = eval_args_list(vms, head->tail);
 
     if (func_pointer->type == TYPE_BUILTIN_FUNC) {
-        return (object_t *) ((func_pointer_t *) func_pointer->builtin)(vms, args_list); // TODO: RC
+        return ((func_pointer_t *) func_pointer->builtin)(vms, args_list);
     }
 
     die("That's not a function.");
 }
 
-object *eval(vm_state *vms, object *o) {
+object_t *eval(vm_state *vms, object_t *o) {
     switch (o->type) {
         case TYPE_INT:
         case TYPE_STRING:
@@ -668,10 +634,10 @@ object *eval(vm_state *vms, object *o) {
             return o;
 
         case TYPE_SYMBOL:
-            return dict_get(vms, vms->env->value, o);
+            return dict_get(vms, vms->env, o);
 
         case TYPE_LIST:
-            return (object *) eval_list(vms, (object_t *) o); // TODO: Remove cast.
+            return eval_list(vms, o);
 
         default:
             die("Don't know how to eval that.");
@@ -682,7 +648,7 @@ void discard_line(char *s, uint64_t *i) {
     while (s[(*i)++] != '\n');
 }
 
-object *parse_recursive(vm_state *vms, char *s, uint64_t *i, uint64_t len) {
+object_t *parse_recursive(vm_state *vms, char *s, uint64_t *i, uint64_t len) {
     char c;
     for (;;) {
         if (*i > len) {
@@ -690,7 +656,7 @@ object *parse_recursive(vm_state *vms, char *s, uint64_t *i, uint64_t len) {
         }
 
         if (*i == len) {
-            return (object *) new_pair(vms); // TODO: RC
+            return new_pair(vms);
         }
 
         c = s[(*i)++];
@@ -705,45 +671,43 @@ object *parse_recursive(vm_state *vms, char *s, uint64_t *i, uint64_t len) {
         }
 
         if (c == '(') {
-            return (object *) read_list(vms, s, i, len); // TODO: RC
+            return read_list(vms, s, i, len);
         }
 
         if (c == ')') {
-            return (object *) ')';
+            return (object_t *) ')';
         }
 
         if (c >= '0' && c <= '9') {
             (*i)--;
-            return (object *) read_int(vms, s, i); // TODO: Remove cast.
+            return read_int(vms, s, i);
         }
 
         if (c == '"') {
-            return (object *) read_string(vms, s, i); // TODO: RC
+            return read_string(vms, s, i);
         }
 
         (*i)--;
-        return (object *) read_symbol(vms, s, i); // TODO: RC
+        return read_symbol(vms, s, i);
     }
 }
 
-object *parse(vm_state *vms, char *s, uint64_t len) {
+object_t *parse(vm_state *vms, char *s, uint64_t len) {
     uint64_t i = 0;
     return parse_recursive(vms, s, &i, len);
 }
 
-void free_object(object *o) {
-    object_t *ot = (object_t *) o; // TODO: Remove this variable.
-
+void free_object(object_t *o) {
     switch (o->type) {
         case TYPE_INT:
             break;
 
         case TYPE_STRING:
-            c_free(ot->string_pointer);
+            c_free(o->string_pointer);
             break;
 
         case TYPE_SYMBOL:
-            c_free(ot->symbol_pointer);
+            c_free(o->symbol_pointer);
             // return not break since symbols have special functionality.
             return;
 
@@ -752,9 +716,6 @@ void free_object(object *o) {
 
         default:
             die("Free not implemented for this object type.");
-    }
-    if (o->value) {
-        c_free(o->value);
     }
     c_free(o);
 }
@@ -773,10 +734,9 @@ char *builtin_names[] = {
     "+",
 };
 func_pointer_t *builtin_pointers[] = {
-    // TODO: Remove all these casts.
-    (func_pointer_t *) dict_func,
-    (func_pointer_t *) dict_add_func,
-    (func_pointer_t *) dict_get_func,
+    dict_func,
+    dict_add_func,
+    dict_get_func,
     len_func,
     list_func,
     list_append_func,
@@ -799,14 +759,14 @@ vm_state *start_vm() {
     vms->last_object = NULL;
     vms->env = new_dict(vms, 4969); // TODO Change this to nested dicts
 
-    dict *d = vms->env->value;
+    object_t *d = vms->env;
     uint64_t n_pointers = sizeof(builtin_pointers) / sizeof(uint64_t);
     uint64_t i;
 
     for (i = 0; i < n_pointers; i++) {
         dict_add(
             d,
-            (object *) new_symbol(vms, builtin_names[i], c_strlen(builtin_names[i])), // TODO: RC
+            new_symbol(vms, builtin_names[i], c_strlen(builtin_names[i])),
             new_builtin_func(vms, builtin_pointers[i])
         );
     }
@@ -816,7 +776,7 @@ vm_state *start_vm() {
     for (i = 0; i < n_pointers; i++) {
         dict_add(
             d,
-            (object *) new_symbol(vms, construct_names[i], c_strlen(construct_names[i])), // TODO: RC
+            new_symbol(vms, construct_names[i], c_strlen(construct_names[i])),
             new_construct(vms, construct_pointers[i])
         );
     }
@@ -828,7 +788,7 @@ void eval_lines() {
     char *line = NULL;
     size_t len = 0;
     ssize_t read;
-    object *o;
+    object_t *o;
     vm_state *vms = start_vm();
 
     for (;;) {
