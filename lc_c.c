@@ -341,7 +341,7 @@ void list_append(vm_state *vms, object_t *list, object_t *o) {
     p->tail = new_pair(vms);
 }
 
-object_t *list_append_func(vm_state *vms, object_t *args_list) {
+object_t *append_func(vm_state *vms, object_t *args_list) {
     list_append(vms, args_list->head, args_list->tail->head);
     return args_list->head;
 }
@@ -522,7 +522,7 @@ object_t *dict_get(vm_state *vms, object_t *d, object_t *key) {
     }
 }
 
-object_t *dict_add_func(vm_state *vms, object_t *args_list) {
+object_t *set_func(vm_state *vms, object_t *args_list) {
     object_t *p = args_list;
     object_t *d = p->head;
     p = p->tail;
@@ -533,7 +533,7 @@ object_t *dict_add_func(vm_state *vms, object_t *args_list) {
     return d;
 }
 
-object_t *dict_get_func(vm_state *vms, object_t *args_list) {
+object_t *get_func(vm_state *vms, object_t *args_list) {
     return dict_get(vms, args_list->head, args_list->tail->head);
 }
 
@@ -722,11 +722,11 @@ void free_object(object_t *o) {
 
 char *builtin_names[] = {
     "dict",
-    "dict-add", // TODO: Rename to set.
-    "dict-get", // TODO: Rename to get.
+    "set",
+    "get",
     "len",
     "list",
-    "list-append", // TODO: Rename to append.
+    "append",
     "head",
     "tail",
     "hashcode",
@@ -735,16 +735,16 @@ char *builtin_names[] = {
 };
 func_pointer_t *builtin_pointers[] = {
     dict_func,
-    dict_add_func,
-    dict_get_func,
+    set_func,
+    get_func,
     len_func,
     list_func,
-    list_append_func,
+    append_func,
     head_func,
     tail_func,
     hashcode_func,
     is_func,
-    (func_pointer_t *) plus_func,
+    plus_func,
 };
 
 char *construct_names[] = {
