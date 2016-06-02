@@ -10,9 +10,8 @@ A programming language.
 
     all=1 ./make
 
-## TODO
+## Planning
 
-- Switch to a different object structure.
 - Use `@` for quoting instead of `'` in Lisp.
 - Set variables.
 - Read variables.
@@ -25,9 +24,9 @@ A programming language.
 ## Reference
 
 x86-64:
-    Argument order: `rdi rsi rdx rcx r8 r9`.
-    Return registers: `rax` and `rdx` (also used above)
-    Preserved registers: `rbx rsp rbp r12 r13 r14 r15`.
+ * Argument order: `rdi rsi rdx rcx r8 r9`.
+ * Return registers: `rax` and `rdx` (also used above)
+ * Preserved registers: `rbx rsp rbp r12 r13 r14 r15`.
 
 ## License
 
