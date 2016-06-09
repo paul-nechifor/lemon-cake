@@ -30,7 +30,7 @@ typedef struct object_t *func_pointer_t(struct vm_state *, struct object_t *);
 
 struct object_t {
     uint64_t type;
-    uint64_t mark;
+    uint64_t marked;
     struct object_t *next_object;
 
     union {
@@ -105,7 +105,7 @@ static void die(char *msg) {
 object_t *new_object_t(vm_state *vms, uint64_t type) {
     object_t *o = c_malloc(sizeof(object_t));
     o->type = type;
-    o->mark = 0;
+    o->marked = 0;
     o->next_object = vms->last_object;
     vms->last_object = o;
     return o;
@@ -757,7 +757,7 @@ func_pointer_t *construct_pointers[] = {
 vm_state *start_vm() {
     vm_state *vms = c_malloc(sizeof(vm_state));
     vms->last_object = NULL;
-    vms->env = new_dict(vms, 4969); // TODO Change this to nested dicts
+    vms->env = new_dict(vms, 4969); // TODO Change this to nested dicts.
 
     object_t *d = vms->env;
     uint64_t n_pointers = sizeof(builtin_pointers) / sizeof(uint64_t);
@@ -784,6 +784,58 @@ vm_state *start_vm() {
     return vms;
 }
 
+void mark(object_t *o) {
+    if (o->marked) {
+        return;
+    }
+
+    o->marked = 1;
+
+    switch (o->type) {
+        case TYPE_LIST:
+            {
+                object_t *pair = o;
+                while (pair->head) {
+                    mark(pair->head);
+                    pair = pair->tail;
+                }
+            }
+            break;
+
+        case TYPE_DICT:
+            {
+                uint64_t i;
+                uint64_t n = o->dict_n_size;
+                dict_pair *dict_table = o->dict_table;
+                dict_pair *pair;
+                for (i = 0; i < n; i++) {
+                    pair = &dict_table[i];
+                    if (!pair->key) {
+                        continue;
+                    }
+                    for (;;) {
+                        mark(pair->key);
+                        mark(pair->value);
+                        if (!pair->next) {
+                            break;
+                        }
+                        pair = pair->next;
+                    }
+                }
+            }
+            break;
+    }
+}
+
+void sweep(vm_state *vms) {
+    // TODO
+}
+
+void gc(vm_state *vms) {
+    mark(vms->env);
+    sweep(vms);
+}
+
 void eval_lines() {
     char *line = NULL;
     size_t len = 0;
@@ -805,6 +857,8 @@ void eval_lines() {
     if (line) {
         c_free(line);
     }
+
+    gc(vms);
 
     // TODO Free vms;
 }

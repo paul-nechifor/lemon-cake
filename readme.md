@@ -16,9 +16,12 @@ A programming language.
 - Set variables.
 - Read variables.
 - Use unique symbols.
+- Change `new_object_t` to only malloc the size that's required for the object.
 - Use the symbol code for hashing.
 - Be able to run multiple lines.
 - Define `s1 s2 s4 s8 u1 u2 u4 u8` to `signed int 8 bits, ...`
+- Allow circular dependencies.
+- Per thread GC?
 
 ## Reference
 
