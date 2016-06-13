@@ -699,6 +699,9 @@ object_t *parse(vm_state *vms, char *s, uint64_t len) {
 
 void free_object(object_t *o) {
     switch (o->type) {
+        case TYPE_BUILTIN_FUNC:
+        case TYPE_CONSTRUCT:
+        case TYPE_LIST:
         case TYPE_INT:
             break;
 
@@ -712,7 +715,8 @@ void free_object(object_t *o) {
             return;
 
         case TYPE_DICT:
-            die("Free not implemented for dict.");
+            c_free(o->dict_table);
+            return;
 
         default:
             die("Free not implemented for this object type.");
@@ -798,6 +802,7 @@ void mark(object_t *o) {
                 while (pair->head) {
                     mark(pair->head);
                     pair = pair->tail;
+                    pair->marked = 1;
                 }
             }
             break;
@@ -828,7 +833,20 @@ void mark(object_t *o) {
 }
 
 void sweep(vm_state *vms) {
-    // TODO
+    object_t **o = &vms->last_object;
+    object_t *unreached;
+
+    while (*o) {
+        if (!(*o)->marked) {
+            unreached = *o;
+            *o = unreached->next_object;
+            free_object(unreached);
+        } else {
+            (*o)->marked = 0;
+            o = &(*o)->next_object;
+        }
+    }
+
 }
 
 void gc(vm_state *vms) {
@@ -852,13 +870,14 @@ void eval_lines() {
         o = eval(vms, parse(vms, line, c_strlen(line)));
         print(o);
         c_fprintf(stdout, "\n");
+        gc(vms); // TODO: Move this.
     }
 
     if (line) {
         c_free(line);
     }
 
-    gc(vms);
+    sweep(vms);
 
     // TODO Free vms;
 }
