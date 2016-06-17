@@ -697,6 +697,26 @@ object_t *parse(vm_state *vms, char *s, uint64_t len) {
     return parse_recursive(vms, s, &i, len);
 }
 
+void free_dict(object_t *o) {
+    uint64_t n = o->dict_n_size;
+    uint64_t i;
+
+    dict_pair *pair;
+    dict_pair *next;
+
+    for (i = 0; i < n; i++) {
+        pair = (&o->dict_table[i])->next;
+
+        while (pair) {
+            next = pair->next;
+            c_free(pair);
+            pair = next;
+        }
+    }
+
+    c_free(o->dict_table);
+}
+
 void free_object(object_t *o) {
     switch (o->type) {
         case TYPE_BUILTIN_FUNC:
@@ -715,7 +735,7 @@ void free_object(object_t *o) {
             return;
 
         case TYPE_DICT:
-            c_free(o->dict_table);
+            free_dict(o);
             return;
 
         default:
@@ -846,7 +866,6 @@ void sweep(vm_state *vms) {
             o = &(*o)->next_object;
         }
     }
-
 }
 
 void gc(vm_state *vms) {
@@ -878,6 +897,5 @@ void eval_lines() {
     }
 
     sweep(vms);
-
-    // TODO Free vms;
+    c_free(vms);
 }
