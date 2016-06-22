@@ -732,11 +732,11 @@ void free_object(object_t *o) {
         case TYPE_SYMBOL:
             c_free(o->symbol_pointer);
             // return not break since symbols have special functionality.
-            return;
+            break;
 
         case TYPE_DICT:
             free_dict(o);
-            return;
+            break;
 
         default:
             die("Free not implemented for this object type.");
