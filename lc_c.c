@@ -32,6 +32,7 @@ struct object_t {
     uint64_t type;
     uint64_t marked;
     struct object_t *next_object;
+    struct object_t *next_stack_object;
 
     union {
         // TYPE_INT
@@ -85,8 +86,18 @@ struct dict_pair {
 typedef struct dict_pair dict_pair;
 
 struct vm_state {
+    uint64_t n_objects;
+    uint64_t max_objects;
+
     object_t *env;
+
+    // This is a linked list of all the allocated objects and it's used for
+    // garbage collection.
     object_t *last_object;
+
+    // This is a linked list of all the objects that are still active in the
+    // computation.
+    object_t *call_stack_objects;
 };
 typedef struct vm_state vm_state;
 
@@ -96,6 +107,7 @@ void free_object(object_t *o);
 object_t *eval(vm_state *vms, object_t *o);
 uint64_t objects_equal(object_t *a, object_t *b);
 void dict_add(object_t *d, object_t *key, object_t *value);
+void gc(vm_state *vms);
 
 static void die(char *msg) {
     c_fprintf(stderr, "%s\n", msg);
@@ -103,11 +115,17 @@ static void die(char *msg) {
 }
 
 object_t *new_object_t(vm_state *vms, uint64_t type) {
+    if (vms->n_objects == vms->max_objects) {
+        gc(vms);
+    }
     object_t *o = c_malloc(sizeof(object_t));
     o->type = type;
     o->marked = 0;
     o->next_object = vms->last_object;
     vms->last_object = o;
+    o->next_stack_object = vms->call_stack_objects;
+    vms->call_stack_objects = o;
+    vms->n_objects++;
     return o;
 }
 
@@ -617,6 +635,7 @@ object_t *eval_list(vm_state *vms, object_t *o) {
         return (func_pointer->construct)(vms, head->tail);
     }
 
+
     object_t *args_list = eval_args_list(vms, head->tail);
 
     if (func_pointer->type == TYPE_BUILTIN_FUNC) {
@@ -637,7 +656,12 @@ object_t *eval(vm_state *vms, object_t *o) {
             return dict_get(vms, vms->env, o);
 
         case TYPE_LIST:
-            return eval_list(vms, o);
+            {
+                object_t *prev_call_stack_top = vms->call_stack_objects;
+                object_t *ret = eval_list(vms, o);
+                vms->call_stack_objects = prev_call_stack_top;
+                return ret;
+            }
 
         default:
             die("Don't know how to eval that.");
@@ -780,6 +804,8 @@ func_pointer_t *construct_pointers[] = {
 
 vm_state *start_vm() {
     vm_state *vms = c_malloc(sizeof(vm_state));
+    vms->n_objects = 0;
+    vms->max_objects = 8;
     vms->last_object = NULL;
     vms->env = new_dict(vms, 4969); // TODO Change this to nested dicts.
 
@@ -822,6 +848,9 @@ void mark(object_t *o) {
                 while (pair->head) {
                     mark(pair->head);
                     pair = pair->tail;
+                    if (!pair) {
+                        break;
+                    }
                     pair->marked = 1;
                 }
             }
@@ -861,6 +890,7 @@ void sweep(vm_state *vms) {
             unreached = *o;
             *o = unreached->next_object;
             free_object(unreached);
+            vms->n_objects--;
         } else {
             (*o)->marked = 0;
             o = &(*o)->next_object;
@@ -870,7 +900,16 @@ void sweep(vm_state *vms) {
 
 void gc(vm_state *vms) {
     mark(vms->env);
+
+    object_t *next = vms->call_stack_objects;
+    while (next) {
+        mark(next);
+        next = next->next_stack_object;
+    }
+
     sweep(vms);
+
+    vms->max_objects = vms->n_objects * 2;
 }
 
 void eval_lines() {
@@ -889,7 +928,7 @@ void eval_lines() {
         o = eval(vms, parse(vms, line, c_strlen(line)));
         print(o);
         c_fprintf(stdout, "\n");
-        gc(vms); // TODO: Move this.
+        vms->call_stack_objects = NULL;
     }
 
     if (line) {

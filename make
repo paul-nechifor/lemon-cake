@@ -10,7 +10,7 @@ main() {
         return
     fi
     sub_compile
-    run_tests
+    [[ "$notests" ]] || run_tests
 }
 
 sub_compile() {
