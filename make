@@ -15,12 +15,18 @@ main() {
 
 sub_compile() {
     rm -fr *.o lc
+
     nasm -f elf64 lc.asm
-    gcc -Os -c lc_c.c
-    ld -o lc -dynamic-linker /lib64/ld-linux-x86-64.so.2 -lc -ldl --entry=main *.o
-    if [[ ! "$debug" ]]; then
+
+    if [[ $debug ]]; then
+        gcc -Os -g -c lc_c.c
+        ld -o lc -dynamic-linker /lib64/ld-linux-x86-64.so.2 -lc -ldl --entry=main *.o
+    else
+        gcc -Os -c lc_c.c
+        ld -o lc -dynamic-linker /lib64/ld-linux-x86-64.so.2 -lc -ldl --entry=main *.o
         strip -R .eh_frame -R .gnu.version -R .hash -R .comment --strip-all lc
     fi
+
     rm -fr *.o
 }
 

@@ -88,6 +88,7 @@ typedef struct dict_pair dict_pair;
 struct vm_state {
     uint64_t n_objects;
     uint64_t max_objects;
+    uint64_t gc_is_on;
 
     object_t *env;
 
@@ -123,8 +124,6 @@ object_t *new_object_t(vm_state *vms, uint64_t type) {
     o->marked = 0;
     o->next_object = vms->last_object;
     vms->last_object = o;
-    o->next_stack_object = vms->call_stack_objects;
-    vms->call_stack_objects = o;
     vms->n_objects++;
     return o;
 }
@@ -617,14 +616,20 @@ object_t *is_func(vm_state *vms, object_t *args_list) {
 }
 
 object_t *eval_list(vm_state *vms, object_t *o) {
-    object_t *head = o;
+    object_t *ret;
+    object_t *top_call_stack_elem = vms->call_stack_objects;
+
+    // Add the o object to the call stack.
+    o->next_stack_object = vms->call_stack_objects;
+    vms->call_stack_objects = o;
 
     // An empty list evaluates to itself.
-    if (!head->head) {
-        return o;
+    if (!o->head) {
+        ret = o;
+        goto eval_list_cleanup;
     }
 
-    object_t *first_elem = head->head;
+    object_t *first_elem = o->head;
     if (first_elem->type != TYPE_SYMBOL) {
         die("Cannot eval non-symbol-starting list.");
     }
@@ -632,17 +637,29 @@ object_t *eval_list(vm_state *vms, object_t *o) {
     object_t *func_pointer = dict_get(vms, vms->env, first_elem);
 
     if (func_pointer->type == TYPE_CONSTRUCT) {
-        return (func_pointer->construct)(vms, head->tail);
+        ret = (func_pointer->construct)(vms, o->tail);
+        goto eval_list_cleanup;
     }
 
+    object_t *args_list = eval_args_list(vms, o->tail);
 
-    object_t *args_list = eval_args_list(vms, head->tail);
+    // Add the args_list object to the call stack.
+    args_list->next_stack_object = vms->call_stack_objects;
+    vms->call_stack_objects = args_list;
 
     if (func_pointer->type == TYPE_BUILTIN_FUNC) {
-        return ((func_pointer_t *) func_pointer->builtin)(vms, args_list);
+        ret = ((func_pointer_t *) func_pointer->builtin)(
+            vms, args_list
+        );
+        goto eval_list_cleanup;
     }
 
     die("That's not a function.");
+
+eval_list_cleanup:
+    vms->call_stack_objects = top_call_stack_elem;
+
+    return ret;
 }
 
 object_t *eval(vm_state *vms, object_t *o) {
@@ -656,12 +673,7 @@ object_t *eval(vm_state *vms, object_t *o) {
             return dict_get(vms, vms->env, o);
 
         case TYPE_LIST:
-            {
-                object_t *prev_call_stack_top = vms->call_stack_objects;
-                object_t *ret = eval_list(vms, o);
-                vms->call_stack_objects = prev_call_stack_top;
-                return ret;
-            }
+            return eval_list(vms, o);
 
         default:
             die("Don't know how to eval that.");
@@ -751,10 +763,12 @@ void free_object(object_t *o) {
 
         case TYPE_STRING:
             c_free(o->string_pointer);
+            o->string_pointer = NULL;
             break;
 
         case TYPE_SYMBOL:
             c_free(o->symbol_pointer);
+            o->symbol_pointer = NULL;
             // return not break since symbols have special functionality.
             break;
 
@@ -806,7 +820,9 @@ vm_state *start_vm() {
     vm_state *vms = c_malloc(sizeof(vm_state));
     vms->n_objects = 0;
     vms->max_objects = 8;
+    vms->gc_is_on = 0;
     vms->last_object = NULL;
+    vms->call_stack_objects = NULL;
     vms->env = new_dict(vms, 4969); // TODO Change this to nested dicts.
 
     object_t *d = vms->env;
@@ -899,12 +915,19 @@ void sweep(vm_state *vms) {
 }
 
 void gc(vm_state *vms) {
+    if (!vms->gc_is_on) {
+        return;
+    }
+
     mark(vms->env);
 
     object_t *next = vms->call_stack_objects;
+
+    uint64_t n_st = 0;
     while (next) {
         mark(next);
         next = next->next_stack_object;
+        n_st++;
     }
 
     sweep(vms);
@@ -916,6 +939,7 @@ void eval_lines() {
     char *line = NULL;
     size_t len = 0;
     ssize_t read;
+    object_t *parsed;
     object_t *o;
     vm_state *vms = start_vm();
 
@@ -925,10 +949,13 @@ void eval_lines() {
         if (read == -1) {
             break;
         }
-        o = eval(vms, parse(vms, line, c_strlen(line)));
+        vms->gc_is_on = 0;
+        parsed = parse(vms, line, c_strlen(line));
+        vms->gc_is_on = 1;
+        o = eval(vms, parsed);
         print(o);
         c_fprintf(stdout, "\n");
-        vms->call_stack_objects = NULL;
+        gc(vms);
     }
 
     if (line) {
