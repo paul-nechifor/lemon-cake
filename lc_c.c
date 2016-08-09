@@ -371,15 +371,14 @@ object_t *tail_func(vm_state *vms, object_t *args_list) {
     return args_list->head->tail;
 }
 
-object_t *eval_args_list(vm_state *vms, object_t *list) {
-    object_t *ret = new_pair(vms);
+void eval_args_list(vm_state *vms, object_t* args_list, object_t *list) {
     object_t *unevaled = list;
 
     if (!unevaled->head) {
-        return ret;
+        return;
     }
 
-    object_t *evaled = ret;
+    object_t *evaled = args_list;
 
     for (;;) {
         evaled->head = eval(vms, unevaled->head);
@@ -392,8 +391,6 @@ object_t *eval_args_list(vm_state *vms, object_t *list) {
 
         evaled = evaled->tail;
     }
-
-    return ret;
 }
 
 uint64_t hash_bytes(char *bytes, uint64_t n) {
@@ -641,11 +638,16 @@ object_t *eval_list(vm_state *vms, object_t *o) {
         goto eval_list_cleanup;
     }
 
-    object_t *args_list = eval_args_list(vms, o->tail);
+    // Turn gc off in order to create the eval args list.
+    vms->gc_is_on = 0;
+    object_t *args_list = new_pair(vms);
+    vms->gc_is_on = 1;
 
     // Add the args_list object to the call stack.
     args_list->next_stack_object = vms->call_stack_objects;
     vms->call_stack_objects = args_list;
+
+    eval_args_list(vms, args_list, o->tail);
 
     if (func_pointer->type == TYPE_BUILTIN_FUNC) {
         ret = ((func_pointer_t *) func_pointer->builtin)(
