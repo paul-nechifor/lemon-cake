@@ -1,0 +1,1 @@
+(head (tail (tail (list 0 1 2))))

@@ -75,16 +75,6 @@ assert_output() {
     fi
 }
 
-test_out() {
-    local input="$1" expected="$2"
-
-    assert_output \
-        "$(tr '\n' ' ' <<<"$input")" \
-        "$expected" \
-        "$(./lc <<<"$input" 2>/dev/null)" \
-        "$(./lc <<<"$input" 2>&1)"
-}
-
 tests_done() {
     echo "results: ok($n_ok), failed($n_failed)"
     echo "Binary size: $(wc -c < lc)"
