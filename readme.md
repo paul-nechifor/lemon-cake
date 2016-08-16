@@ -12,10 +12,6 @@ A programming language.
 
 ## Planning
 
-- Why is the call stack not being emptied?
-- Shouldn't I just add the evaluated parameters to the call stack instead of
-  every single value?
-
 - Use `@` for quoting instead of `'` in Lisp.
 - Set variables.
 - Read variables.

@@ -23,6 +23,11 @@ function_string memcpy
 function_string memset
 function_string strcmp
 function_string strlen
+function_string fread
+function_string fclose
+function_string ftell
+function_string fseek
+function_string fopen
 
 
 first_function_to_load:
@@ -36,6 +41,11 @@ function_pointer_and_name memcpy
 function_pointer_and_name memset
 function_pointer_and_name strcmp
 function_pointer_and_name strlen
+function_pointer_and_name fread
+function_pointer_and_name fclose
+function_pointer_and_name ftell
+function_pointer_and_name fseek
+function_pointer_and_name fopen
 
 end_of_functions_to_load:
 

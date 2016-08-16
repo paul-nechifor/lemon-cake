@@ -12,6 +12,13 @@ extern void *(*c_memcpy)(void *destination, const void *source, size_t num);
 extern void *(*c_memset)(void *ptr, int value, size_t num);
 extern int (*c_strcmp)(const char *str1, const char *str2);
 extern size_t (*c_strlen)(const char *str);
+extern size_t (*c_fread)(void *ptr, size_t size, size_t nmemb, FILE *stream);
+extern int (*c_fclose)(FILE *stream);
+extern long int (*c_ftell)(FILE *stream);
+extern int (*c_fseek)(FILE *stream, long int offset, int whence);
+extern FILE *(*c_fopen)(const char *filename, const char *mode);
+
+extern uint64_t *prog_argc_ptr;
 
 enum {
     TYPE_INT = 1,
@@ -945,25 +952,58 @@ void eval_lines() {
     object_t *o;
     vm_state *vms = start_vm();
 
-    for (;;) {
-        c_fprintf(stderr, "> ");
-        read = c_getline(&line, &len, stdin);
-        if (read == -1) {
-            break;
+    if (*prog_argc_ptr == 1) {
+        for (;;) {
+            c_fprintf(stderr, "> ");
+            read = c_getline(&line, &len, stdin);
+            if (read == -1) {
+                break;
+            }
+            vms->gc_is_on = 0;
+            parsed = parse(vms, line, c_strlen(line));
+            vms->gc_is_on = 1;
+            o = eval(vms, parsed);
+            print(o);
+            c_fprintf(stdout, "\n");
+            gc(vms);
         }
-        vms->gc_is_on = 0;
-        parsed = parse(vms, line, c_strlen(line));
-        vms->gc_is_on = 1;
-        o = eval(vms, parsed);
-        print(o);
-        c_fprintf(stdout, "\n");
-        gc(vms);
+        goto eval_lines_cleanup;
+    }
+    uint64_t length;
+    char *file_name = *((char **)prog_argc_ptr + 2);
+    FILE *f = c_fopen(file_name, "rb");
+
+    if (!f) {
+        c_fprintf(stderr, "Could not open '%s'.", file_name);
+        goto eval_lines_cleanup;
     }
 
+    c_fseek(f, 0, SEEK_END);
+    length = c_ftell(f);
+    c_fseek(f, 0, SEEK_SET);
+    line = c_malloc(length);
+
+    if (!line) {
+        c_fprintf(stderr, "Failed to malloc buffer for file '%s'.", file_name);
+        goto eval_lines_cleanup;
+    }
+
+    if (c_fread(line, 1, length, f) != length) {
+        c_fprintf(stderr, "Failed to read the whole file '%s'.", file_name);
+        goto eval_lines_cleanup;
+    }
+    c_fclose(f);
+
+    vms->gc_is_on = 0;
+    parsed = parse(vms, line, length);
+    vms->gc_is_on = 1;
+    o = eval(vms, parsed);
+    print(o);
+
+eval_lines_cleanup:
     if (line) {
         c_free(line);
     }
-
     sweep(vms);
     c_free(vms);
 }
