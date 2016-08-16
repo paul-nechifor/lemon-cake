@@ -142,6 +142,8 @@ test_out "(tail (tail (list 0 1 2)))" "(2)"
 test_out "(head (tail (tail (list 0 1 2))))" "2"
 test_out "(tail (tail (tail (list 0 1 2))))" "()"
 
+test_out "(repr 'one')" "'one'()"
+
 cat /dev/null<<END
 test_out "(do (multi-assign (a b c) (1 2 3)) (list c a b))" "(3 1 2)"
 

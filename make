@@ -32,23 +32,46 @@ sub_compile() {
 
 run_tests() {
     . "$root/tests.sh"
+
+    for test_file in tests/*.lc; do
+        local base_name="${test_file%.lc}"
+        assert_output \
+            "$(basename "$test_file" .lc)" \
+            "$(cat "$base_name".out)" \
+            "$(./lc "$test_file" 2>/dev/null)" \
+            "$(./lc "$test_file" 2>&1)"
+    done
 }
 
-test_out() {
+assert_output() {
+    local name="$1"
+    local expected="$2"
+    local actual="$3"
+    local full_output="$4"
+
     local input="$1" expected="$2"
-    echo -n "${n_tests}. Testing $(af 4)$(tr '\n' ' ' <<<"$input")$(sgr) ... "
+    echo -n "${n_tests}. Testing $(af 4)$name$(sgr) ... "
     ((n_tests++)) || true
-    local output="$(./lc <<<"$input" 2>/dev/null)"
-    if [[ "$expected" == "$output" ]]; then
+    local output=
+    if [[ "$expected" == "$actual" ]]; then
         echo "$(af 2)ok$(sgr)"
         ((n_ok++)) || true
     else
-        local full_output="$(./lc <<<"$input" 2>&1)"
         echo "$(af 1)failed$(sgr)"
         echo "    $(af 2)expected$(sgr): $(ab 2)$expected$(sgr)"
         echo "    $(af 1)actual$(sgr): $(ab 1)$full_output$(sgr)"
         ((n_failed++)) || true
     fi
+}
+
+test_out() {
+    local input="$1" expected="$2"
+
+    assert_output \
+        "$(tr '\n' ' ' <<<"$input")" \
+        "$expected" \
+        "$(./lc <<<"$input" 2>/dev/null)" \
+        "$(./lc <<<"$input" 2>&1)"
 }
 
 tests_done() {

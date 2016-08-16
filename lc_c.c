@@ -619,6 +619,11 @@ object_t *is_func(vm_state *vms, object_t *args_list) {
     return new_int(vms, objects_equal(args_list->head, args_list->tail->head));
 }
 
+object_t *repr_func(vm_state *vms, object_t *args_list) {
+    print(args_list->head);
+    return new_pair(vms);
+}
+
 object_t *eval_list(vm_state *vms, object_t *o) {
     object_t *ret;
     object_t *top_call_stack_elem = vms->call_stack_objects;
@@ -803,6 +808,7 @@ char *builtin_names[] = {
     "hashcode",
     "is",
     "+",
+    "repr",
 };
 func_pointer_t *builtin_pointers[] = {
     dict_func,
@@ -816,6 +822,7 @@ func_pointer_t *builtin_pointers[] = {
     hashcode_func,
     is_func,
     plus_func,
+    repr_func,
 };
 
 char *construct_names[] = {
@@ -997,8 +1004,7 @@ void eval_lines() {
     vms->gc_is_on = 0;
     parsed = parse(vms, line, length);
     vms->gc_is_on = 1;
-    o = eval(vms, parsed);
-    print(o);
+    eval(vms, parsed);
 
 eval_lines_cleanup:
     if (line) {
