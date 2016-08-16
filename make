@@ -1,7 +1,9 @@
 #!/bin/bash -e
 
 root="$(cd "$(dirname "$BASH_SOURCE")"; pwd)"
-n_tests=0 n_ok=0 n_failed=0
+n_tests=0
+n_ok=0
+n_failed=0
 
 main() {
     cd "$root"
@@ -31,8 +33,10 @@ sub_compile() {
 }
 
 run_tests() {
-    . "$root/tests.sh"
-
+    # More tests:
+    # "(do (multi-assign (a b c) (1 2 3)) (list c a b))" "(3 1 2)"
+    # "((func 4))" "4"
+    # "((func (+ 1 (head args))) 2 3 4)" "3"
     for test_file in tests/*.lc; do
         local base_name="${test_file%.lc}"
         assert_output \
@@ -52,6 +56,10 @@ run_tests() {
     done
 
     tests_done
+
+    if [[ $all ]]; then
+        check_summation 50 1000 200
+    fi
 }
 
 assert_output() {
@@ -61,8 +69,8 @@ assert_output() {
     local full_output="$4"
 
     local input="$1" expected="$2"
-    echo -n "${n_tests}. Testing $(af 4)$name$(sgr) ... "
     ((n_tests++)) || true
+    echo -n "${n_tests}. Testing $(af 4)$name$(sgr) ... "
     local output=
     if [[ "$expected" == "$actual" ]]; then
         echo "$(af 2)ok$(sgr)"
@@ -80,8 +88,63 @@ tests_done() {
     echo "Binary size: $(wc -c < lc)"
 }
 
-sgr() { tput sgr0; }
-af() { tput setaf "$@"; }
-ab() { tput setab "$@"; }
+sgr() {
+    tput sgr0;
+}
+
+af() {
+    tput setaf "$@";
+}
+
+ab() {
+    tput setab "$@";
+}
+
+random_plus_expression() {
+    local left="$1" nr=
+    echo -n '(+'
+    while [[ "$nr" != "0" ]]; do
+        nr=$(( RANDOM % left ))
+        left=$(( left - nr ))
+        if [[ "$nr" != "0" && "$(( RANDOM % 6 ))" == "0" ]]; then
+            echo -n ' '
+            random_plus_expression "$nr"
+        else
+            echo -n " $nr"
+        fi
+    done
+    echo -n " $left)"
+}
+
+check_summation() {
+    local n_times="$1" n_buffer_lines="$2" number="$3"
+    local string="$(
+        for (( i=0; i<n_buffer_lines; i++ )); do
+            random_plus_expression "$number"
+            echo
+        done
+    )"
+    echo -e "\n\nMemory usage:\n"
+    (
+        for (( i=0; i<n_times; i++ )); do
+            echo "$string"
+        done
+    ) | ./lc 2>/dev/null | (
+        local pid="$(ps aux | grep './lc' | grep -v grep | awk '{print $2}')"
+        local i=0
+        while read line; do
+            let i++ || true
+            if [[ "$i" == "$n_buffer_lines" ]]; then
+                let i=0 || true
+                ps aux | grep "$pid" | grep -v grep | awk '{print $5}'
+            fi
+
+            if [[ "$line" != "$number" ]]; then
+                echo "Failed!"
+                exit 1
+            fi
+        done
+    )
+}
 
 main "$@"
