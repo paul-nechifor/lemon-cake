@@ -41,6 +41,17 @@ run_tests() {
             "$(./lc "$test_file" 2>/dev/null)" \
             "$(./lc "$test_file" 2>&1)"
     done
+
+    for test_file in tests/*.in; do
+        local base_name="${test_file%.in}"
+        assert_output \
+            "$(basename "$test_file" .in)" \
+            "$(cat "$base_name".out)" \
+            "$(./lc < "$test_file" 2>/dev/null)" \
+            "$(./lc < "$test_file" 2>&1)"
+    done
+
+    tests_done
 }
 
 assert_output() {

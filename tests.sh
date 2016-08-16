@@ -1,11 +1,3 @@
-test_out "4" "4"
-
-test_out "1234
-5" "1234
-5"
-
-test_out "'asdf'" "'asdf'"
-
 test_out "321
 'str'
 123" "321
@@ -151,8 +143,6 @@ test_out "((func 4))" "4"
 
 test_out "((func (+ 1 (head args))) 2 3 4)" "3"
 END
-
-tests_done
 
 # Long tests.
 random_plus_expression() {
