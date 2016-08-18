@@ -12,16 +12,28 @@ A programming language.
 
 ## Planning
 
-- Use `@` for quoting instead of `'` in Lisp.
 - Set variables.
 - Read variables.
 - Use unique symbols.
-- Change `new_object_t` to only malloc the size that's required for the object.
 - Use the symbol code for hashing.
-- Be able to run multiple lines.
+
+- Think about how variable contexts should be implemented.
+
+- Introduce lambdas.
+
 - Define `s1 s2 s4 s8 u1 u2 u4 u8` to `signed int 8 bits, ...`
+- Use `@` for quoting instead of `'` in Lisp.
+
+- Rewrite the whole thing in Assembly (so it can self assemble in the future).
+
+- Write an assembler in LemonCake that can assemble the LemonCake source code.
+
+- Write a (very) basic Markdown transformer so I can Write the source code in
+  literate LemonCake.
+
 - Allow circular dependencies.
-- Per thread GC?
+- Change `new_object_t` to only malloc the size that's required for the object.
+- Per thread GC? Communiction via messages.
 
 ## Reference
 
