@@ -624,6 +624,20 @@ object_t *repr_func(vm_state *vms, object_t *args_list) {
     return new_pair(vms);
 }
 
+object_t *last_func(vm_state *vms, object_t *args_list) {
+    object_t *o = args_list;
+
+    if (!o->head) {
+        return o;
+    }
+
+    while (o->tail->head) {
+        o = o->tail;
+    }
+
+    return o->head;
+}
+
 object_t *eval_list(vm_state *vms, object_t *o) {
     object_t *ret;
     object_t *top_call_stack_elem = vms->call_stack_objects;
@@ -809,6 +823,7 @@ char *builtin_names[] = {
     "is",
     "+",
     "repr",
+    "last",
 };
 func_pointer_t *builtin_pointers[] = {
     dict_func,
@@ -823,6 +838,7 @@ func_pointer_t *builtin_pointers[] = {
     is_func,
     plus_func,
     repr_func,
+    last_func,
 };
 
 char *construct_names[] = {
