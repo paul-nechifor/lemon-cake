@@ -975,6 +975,7 @@ void eval_lines() {
     object_t *o;
     vm_state *vms = start_vm();
 
+    // If argc is 1, that means there are no arguments so just run a REPL.
     if (*prog_argc_ptr == 1) {
         for (;;) {
             c_fprintf(stderr, "> ");
@@ -992,7 +993,8 @@ void eval_lines() {
         }
         goto eval_lines_cleanup;
     }
-    uint64_t length;
+    uint64_t file_length;
+    uint64_t code_length;
     char *file_name = *((char **)prog_argc_ptr + 2);
     FILE *f = c_fopen(file_name, "rb");
 
@@ -1001,24 +1003,34 @@ void eval_lines() {
         goto eval_lines_cleanup;
     }
 
+    // Find out the size of the file by going to the end.
     c_fseek(f, 0, SEEK_END);
-    length = c_ftell(f);
+    file_length = c_ftell(f);
     c_fseek(f, 0, SEEK_SET);
-    line = c_malloc(length);
+
+    // Allocate enough memory to store the whole file plus the wrapping '(last '
+    // and ')' so 7 characters.
+    code_length = file_length + 7;
+    line = c_malloc(code_length);
 
     if (!line) {
         c_fprintf(stderr, "Failed to malloc buffer for file '%s'.", file_name);
         goto eval_lines_cleanup;
     }
 
-    if (c_fread(line, 1, length, f) != length) {
+    c_memcpy(line, "(last ", 6);
+
+    if (c_fread(line + 6, 1, file_length, f) != file_length) {
         c_fprintf(stderr, "Failed to read the whole file '%s'.", file_name);
         goto eval_lines_cleanup;
     }
     c_fclose(f);
 
+    line[code_length - 1] = ')';
+    line[code_length] = 0;
+
     vms->gc_is_on = 0;
-    parsed = parse(vms, line, length);
+    parsed = parse(vms, line, code_length);
     vms->gc_is_on = 1;
     eval(vms, parsed);
 
