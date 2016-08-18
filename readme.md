@@ -1,6 +1,13 @@
 # LemonCake
 
-A programming language.
+A highly flexible programming language.
+
+This language is in the very early stages of being implemented. My plans for it
+are very chaotic, but hopefully it will converge towards something nice.
+
+I just want to experiment with creating a language. I don't expect any of this
+to be useful. But maybe after 10 years of working on it could become a cool toy
+language.
 
 ## Build it
 
@@ -11,6 +18,11 @@ A programming language.
     all=1 ./make
 
 ## Planning
+
+These are some of the things I plan to do, ordered by priority and bunched into
+groups.
+
+- Join all the design documents I have into this file.
 
 - Set variables.
 - Read variables.
