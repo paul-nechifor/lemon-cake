@@ -1,0 +1,4 @@
+(set $env (quote x) 5)
+(set $env (quote y) 4)
+(set $env (quote z) (+ x y))
+(repr z)

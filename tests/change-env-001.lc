@@ -1,0 +1,5 @@
+# `$env` is the default variable representing the environment (a dict). Making
+# this easier should be done in a macro.
+
+(set $env (quote x) 4)
+(repr x)

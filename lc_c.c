@@ -855,7 +855,9 @@ vm_state *start_vm() {
     vms->gc_is_on = 0;
     vms->last_object = NULL;
     vms->call_stack_objects = NULL;
-    vms->env = new_dict(vms, 4969); // TODO Change this to nested dicts.
+    vms->env = new_dict(vms, 4969);
+
+    dict_add(vms->env, new_symbol(vms, "$env", 4), vms->env);
 
     object_t *d = vms->env;
     uint64_t n_pointers = sizeof(builtin_pointers) / sizeof(uint64_t);

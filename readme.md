@@ -22,12 +22,16 @@ language.
 These are some of the things I plan to do, ordered by priority and bunched into
 groups.
 
-- Switch parse to return a list of instructions instead of just one.
-
-- Set variables.
-- Read variables.
 - Use unique symbols.
 - Use the symbol code for hashing.
+- Switch parse to return a list of instructions instead of just one.
+- Add macros.
+
+- Add a default script that's run. That would include things like the macro to
+  expand `=`. This way large parts could be implemented in LemonCake instead of
+  C/Assembly.
+
+- Make dicts resizable.
 
 - Think about how variable contexts should be implemented.
 
@@ -45,7 +49,7 @@ groups.
 
 - Allow circular dependencies.
 - Change `new_object_t` to only malloc the size that's required for the object.
-- Per thread GC? Communiction via messages.
+- Per thread interpreter and GC? Communiction via messages.
 
 ## Reference
 
