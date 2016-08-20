@@ -22,20 +22,15 @@ language.
 These are some of the things I plan to do, ordered by priority and bunched into
 groups.
 
-- Use unique symbols.
-- Use the symbol code for hashing.
 - Switch parse to return a list of instructions instead of just one.
 - Add macros.
+- Introduce lambdas.
 
 - Add a default script that's run. That would include things like the macro to
   expand `=`. This way large parts could be implemented in LemonCake instead of
   C/Assembly.
 
 - Make dicts resizable.
-
-- Think about how variable contexts should be implemented.
-
-- Introduce lambdas.
 
 - Define `s1 s2 s4 s8 u1 u2 u4 u8` to `signed int 8 bits, ...`
 - Use `@` for quoting instead of `'` in Lisp.
