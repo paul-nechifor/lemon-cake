@@ -45,49 +45,7 @@ groups.
 - Change `new_object_t` to only malloc the size that's required for the object.
 - Per thread interpreter and GC? Communiction via messages.
 
-## Reference
-
-x86-64:
- * Argument order: `rdi rsi rdx rcx r8 r9`.
- * Return registers: `rax` and `rdx` (also used above)
- * Preserved registers: `rbx rsp rbp r12 r13 r14 r15`.
-
-
-## Ideas (this needs to be organized better)
-
-a = ~
-a = x ~
-a = x ~ x + 1
-a = ~ 4
-
-x = if a then b else c
-x =
-  if a then b else c
-x =
-  if
-    a
-    b
-    c
-x =
-  if a
-    b
-    c
-x = if a
-  b
-  c
-
-f1 = (a b) ~ a + b
-
-f1 4 (lazy 5 + 5)
-
-    # `lazy` is a macro that evaluates its arguments on access (in the expected
-    # environment)
-
-
-Take some inspiration from "Indentation-sensitive syntax for Lisp":
-http://srfi.schemers.org/srfi-49/srfi-49.html .
-
-Principles:
+# Principles
 
 - There should be one default way of doing it, but many alternatives.
 - The last expression in a file is what's exported by default. So a file
@@ -124,43 +82,80 @@ Principles:
 - It should be easy to wrap everything in an expression for instrumentation
   purpuses and it could we used for dead code elimination.
 
-- Arguments should come in an ordered named structure. So:
+- Add runtime checks (which could be skipped in live).
 
-    (= s (ordstuct (
-      (name)
-      () # Everything after this point must be passed by name.
-      (age)
-      (:= nickname 'John')
-    )))
+## Ideas (this needs to be organized better)
 
-lcpm
+Code sketches:
+
+```
+a = ~
+a = x ~
+a = x ~ x + 1
+a = ~ 4
+
+x = if a then b else c
+x =
+  if a then b else c
+x =
+  if
+    a
+    b
+    c
+x =
+  if a
+    b
+    c
+x = if a
+  b
+  c
+
+f1 = (a b) ~ a + b
+
+f1 4 (lazy 5 + 5)
+
+    # `lazy` is a macro that evaluates its arguments on access (in the expected
+    # environment)
 
 pi = import math@'1.0.0'
 
+# Arguments should come in an ordered named structure. So:
 
-
-
-
-
-
-- use a single function for allocation
-  - every <n> allocations run gc_clean()
-
-
-
-- functions
-- lazy functions
-- 
-
-
-- Add runtime checks (which could be skipped in live).
+(= s (ordstuct (
+  (name)
+  () # Everything after this point must be passed by name.
+  (age)
+  (:= nickname 'John')
+)))
+```
 
 ## Links
 
-http://tadeuzagallo.com/blog/introducing-verve/
-https://github.com/tadeuzagallo/verve-lang
-http://pgbovine.net/cpython-internals.htm
+What I've used for inspiratior or plan to use in the future:
+
+* [Baby's First Garbage Collector][baby-gc] — A very basic GC in C. This is
+  similar to what LemonCake now uses.
+
+* [CPython internals: A ten-hour codewalk through the Python interpreter source
+  code][cpython-internals]
+
+* [Verge][verve] ([repo][verve-repo])
+
+* [Indentation-sensitive syntax for Lisp][lisp-indent]
+
+## Reference
+
+x86-64:
+ * Argument order: `rdi rsi rdx rcx r8 r9`.
+ * Return registers: `rax` and `rdx` (also used above)
+ * Preserved registers: `rbx rsp rbp r12 r13 r14 r15`.
 
 ## License
 
 ISC
+
+[baby-gc]: http://journal.stuffwithstuff.com/2013/12/08/babys-first-garbage-collector/
+[cpython-internals]: http://pgbovine.net/cpython-internals.htm
+[verve]: http://tadeuzagallo.com/blog/introducing-verve/
+[verve-repo]: https://github.com/tadeuzagallo/verve-lang
+[lisp-indent]: http://srfi.schemers.org/srfi-49/srfi-49.html
