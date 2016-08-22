@@ -127,11 +127,26 @@ pi = import math@'1.0.0'
   (age)
   (:= nickname 'John')
 )))
+
+# A function that takes to string arguments and returns their concatenation.
+connectWords = (firstWord str) (secondWord str) ~
+  firstWord + secondWord
+
+# Defining a type with typed attributes.
+User = deftype
+  name String
+  email Email
+  age int
+  admin bool
 ```
 
 ## Links
 
 What I've used for inspiratior or plan to use in the future:
+
+* [(How to Write a (Lisp) Interpreter (in Python))][lisp-in-python]
+
+* [Minilisp][minilisp]
 
 * [Baby's First Garbage Collector][baby-gc] — A very basic GC in C. This is
   similar to what LemonCake now uses.
@@ -154,6 +169,8 @@ x86-64:
 
 ISC
 
+[lisp-in-python]: http://norvig.com/lispy.html
+[minilisp]: https://github.com/rui314/minilisp
 [baby-gc]: http://journal.stuffwithstuff.com/2013/12/08/babys-first-garbage-collector/
 [cpython-internals]: http://pgbovine.net/cpython-internals.htm
 [verve]: http://tadeuzagallo.com/blog/introducing-verve/
