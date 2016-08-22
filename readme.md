@@ -22,7 +22,6 @@ language.
 These are some of the things I plan to do, ordered by priority and bunched into
 groups.
 
-- Switch parse to return a list of instructions instead of just one.
 - Add macros.
 - Introduce lambdas.
 

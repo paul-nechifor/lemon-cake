@@ -163,7 +163,6 @@ object_t *new_string(vm_state *vms, char *s, uint64_t chars) {
 }
 
 object_t *new_symbol(vm_state *vms, char *s, uint64_t chars) {
-    // TODO: Use unique symbols.
     object_t *ret = new_object_t(vms, TYPE_SYMBOL);
     ret->symbol_id = 0;
     ret->symbol_length = chars;
@@ -713,7 +712,9 @@ void discard_line(char *s, uint64_t *i) {
 }
 
 object_t *parse_recursive(vm_state *vms, char *s, uint64_t *i, uint64_t len) {
+    object_t *ret;
     char c;
+
     for (;;) {
         if (*i > len) {
             die("Stepping over the end of the code.");
@@ -739,26 +740,69 @@ object_t *parse_recursive(vm_state *vms, char *s, uint64_t *i, uint64_t len) {
         }
 
         if (c == ')') {
-            return (object_t *) ')';
+            ret = (object_t *) ')';
+            goto parse_recursive_discard_non_object;
         }
 
         if (c >= '0' && c <= '9') {
             (*i)--;
-            return read_int(vms, s, i);
+            ret = read_int(vms, s, i);
+            goto parse_recursive_discard_non_object;
         }
 
         if (c == '\'') {
-            return read_string(vms, s, i);
+            ret = read_string(vms, s, i);
+            goto parse_recursive_discard_non_object;
         }
 
         (*i)--;
         return read_symbol(vms, s, i);
     }
+
+    // This means we have reached the end of an expression. It useful at
+    // this point to remove all the non instructions (whitespace and
+    // comments).
+parse_recursive_discard_non_object:
+
+    for (;;) {
+        if (*i >= len - 1) {
+            break;
+        }
+
+        c = s[(*i)++];
+
+        if (c == ' ' || c == '\n' || c == '\r' || c == '\t') {
+            continue;
+        }
+
+        if (c == '#') {
+            discard_line(s, i);
+            continue;
+        }
+
+        (*i)--;
+        break;
+    }
+
+    return ret;
 }
 
 object_t *parse(vm_state *vms, char *s, uint64_t len) {
     uint64_t i = 0;
-    return parse_recursive(vms, s, &i, len);
+    object_t *ret = new_pair(vms);
+    object_t *pair = ret;
+
+    pair->head = new_symbol(vms, "last", 4);
+    pair->tail = new_pair(vms);
+
+    while (i < len - 1) {
+        pair = pair->tail;
+        pair->head = parse_recursive(vms, s, &i, len);
+        pair->tail = new_pair(vms);
+    }
+
+    return ret;
+
 }
 
 void free_dict(object_t *o) {
@@ -996,7 +1040,6 @@ void eval_lines() {
         goto eval_lines_cleanup;
     }
     uint64_t file_length;
-    uint64_t code_length;
     char *file_name = *((char **)prog_argc_ptr + 2);
     FILE *f = c_fopen(file_name, "rb");
 
@@ -1010,29 +1053,21 @@ void eval_lines() {
     file_length = c_ftell(f);
     c_fseek(f, 0, SEEK_SET);
 
-    // Allocate enough memory to store the whole file plus the wrapping '(last '
-    // and ')' so 7 characters.
-    code_length = file_length + 7;
-    line = c_malloc(code_length);
+    line = c_malloc(file_length);
 
     if (!line) {
         c_fprintf(stderr, "Failed to malloc buffer for file '%s'.", file_name);
         goto eval_lines_cleanup;
     }
 
-    c_memcpy(line, "(last ", 6);
-
-    if (c_fread(line + 6, 1, file_length, f) != file_length) {
+    if (c_fread(line, 1, file_length, f) != file_length) {
         c_fprintf(stderr, "Failed to read the whole file '%s'.", file_name);
         goto eval_lines_cleanup;
     }
     c_fclose(f);
 
-    line[code_length - 1] = ')';
-    line[code_length] = 0;
-
     vms->gc_is_on = 0;
-    parsed = parse(vms, line, code_length);
+    parsed = parse(vms, line, file_length);
     vms->gc_is_on = 1;
     eval(vms, parsed);
 
