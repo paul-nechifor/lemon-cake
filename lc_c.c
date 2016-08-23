@@ -86,7 +86,7 @@ struct object_t {
         // TYPE_MACRO
         struct {
             struct object_t* macro_body;
-            struct object_t* macro_env;
+            struct object_t* macro_parent_env;
         };
     };
 };
@@ -160,10 +160,10 @@ object_t *new_construct(vm_state *vms, func_pointer_t *func) {
     return ret;
 }
 
-object_t *new_macro(vm_state *vms, object_t *macro_body, object_t* macro_env) {
+object_t *new_macro(vm_state *vms, object_t *macro_body, object_t* macro_parent_env) {
     object_t *ret = new_object_t(vms, TYPE_MACRO);
     ret->macro_body = macro_body;
-    ret->macro_env = macro_env;
+    ret->macro_parent_env = macro_parent_env;
     return ret;
 }
 
@@ -549,21 +549,26 @@ void dict_add(object_t *d, object_t *key, object_t *value) {
     }
 }
 
-object_t *dict_get(vm_state *vms, object_t *d, object_t *key) {
+object_t *dict_get_null(vm_state *vms, object_t *d, object_t *key) {
     uint64_t hash = hashcode_object(key);
     dict_pair *pair = &d->dict_table[hash % d->dict_n_size];
     for (;;) {
         if (!pair->value) {
-            return new_pair(vms);
+            return NULL;
         }
         if (objects_equal(key, pair->key)) {
             return pair->value;
         }
         if (!pair->next) {
-            return new_pair(vms);
+            return NULL;
         }
         pair = pair->next;
     }
+}
+
+object_t *dict_get(vm_state *vms, object_t *d, object_t *key) {
+    object_t *ret = dict_get_null(vms, d, key);
+    return ret ? ret : new_pair(vms);
 }
 
 object_t *set_func(vm_state *vms, object_t *env, object_t *args_list) {
@@ -662,9 +667,12 @@ object_t *last_func(vm_state *vms, object_t *env, object_t *args_list) {
 }
 
 object_t *macro_func(vm_state *vms, object_t *env, object_t *args_list) {
-    object_t *child_env = new_dict(vms, 4969);
-    dict_add(child_env, new_symbol(vms, "$parent", 7), env);
-    return new_macro(vms, args_list->head, child_env);
+    return new_macro(vms, args_list->head, env);
+}
+
+void populate_child_env(vm_state *vms, object_t *parent_env, object_t *child_env, object_t *args) {
+    dict_add(child_env, new_symbol(vms, "$parent", 7), parent_env);
+    dict_add(child_env, new_symbol(vms, "$args", 5), args);
 }
 
 object_t *eval_list(vm_state *vms, object_t *env, object_t *o) {
@@ -689,6 +697,17 @@ object_t *eval_list(vm_state *vms, object_t *env, object_t *o) {
     object_t *func_pointer = dict_get(vms, vms->env, first_elem);
 
     if (func_pointer->type == TYPE_CONSTRUCT) {
+        // Turn gc off in order to create the child env.
+        vms->gc_is_on = 0;
+        object_t *child_env = new_dict(vms, 4969);
+        vms->gc_is_on = 1;
+
+        // Add the child env object to the call stack.
+        child_env->next_stack_object = vms->call_stack_objects;
+        vms->call_stack_objects = child_env;
+
+        populate_child_env(vms, env, child_env, o->tail);
+
         ret = (func_pointer->construct)(vms, env, o->tail);
         goto eval_list_cleanup;
     }
@@ -733,7 +752,27 @@ object_t *eval(vm_state *vms, object_t *env, object_t *o) {
             return o;
 
         case TYPE_SYMBOL:
-            return dict_get(vms, vms->env, o);
+            {
+                vms->gc_is_on = 0;
+                object_t *parent_sym = new_symbol(vms, "$parent", 7);
+                vms->gc_is_on = 1;
+
+                object_t *parent;
+                object_t *value;
+                object_t *curr_env = env;
+
+                for (;;) {
+                    parent = dict_get_null(vms, curr_env, parent_sym);
+                    if (!parent) {
+                        return dict_get(vms, curr_env, o);
+                    }
+                    value = dict_get_null(vms, curr_env, o);
+                    if (value) {
+                        return value;
+                    }
+                    curr_env = parent;
+                }
+            }
 
         case TYPE_LIST:
             return eval_list(vms, env, o);
@@ -1013,7 +1052,7 @@ void mark(object_t *o) {
 
         case TYPE_MACRO:
             mark(o->macro_body);
-            mark(o->macro_env);
+            mark(o->macro_parent_env);
             break;
     }
 }

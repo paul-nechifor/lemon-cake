@@ -32,6 +32,8 @@ groups.
   expand `=`. This way large parts could be implemented in LemonCake instead of
   C/Assembly.
 
+- Consider interning some commonly used symbols.
+
 - Make dicts resizable.
 
 - Define `s1 s2 s4 s8 u1 u2 u4 u8` to `signed int 8 bits, ...`
