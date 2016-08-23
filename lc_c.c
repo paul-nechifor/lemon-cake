@@ -531,6 +531,7 @@ void dict_add(object_t *d, object_t *key, object_t *value) {
         }
 
         if (objects_equal(key, pair->key)) {
+            pair->value = value;
             return;
         }
 
@@ -693,6 +694,7 @@ object_t *assign_func(vm_state *vms, object_t *env, object_t *args_list) {
     object_t *name;
     object_t *value;
     object_t *list = args_list;
+    object_t *ret = NULL;
 
     for (;;) {
         name = list->head;
@@ -711,11 +713,10 @@ object_t *assign_func(vm_state *vms, object_t *env, object_t *args_list) {
         dict_add(
             get_env_of_name(vms, env, name),
             name,
-            eval(vms, env, value)
+            ret = eval(vms, env, value)
         );
     }
-
-    return new_pair(vms);
+    return ret ? ret : new_pair(vms);
 }
 
 object_t *macro_func(vm_state *vms, object_t *env, object_t *args_list) {

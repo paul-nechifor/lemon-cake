@@ -22,8 +22,6 @@ language.
 These are some of the things I plan to do, ordered by priority and bunched into
 groups.
 
-- Must be able to override variables.
-
 - Add macros.
 - Introduce lambdas.
 
@@ -36,6 +34,9 @@ groups.
 - Consider interning some commonly used symbols.
 
 - Make dicts resizable.
+
+- Eliminate cycles when using `print` by keeping track of objects that have
+  already been printed.
 
 - Define `s1 s2 s4 s8 u1 u2 u4 u8` to `signed int 8 bits, ...`
 - Use `@` for quoting instead of `'` in Lisp.
