@@ -34,7 +34,7 @@ enum {
 struct object_t;
 struct vm_state;
 struct dict_pair;
-typedef struct object_t *func_pointer_t(struct vm_state *, struct object_t *);
+typedef struct object_t *func_pointer_t(struct vm_state *, struct object_t *, struct object_t *);
 
 struct object_t {
     uint64_t type;
@@ -86,6 +86,7 @@ struct object_t {
         // TYPE_MACRO
         struct {
             struct object_t* macro_body;
+            struct object_t* macro_env;
         };
     };
 };
@@ -118,7 +119,7 @@ typedef struct vm_state vm_state;
 object_t *parse_recursive(vm_state *vms, char *s, uint64_t *i, uint64_t len);
 void print(object_t *o);
 void free_object(object_t *o);
-object_t *eval(vm_state *vms, object_t *o);
+object_t *eval(vm_state *vms, object_t *env, object_t *o);
 uint64_t objects_equal(object_t *a, object_t *b);
 void dict_add(object_t *d, object_t *key, object_t *value);
 void gc(vm_state *vms);
@@ -159,9 +160,10 @@ object_t *new_construct(vm_state *vms, func_pointer_t *func) {
     return ret;
 }
 
-object_t *new_macro(vm_state *vms, object_t *macro_body) {
+object_t *new_macro(vm_state *vms, object_t *macro_body, object_t* macro_env) {
     object_t *ret = new_object_t(vms, TYPE_MACRO);
     ret->macro_body = macro_body;
+    ret->macro_env = macro_env;
     return ret;
 }
 
@@ -359,7 +361,7 @@ void print(object_t *o) {
     }
 }
 
-object_t *plus_func(vm_state *vms, object_t *args_list) {
+object_t *plus_func(vm_state *vms, object_t *env, object_t *args_list) {
     uint64_t ret = 0;
 
     object_t *pair = args_list;
@@ -386,20 +388,20 @@ void list_append(vm_state *vms, object_t *list, object_t *o) {
     p->tail = new_pair(vms);
 }
 
-object_t *append_func(vm_state *vms, object_t *args_list) {
+object_t *append_func(vm_state *vms, object_t *env, object_t *args_list) {
     list_append(vms, args_list->head, args_list->tail->head);
     return args_list->head;
 }
 
-object_t *head_func(vm_state *vms, object_t *args_list) {
+object_t *head_func(vm_state *vms, object_t *env, object_t *args_list) {
     return args_list->head->head;
 }
 
-object_t *tail_func(vm_state *vms, object_t *args_list) {
+object_t *tail_func(vm_state *vms, object_t *env, object_t *args_list) {
     return args_list->head->tail;
 }
 
-void eval_args_list(vm_state *vms, object_t* args_list, object_t *list) {
+void eval_args_list(vm_state *vms, object_t *env, object_t* args_list, object_t *list) {
     object_t *unevaled = list;
 
     if (!unevaled->head) {
@@ -409,7 +411,7 @@ void eval_args_list(vm_state *vms, object_t* args_list, object_t *list) {
     object_t *evaled = args_list;
 
     for (;;) {
-        evaled->head = eval(vms, unevaled->head);
+        evaled->head = eval(vms, env, unevaled->head);
         evaled->tail = new_pair(vms);
         unevaled = unevaled->tail;
 
@@ -456,7 +458,7 @@ uint64_t hashcode_object(object_t *o) {
     }
 }
 
-object_t *hashcode_func(vm_state *vms, object_t *args_list) {
+object_t *hashcode_func(vm_state *vms, object_t *env, object_t *args_list) {
     return new_int(vms, hashcode_object(args_list->head));
 }
 
@@ -494,7 +496,7 @@ uint64_t list_length(object_t *p) {
     return ret;
 }
 
-object_t *dict_func(vm_state *vms, object_t *args_list) {
+object_t *dict_func(vm_state *vms, object_t *env, object_t *args_list) {
     uint64_t n_args = list_length(args_list);
     if (n_args % 2) {
         die("Need even number of args.");
@@ -564,7 +566,7 @@ object_t *dict_get(vm_state *vms, object_t *d, object_t *key) {
     }
 }
 
-object_t *set_func(vm_state *vms, object_t *args_list) {
+object_t *set_func(vm_state *vms, object_t *env, object_t *args_list) {
     object_t *p = args_list;
     object_t *d = p->head;
     p = p->tail;
@@ -575,7 +577,7 @@ object_t *set_func(vm_state *vms, object_t *args_list) {
     return d;
 }
 
-object_t *get_func(vm_state *vms, object_t *args_list) {
+object_t *get_func(vm_state *vms, object_t *env, object_t *args_list) {
     return dict_get(vms, args_list->head, args_list->tail->head);
 }
 
@@ -593,15 +595,15 @@ uint64_t obj_len_func(object_t *o) {
     die("Don't know how get the length for that type.");
 }
 
-object_t *len_func(vm_state *vms, object_t *args_list) {
+object_t *len_func(vm_state *vms, object_t *env, object_t *args_list) {
     return new_int(vms, obj_len_func(args_list->head));
 }
 
-object_t *list_func(vm_state *vms, object_t *args_list) {
+object_t *list_func(vm_state *vms, object_t *env, object_t *args_list) {
     return args_list;
 }
 
-object_t *quote_func(vm_state *vms, object_t *args_list) {
+object_t *quote_func(vm_state *vms, object_t *env, object_t *args_list) {
     if (!args_list) {
         return new_pair(vms);
     }
@@ -636,16 +638,16 @@ uint64_t objects_equal(object_t *a, object_t *b) {
     return 1;
 }
 
-object_t *is_func(vm_state *vms, object_t *args_list) {
+object_t *is_func(vm_state *vms, object_t *env, object_t *args_list) {
     return new_int(vms, objects_equal(args_list->head, args_list->tail->head));
 }
 
-object_t *repr_func(vm_state *vms, object_t *args_list) {
+object_t *repr_func(vm_state *vms, object_t *env, object_t *args_list) {
     print(args_list->head);
     return new_pair(vms);
 }
 
-object_t *last_func(vm_state *vms, object_t *args_list) {
+object_t *last_func(vm_state *vms, object_t *env, object_t *args_list) {
     object_t *o = args_list;
 
     if (!o->head) {
@@ -659,11 +661,13 @@ object_t *last_func(vm_state *vms, object_t *args_list) {
     return o->head;
 }
 
-object_t *macro_func(vm_state *vms, object_t *args_list) {
-    return new_macro(vms, args_list->head);
+object_t *macro_func(vm_state *vms, object_t *env, object_t *args_list) {
+    object_t *child_env = new_dict(vms, 4969);
+    dict_add(child_env, new_symbol(vms, "$parent", 7), env);
+    return new_macro(vms, args_list->head, child_env);
 }
 
-object_t *eval_list(vm_state *vms, object_t *o) {
+object_t *eval_list(vm_state *vms, object_t *env, object_t *o) {
     object_t *ret;
     object_t *top_call_stack_elem = vms->call_stack_objects;
 
@@ -685,12 +689,12 @@ object_t *eval_list(vm_state *vms, object_t *o) {
     object_t *func_pointer = dict_get(vms, vms->env, first_elem);
 
     if (func_pointer->type == TYPE_CONSTRUCT) {
-        ret = (func_pointer->construct)(vms, o->tail);
+        ret = (func_pointer->construct)(vms, env, o->tail);
         goto eval_list_cleanup;
     }
 
     if (func_pointer->type == TYPE_MACRO) {
-        ret = eval(vms, eval(vms, func_pointer->macro_body));
+        ret = eval(vms, env, eval(vms, env, func_pointer->macro_body));
         goto eval_list_cleanup;
     }
 
@@ -703,11 +707,11 @@ object_t *eval_list(vm_state *vms, object_t *o) {
     args_list->next_stack_object = vms->call_stack_objects;
     vms->call_stack_objects = args_list;
 
-    eval_args_list(vms, args_list, o->tail);
+    eval_args_list(vms, env, args_list, o->tail);
 
     if (func_pointer->type == TYPE_BUILTIN_FUNC) {
         ret = ((func_pointer_t *) func_pointer->builtin)(
-            vms, args_list
+            vms, env, args_list
         );
         goto eval_list_cleanup;
     }
@@ -720,7 +724,7 @@ eval_list_cleanup:
     return ret;
 }
 
-object_t *eval(vm_state *vms, object_t *o) {
+object_t *eval(vm_state *vms, object_t *env, object_t *o) {
     switch (o->type) {
         case TYPE_INT:
         case TYPE_STRING:
@@ -732,7 +736,7 @@ object_t *eval(vm_state *vms, object_t *o) {
             return dict_get(vms, vms->env, o);
 
         case TYPE_LIST:
-            return eval_list(vms, o);
+            return eval_list(vms, env, o);
 
         default:
             die("Don't know how to eval that.");
@@ -1009,6 +1013,7 @@ void mark(object_t *o) {
 
         case TYPE_MACRO:
             mark(o->macro_body);
+            mark(o->macro_env);
             break;
     }
 }
@@ -1070,7 +1075,7 @@ void eval_lines() {
             vms->gc_is_on = 0;
             parsed = parse(vms, line, c_strlen(line));
             vms->gc_is_on = 1;
-            o = eval(vms, parsed);
+            o = eval(vms, vms->env, parsed);
             print(o);
             c_fprintf(stdout, "\n");
             gc(vms);
@@ -1107,7 +1112,7 @@ void eval_lines() {
     vms->gc_is_on = 0;
     parsed = parse(vms, line, file_length);
     vms->gc_is_on = 1;
-    eval(vms, parsed);
+    eval(vms, vms->env, parsed);
 
 eval_lines_cleanup:
     if (line) {
