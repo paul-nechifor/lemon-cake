@@ -22,15 +22,16 @@ language.
 These are some of the things I plan to do, ordered by priority and bunched into
 groups.
 
+- Must be able to override variables.
+
 - Add macros.
 - Introduce lambdas.
 
 - Write tests for broken programs (e.g.: `(+ 1`) and make sure they don't end up
   in an infinite loop.
 
-- Add a default script that's run. That would include things like the macro to
-  expand `=`. This way large parts could be implemented in LemonCake instead of
-  C/Assembly.
+- Add a default script that's run. This way large parts could be implemented in
+  LemonCake instead of C/Assembly.
 
 - Consider interning some commonly used symbols.
 

@@ -1,8 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#define offsetof(st, m) ((size_t) ( (char *)&((st *)0)->m - (char *)0 ))
-
 extern void (*c_exit)(int status);
 extern int (*c_fprintf)(FILE *stream, const char *format, ...);
 extern void (*c_free)(void *ptr);
@@ -666,6 +664,60 @@ object_t *last_func(vm_state *vms, object_t *env, object_t *args_list) {
     return o->head;
 }
 
+object_t *get_env_of_name(vm_state *vms, object_t *env, object_t *name) {
+    object_t *parent_sym = new_symbol(vms, "$parent", 7);
+
+    object_t *parent;
+    object_t *value;
+    object_t *curr_env = env;
+
+    for (;;) {
+        // If the value is in the current env, then return the env;
+        value = dict_get_null(vms, curr_env, name);
+        if (value) {
+            return curr_env;
+        }
+
+        // If this env has no $parent, then this is the root env so return the
+        // leaf env.
+        parent = dict_get_null(vms, curr_env, parent_sym);
+        if (!parent) {
+            return env;
+        }
+
+        curr_env = parent;
+    }
+}
+
+object_t *assign_func(vm_state *vms, object_t *env, object_t *args_list) {
+    object_t *name;
+    object_t *value;
+    object_t *list = args_list;
+
+    for (;;) {
+        name = list->head;
+        if (!name) {
+            break;
+        }
+
+        list = list->tail;
+        value = list->head;
+        if (!name) {
+            die("No value to assign to name.");
+        }
+
+        list = list->tail;
+
+        dict_add(
+            get_env_of_name(vms, env, name),
+            name,
+            eval(vms, env, value)
+        );
+    }
+
+    return new_pair(vms);
+}
+
 object_t *macro_func(vm_state *vms, object_t *env, object_t *args_list) {
     return new_macro(vms, args_list->head, env);
 }
@@ -963,10 +1015,12 @@ func_pointer_t *builtin_pointers[] = {
 char *construct_names[] = {
     "quote",
     "macro",
+    "=",
 };
 func_pointer_t *construct_pointers[] = {
     quote_func,
     macro_func,
+    assign_func,
 };
 
 vm_state *start_vm() {
