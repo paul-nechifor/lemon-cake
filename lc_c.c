@@ -28,6 +28,7 @@ enum {
     TYPE_DICT,
     TYPE_BUILTIN_FUNC,
     TYPE_CONSTRUCT,
+    TYPE_MACRO,
 };
 
 struct object_t;
@@ -81,6 +82,11 @@ struct object_t {
 
         // TYPE_CONSTRUCT
         func_pointer_t *construct;
+
+        // TYPE_MACRO
+        struct {
+            struct object_t* macro_body;
+        };
     };
 };
 typedef struct object_t object_t;
@@ -150,6 +156,12 @@ object_t *new_builtin_func(vm_state *vms, func_pointer_t *func) {
 object_t *new_construct(vm_state *vms, func_pointer_t *func) {
     object_t *ret = new_object_t(vms, TYPE_CONSTRUCT);
     ret->construct = func;
+    return ret;
+}
+
+object_t *new_macro(vm_state *vms, object_t *macro_body) {
+    object_t *ret = new_object_t(vms, TYPE_MACRO);
+    ret->macro_body = macro_body;
     return ret;
 }
 
@@ -330,6 +342,16 @@ void print(object_t *o) {
 
         case TYPE_BUILTIN_FUNC:
             c_fprintf(stdout, "(builtin %llu)", o->builtin);
+            break;
+
+        case TYPE_CONSTRUCT:
+            c_fprintf(stdout, "(construct [...])");
+            break;
+
+        case TYPE_MACRO:
+            c_fprintf(stdout, "(macro ");
+            print(o->macro_body);
+            c_fprintf(stdout, ")");
             break;
 
         default:
@@ -637,6 +659,10 @@ object_t *last_func(vm_state *vms, object_t *args_list) {
     return o->head;
 }
 
+object_t *macro_func(vm_state *vms, object_t *args_list) {
+    return new_macro(vms, args_list->head);
+}
+
 object_t *eval_list(vm_state *vms, object_t *o) {
     object_t *ret;
     object_t *top_call_stack_elem = vms->call_stack_objects;
@@ -660,6 +686,11 @@ object_t *eval_list(vm_state *vms, object_t *o) {
 
     if (func_pointer->type == TYPE_CONSTRUCT) {
         ret = (func_pointer->construct)(vms, o->tail);
+        goto eval_list_cleanup;
+    }
+
+    if (func_pointer->type == TYPE_MACRO) {
+        ret = eval(vms, eval(vms, func_pointer->macro_body));
         goto eval_list_cleanup;
     }
 
@@ -694,6 +725,7 @@ object_t *eval(vm_state *vms, object_t *o) {
         case TYPE_INT:
         case TYPE_STRING:
         case TYPE_DICT:
+        case TYPE_MACRO:
             return o;
 
         case TYPE_SYMBOL:
@@ -831,6 +863,7 @@ void free_object(object_t *o) {
         case TYPE_CONSTRUCT:
         case TYPE_LIST:
         case TYPE_INT:
+        case TYPE_MACRO:
             break;
 
         case TYPE_STRING:
@@ -841,7 +874,6 @@ void free_object(object_t *o) {
         case TYPE_SYMBOL:
             c_free(o->symbol_pointer);
             o->symbol_pointer = NULL;
-            // return not break since symbols have special functionality.
             break;
 
         case TYPE_DICT:
@@ -887,9 +919,11 @@ func_pointer_t *builtin_pointers[] = {
 
 char *construct_names[] = {
     "quote",
+    "macro",
 };
 func_pointer_t *construct_pointers[] = {
     quote_func,
+    macro_func,
 };
 
 vm_state *start_vm() {
@@ -971,6 +1005,10 @@ void mark(object_t *o) {
                     }
                 }
             }
+            break;
+
+        case TYPE_MACRO:
+            mark(o->macro_body);
             break;
     }
 }

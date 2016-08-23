@@ -25,6 +25,9 @@ groups.
 - Add macros.
 - Introduce lambdas.
 
+- Write tests for broken programs (e.g.: `(+ 1`) and make sure they don't end up
+  in an infinite loop.
+
 - Add a default script that's run. That would include things like the macro to
   expand `=`. This way large parts could be implemented in LemonCake instead of
   C/Assembly.
@@ -144,6 +147,9 @@ User = deftype
 
 What I've used for inspiratior or plan to use in the future:
 
+* [A Whirlwind Tutorial on Creating Really Teensy ELF Executables for
+  Linux][whirlwind-tutorial]
+
 * [(How to Write a (Lisp) Interpreter (in Python))][lisp-in-python]
 
 * [Minilisp][minilisp]
@@ -169,6 +175,7 @@ x86-64:
 
 ISC
 
+[whirlwind-tutorial]: http://www.muppetlabs.com/~breadbox/software/tiny/teensy.html
 [lisp-in-python]: http://norvig.com/lispy.html
 [minilisp]: https://github.com/rui314/minilisp
 [baby-gc]: http://journal.stuffwithstuff.com/2013/12/08/babys-first-garbage-collector/

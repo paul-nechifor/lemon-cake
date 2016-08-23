@@ -1,0 +1,2 @@
+(set $env (quote two) (macro (quote (+ 1 1))))
+(repr (two))
