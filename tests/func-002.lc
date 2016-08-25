@@ -1,0 +1,8 @@
+# Test that you can override values outside of the function.
+(= a 1)
+(= increase-a (~ (= a (+ a 1))))
+(repr a)
+(increase-a)
+(repr a)
+(increase-a)
+(repr a)

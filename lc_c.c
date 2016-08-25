@@ -27,6 +27,7 @@ enum {
     TYPE_BUILTIN_FUNC,
     TYPE_CONSTRUCT,
     TYPE_MACRO,
+    TYPE_FUNC,
 };
 
 struct object_t;
@@ -85,6 +86,12 @@ struct object_t {
         struct {
             struct object_t* macro_body;
             struct object_t* macro_parent_env;
+        };
+
+        // TYPE_FUNC
+        struct {
+            struct object_t* func_body;
+            struct object_t* func_parent_env;
         };
     };
 };
@@ -162,6 +169,13 @@ object_t *new_macro(vm_state *vms, object_t *macro_body, object_t* macro_parent_
     object_t *ret = new_object_t(vms, TYPE_MACRO);
     ret->macro_body = macro_body;
     ret->macro_parent_env = macro_parent_env;
+    return ret;
+}
+
+object_t *new_func(vm_state *vms, object_t *func_body, object_t* func_parent_env) {
+    object_t *ret = new_object_t(vms, TYPE_FUNC);
+    ret->func_body = func_body;
+    ret->func_parent_env = func_parent_env;
     return ret;
 }
 
@@ -350,6 +364,12 @@ void print(object_t *o) {
 
         case TYPE_MACRO:
             c_fprintf(stdout, "(macro ");
+            print(o->macro_body);
+            c_fprintf(stdout, ")");
+            break;
+
+        case TYPE_FUNC:
+            c_fprintf(stdout, "(~ ");
             print(o->macro_body);
             c_fprintf(stdout, ")");
             break;
@@ -719,6 +739,14 @@ object_t *assign_func(vm_state *vms, object_t *env, object_t *args_list) {
     return ret ? ret : new_pair(vms);
 }
 
+object_t *func_func(vm_state *vms, object_t *env, object_t *args_list) {
+    object_t *ret;
+
+    ret = new_func(vms, args_list->head, env);
+
+    return ret;
+}
+
 object_t *macro_func(vm_state *vms, object_t *env, object_t *args_list) {
     return new_macro(vms, args_list->head, env);
 }
@@ -750,6 +778,11 @@ object_t *eval_list(vm_state *vms, object_t *env, object_t *o) {
     object_t *func_pointer = dict_get(vms, vms->env, first_elem);
 
     if (func_pointer->type == TYPE_CONSTRUCT) {
+        ret = (func_pointer->construct)(vms, env, o->tail);
+        goto eval_list_cleanup;
+    }
+
+    if (func_pointer->type == TYPE_FUNC) {
         // Turn gc off in order to create the child env.
         vms->gc_is_on = 0;
         object_t *child_env = new_dict(vms, 4969);
@@ -761,7 +794,7 @@ object_t *eval_list(vm_state *vms, object_t *env, object_t *o) {
 
         populate_child_env(vms, env, child_env, o->tail);
 
-        ret = (func_pointer->construct)(vms, env, o->tail);
+        ret = eval(vms, child_env, func_pointer->func_body);
         goto eval_list_cleanup;
     }
 
@@ -802,6 +835,7 @@ object_t *eval(vm_state *vms, object_t *env, object_t *o) {
         case TYPE_STRING:
         case TYPE_DICT:
         case TYPE_MACRO:
+        case TYPE_FUNC:
             return o;
 
         case TYPE_SYMBOL:
@@ -960,6 +994,7 @@ void free_object(object_t *o) {
         case TYPE_LIST:
         case TYPE_INT:
         case TYPE_MACRO:
+        case TYPE_FUNC:
             break;
 
         case TYPE_STRING:
@@ -1017,11 +1052,13 @@ char *construct_names[] = {
     "quote",
     "macro",
     "=",
+    "~",
 };
 func_pointer_t *construct_pointers[] = {
     quote_func,
     macro_func,
     assign_func,
+    func_func,
 };
 
 vm_state *start_vm() {
@@ -1108,6 +1145,11 @@ void mark(object_t *o) {
         case TYPE_MACRO:
             mark(o->macro_body);
             mark(o->macro_parent_env);
+            break;
+
+        case TYPE_FUNC:
+            mark(o->func_body);
+            mark(o->func_parent_env);
             break;
     }
 }
