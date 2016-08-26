@@ -771,11 +771,17 @@ object_t *eval_list(vm_state *vms, object_t *env, object_t *o) {
     }
 
     object_t *first_elem = o->head;
-    if (first_elem->type != TYPE_SYMBOL) {
-        die("Cannot eval non-symbol-starting list.");
+    object_t *func_pointer;
+
+    if (first_elem->type == TYPE_SYMBOL) {
+        func_pointer = dict_get(vms, vms->env, first_elem);
+    } else if (first_elem->type == TYPE_LIST) {
+        func_pointer = eval(vms, vms->env, first_elem);
+    } else {
+        print(first_elem);
+        die("For lists to be evaled they need to start with a symbol or a list");
     }
 
-    object_t *func_pointer = dict_get(vms, vms->env, first_elem);
 
     if (func_pointer->type == TYPE_CONSTRUCT) {
         ret = (func_pointer->construct)(vms, env, o->tail);

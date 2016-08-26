@@ -1,0 +1,5 @@
+# Test IIFE (immediately invoked function expression).
+(repr (
+  (~ (+ 2 (head $args)))
+  2
+))

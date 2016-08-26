@@ -25,6 +25,9 @@ groups.
 - Add macros.
 - Introduce lambdas.
 
+- Add a debugging flag which will trigger printing all the evaulated
+  expressions.
+
 - Write tests for broken programs (e.g.: `(+ 1`) and make sure they don't end up
   in an infinite loop.
 
