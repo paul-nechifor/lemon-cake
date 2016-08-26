@@ -90,6 +90,7 @@ struct object_t {
 
         // TYPE_FUNC
         struct {
+            struct object_t* func_args;
             struct object_t* func_body;
             struct object_t* func_parent_env;
         };
@@ -172,8 +173,14 @@ object_t *new_macro(vm_state *vms, object_t *macro_body, object_t* macro_parent_
     return ret;
 }
 
-object_t *new_func(vm_state *vms, object_t *func_body, object_t* func_parent_env) {
+object_t *new_func(
+    vm_state *vms,
+    object_t *func_args,
+    object_t *func_body,
+    object_t *func_parent_env
+) {
     object_t *ret = new_object_t(vms, TYPE_FUNC);
+    ret->func_args = func_args;
     ret->func_body = func_body;
     ret->func_parent_env = func_parent_env;
     return ret;
@@ -739,10 +746,29 @@ object_t *assign_func(vm_state *vms, object_t *env, object_t *args_list) {
     return ret ? ret : new_pair(vms);
 }
 
+/*
+ * This function accepts either one or two arguments. E.g.:
+ *   (~ <body>)
+ *   (~ <args> <body>)
+ */
 object_t *func_func(vm_state *vms, object_t *env, object_t *args_list) {
     object_t *ret;
 
-    ret = new_func(vms, args_list->head, env);
+    object_t *arg1 = args_list->head;
+    object_t *arg2 = args_list->tail->head;
+
+    object_t *args;
+    object_t *body;
+
+    if (arg2) {
+        args = arg1;
+        body = arg2;
+    } else {
+        args = new_pair(vms);
+        body = arg1;
+    }
+
+    ret = new_func(vms, args, body, env);
 
     return ret;
 }
@@ -751,9 +777,35 @@ object_t *macro_func(vm_state *vms, object_t *env, object_t *args_list) {
     return new_macro(vms, args_list->head, env);
 }
 
-void populate_child_env(vm_state *vms, object_t *parent_env, object_t *child_env, object_t *args) {
+void populate_child_env(
+    vm_state *vms,
+    object_t *parent_env,
+    object_t *child_env,
+    object_t *arg_names,
+    object_t *arg_values
+) {
     dict_add(child_env, new_symbol(vms, "$parent", 7), parent_env);
-    dict_add(child_env, new_symbol(vms, "$args", 5), args);
+    dict_add(child_env, new_symbol(vms, "$args", 5), arg_values);
+
+    object_t *arg_name = arg_names;
+    object_t *arg_value = arg_values;
+
+    while (arg_name->head) {
+        dict_add(
+            child_env,
+            new_symbol(
+                vms,
+                arg_name->head->symbol_pointer,
+                arg_name->head->symbol_length
+            ),
+            arg_value->head
+        );
+        arg_name = arg_name->tail;
+
+        if (arg_value->head) {
+            arg_value = arg_value->tail;
+        }
+    }
 }
 
 object_t *eval_list(vm_state *vms, object_t *env, object_t *o) {
@@ -771,41 +823,25 @@ object_t *eval_list(vm_state *vms, object_t *env, object_t *o) {
     }
 
     object_t *first_elem = o->head;
-    object_t *func_pointer;
+    object_t *func;
 
     if (first_elem->type == TYPE_SYMBOL) {
-        func_pointer = dict_get(vms, vms->env, first_elem);
+        func = dict_get(vms, vms->env, first_elem);
     } else if (first_elem->type == TYPE_LIST) {
-        func_pointer = eval(vms, vms->env, first_elem);
+        func = eval(vms, vms->env, first_elem);
     } else {
         print(first_elem);
         die("For lists to be evaled they need to start with a symbol or a list");
     }
 
 
-    if (func_pointer->type == TYPE_CONSTRUCT) {
-        ret = (func_pointer->construct)(vms, env, o->tail);
+    if (func->type == TYPE_CONSTRUCT) {
+        ret = (func->construct)(vms, env, o->tail);
         goto eval_list_cleanup;
     }
 
-    if (func_pointer->type == TYPE_FUNC) {
-        // Turn gc off in order to create the child env.
-        vms->gc_is_on = 0;
-        object_t *child_env = new_dict(vms, 4969);
-        vms->gc_is_on = 1;
-
-        // Add the child env object to the call stack.
-        child_env->next_stack_object = vms->call_stack_objects;
-        vms->call_stack_objects = child_env;
-
-        populate_child_env(vms, env, child_env, o->tail);
-
-        ret = eval(vms, child_env, func_pointer->func_body);
-        goto eval_list_cleanup;
-    }
-
-    if (func_pointer->type == TYPE_MACRO) {
-        ret = eval(vms, env, eval(vms, env, func_pointer->macro_body));
+    if (func->type == TYPE_MACRO) {
+        ret = eval(vms, env, eval(vms, env, func->macro_body));
         goto eval_list_cleanup;
     }
 
@@ -820,8 +856,24 @@ object_t *eval_list(vm_state *vms, object_t *env, object_t *o) {
 
     eval_args_list(vms, env, args_list, o->tail);
 
-    if (func_pointer->type == TYPE_BUILTIN_FUNC) {
-        ret = ((func_pointer_t *) func_pointer->builtin)(
+    if (func->type == TYPE_FUNC) {
+        // Turn gc off in order to create the child env.
+        vms->gc_is_on = 0;
+        object_t *child_env = new_dict(vms, 4969);
+        vms->gc_is_on = 1;
+
+        // Add the child env object to the call stack.
+        child_env->next_stack_object = vms->call_stack_objects;
+        vms->call_stack_objects = child_env;
+
+        populate_child_env(vms, env, child_env, func->func_args, args_list);
+
+        ret = eval(vms, child_env, func->func_body);
+        goto eval_list_cleanup;
+    }
+
+    if (func->type == TYPE_BUILTIN_FUNC) {
+        ret = ((func_pointer_t *) func->builtin)(
             vms, env, args_list
         );
         goto eval_list_cleanup;
@@ -1154,6 +1206,7 @@ void mark(object_t *o) {
             break;
 
         case TYPE_FUNC:
+            mark(o->func_args);
             mark(o->func_body);
             mark(o->func_parent_env);
             break;

@@ -1,0 +1,4 @@
+# Function with named arguments.
+(= sum (~ (a b) (+ a b)))
+(repr (sum 1 4))
+(repr (sum 1 2 3))
