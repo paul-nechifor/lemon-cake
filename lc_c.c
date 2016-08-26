@@ -1,6 +1,12 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#define ADD_ON_CALL_STACK(vms, obj) \
+    do { \
+        obj->next_stack_object = vms->call_stack_objects; \
+        vms->call_stack_objects = obj; \
+    } while (0)
+
 extern void (*c_exit)(int status);
 extern int (*c_fprintf)(FILE *stream, const char *format, ...);
 extern void (*c_free)(void *ptr);
@@ -123,11 +129,12 @@ struct vm_state {
 typedef struct vm_state vm_state;
 
 object_t *parse_recursive(vm_state *vms, char *s, uint64_t *i, uint64_t len);
-void print(object_t *o);
+void print(vm_state *vms, object_t *o);
 void free_object(object_t *o);
 object_t *eval(vm_state *vms, object_t *env, object_t *o);
 uint64_t objects_equal(object_t *a, object_t *b);
 void dict_add(object_t *d, object_t *key, object_t *value);
+object_t *dict_get(vm_state *vms, object_t *d, object_t *key);
 void gc(vm_state *vms);
 
 static void die(char *msg) {
@@ -136,13 +143,14 @@ static void die(char *msg) {
 }
 
 object_t *new_object_t(vm_state *vms, uint64_t type) {
-    if (vms->n_objects == vms->max_objects) {
+    if (vms->n_objects == vms->max_objects && vms->gc_is_on) {
         gc(vms);
     }
     object_t *o = c_malloc(sizeof(object_t));
     o->type = type;
     o->marked = 0;
     o->next_object = vms->last_object;
+    o->next_stack_object = NULL;
     vms->last_object = o;
     vms->n_objects++;
     return o;
@@ -292,7 +300,7 @@ object_t *read_list(vm_state *vms, char *s, uint64_t *i, uint64_t len) {
     }
 }
 
-void print_list(object_t *o) {
+void print_list(vm_state *vms, object_t *o) {
     c_fprintf(stdout, "(");
     uint64_t first_elem = 1;
 
@@ -304,7 +312,7 @@ void print_list(object_t *o) {
         } else {
             c_fprintf(stdout, " ");
         }
-        print(pair->head);
+        print(vms, pair->head);
         pair = pair->tail;
     }
 
@@ -312,7 +320,7 @@ end_print_list:
     c_fprintf(stdout, ")");
 }
 
-void print_dict(object_t *o) {
+void print_dict(vm_state *vms, object_t *o) {
     c_fprintf(stdout, "(dict");
 
     dict_pair *table = o->dict_table;
@@ -325,9 +333,9 @@ void print_dict(object_t *o) {
         for (;;) {
             if (pair->value) {
                 c_fprintf(stdout, " ");
-                print(pair->key);
+                print(vms, pair->key);
                 c_fprintf(stdout, " ");
-                print(pair->value);
+                print(vms, pair->value);
             }
             if (!pair->next) {
                 break;
@@ -339,7 +347,7 @@ void print_dict(object_t *o) {
     c_fprintf(stdout, ")");
 }
 
-void print(object_t *o) {
+void print(vm_state *vms, object_t *o) {
     switch (o->type) {
         case TYPE_INT:
             c_fprintf(stdout, "%llu", o->int_value);
@@ -350,7 +358,7 @@ void print(object_t *o) {
             break;
 
         case TYPE_LIST:
-            print_list(o);
+            print_list(vms, o);
             break;
 
         case TYPE_SYMBOL:
@@ -358,26 +366,30 @@ void print(object_t *o) {
             break;
 
         case TYPE_DICT:
-            print_dict(o);
+            print_dict(vms, o);
             break;
 
         case TYPE_BUILTIN_FUNC:
-            c_fprintf(stdout, "(builtin %llu)", o->builtin);
+            c_fprintf(stdout, "(builtin %p)", o->builtin);
             break;
 
         case TYPE_CONSTRUCT:
-            c_fprintf(stdout, "(construct [...])");
+            c_fprintf(stdout, "(construct %p)", o->construct);
             break;
 
         case TYPE_MACRO:
             c_fprintf(stdout, "(macro ");
-            print(o->macro_body);
+            print(vms, o->macro_body);
             c_fprintf(stdout, ")");
             break;
 
         case TYPE_FUNC:
             c_fprintf(stdout, "(~ ");
-            print(o->macro_body);
+            if (o->func_args->head) {
+                print(vms, o->func_args);
+                c_fprintf(stdout, " ");
+            }
+            print(vms, o->func_body);
             c_fprintf(stdout, ")");
             break;
 
@@ -674,7 +686,7 @@ object_t *is_func(vm_state *vms, object_t *env, object_t *args_list) {
 }
 
 object_t *repr_func(vm_state *vms, object_t *env, object_t *args_list) {
-    print(args_list->head);
+    print(vms, args_list->head);
     return new_pair(vms);
 }
 
@@ -752,8 +764,6 @@ object_t *assign_func(vm_state *vms, object_t *env, object_t *args_list) {
  *   (~ <args> <body>)
  */
 object_t *func_func(vm_state *vms, object_t *env, object_t *args_list) {
-    object_t *ret;
-
     object_t *arg1 = args_list->head;
     object_t *arg2 = args_list->tail->head;
 
@@ -768,9 +778,7 @@ object_t *func_func(vm_state *vms, object_t *env, object_t *args_list) {
         body = arg1;
     }
 
-    ret = new_func(vms, args, body, env);
-
-    return ret;
+    return new_func(vms, args, body, env);
 }
 
 object_t *macro_func(vm_state *vms, object_t *env, object_t *args_list) {
@@ -812,9 +820,7 @@ object_t *eval_list(vm_state *vms, object_t *env, object_t *o) {
     object_t *ret;
     object_t *top_call_stack_elem = vms->call_stack_objects;
 
-    // Add the o object to the call stack.
-    o->next_stack_object = vms->call_stack_objects;
-    vms->call_stack_objects = o;
+    ADD_ON_CALL_STACK(vms, o);
 
     // An empty list evaluates to itself.
     if (!o->head) {
@@ -825,12 +831,9 @@ object_t *eval_list(vm_state *vms, object_t *env, object_t *o) {
     object_t *first_elem = o->head;
     object_t *func;
 
-    if (first_elem->type == TYPE_SYMBOL) {
-        func = dict_get(vms, vms->env, first_elem);
-    } else if (first_elem->type == TYPE_LIST) {
-        func = eval(vms, vms->env, first_elem);
+    if (first_elem->type == TYPE_SYMBOL || first_elem->type == TYPE_LIST) {
+        func = eval(vms, env, first_elem);
     } else {
-        print(first_elem);
         die("For lists to be evaled they need to start with a symbol or a list");
     }
 
@@ -850,9 +853,7 @@ object_t *eval_list(vm_state *vms, object_t *env, object_t *o) {
     object_t *args_list = new_pair(vms);
     vms->gc_is_on = 1;
 
-    // Add the args_list object to the call stack.
-    args_list->next_stack_object = vms->call_stack_objects;
-    vms->call_stack_objects = args_list;
+    ADD_ON_CALL_STACK(vms, args_list);
 
     eval_args_list(vms, env, args_list, o->tail);
 
@@ -862,11 +863,11 @@ object_t *eval_list(vm_state *vms, object_t *env, object_t *o) {
         object_t *child_env = new_dict(vms, 4969);
         vms->gc_is_on = 1;
 
-        // Add the child env object to the call stack.
-        child_env->next_stack_object = vms->call_stack_objects;
-        vms->call_stack_objects = child_env;
+        ADD_ON_CALL_STACK(vms, child_env);
 
-        populate_child_env(vms, env, child_env, func->func_args, args_list);
+        populate_child_env(
+            vms, func->func_parent_env, child_env, func->func_args, args_list
+        );
 
         ret = eval(vms, child_env, func->func_body);
         goto eval_list_cleanup;
@@ -1230,10 +1231,11 @@ void sweep(vm_state *vms) {
     }
 }
 
+/*
+ * You need to check that vms->gc_is_on is true before calling this function.
+ */
 void gc(vm_state *vms) {
-    if (!vms->gc_is_on) {
-        return;
-    }
+    vms->gc_is_on = 0;
 
     mark(vms->env);
 
@@ -1249,6 +1251,8 @@ void gc(vm_state *vms) {
     sweep(vms);
 
     vms->max_objects = vms->n_objects * 2;
+
+    vms->gc_is_on = 1;
 }
 
 void eval_lines() {
@@ -1271,9 +1275,12 @@ void eval_lines() {
             parsed = parse(vms, line, c_strlen(line));
             vms->gc_is_on = 1;
             o = eval(vms, vms->env, parsed);
-            print(o);
+            print(vms, o);
             c_fprintf(stdout, "\n");
-            gc(vms);
+            if (vms->gc_is_on) {
+                gc(vms);
+            }
+
         }
         goto eval_lines_cleanup;
     }
@@ -1310,6 +1317,9 @@ void eval_lines() {
     eval(vms, vms->env, parsed);
 
 eval_lines_cleanup:
+    if (vms->gc_is_on) {
+        gc(vms);
+    }
     if (line) {
         c_free(line);
     }

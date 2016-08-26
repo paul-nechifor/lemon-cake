@@ -38,9 +38,6 @@ groups.
 
 - Make dicts resizable.
 
-- Eliminate cycles when using `print` by keeping track of objects that have
-  already been printed.
-
 - Define `s1 s2 s4 s8 u1 u2 u4 u8` to `signed int 8 bits, ...`
 - Use `@` for quoting instead of `'` in Lisp.
 

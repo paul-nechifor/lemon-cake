@@ -1,0 +1,22 @@
+# Nested functions.
+
+(= funcs ((~ (last
+  (= a 1)
+  (
+    dict
+    'inc-a' (~ (= a (+ a 1)))
+    'get-a' (~ a)
+  )
+))))
+
+# 'a' isn't available here.
+(repr a)
+
+# Get 1.
+(repr ((get funcs 'get-a')))
+
+# Increase.
+((get funcs 'inc-a'))
+
+# Get 2.
+(repr ((get funcs 'get-a')))
