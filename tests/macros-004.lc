@@ -1,0 +1,13 @@
+(= add-with (macro (base) (list
+  (quote ~)
+  (quote (n))
+  (list (quote +) (quote n) base)
+)))
+
+(= adder-5 (add-with 5))
+(repr (adder-5 10))
+(repr (adder-5 100))
+
+(= adder-123 (add-with 123))
+(repr (adder-123 1000))
+(repr (adder-123 1))

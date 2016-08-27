@@ -1,0 +1,19 @@
+(=
+  =~
+  (macro
+    (name args function)
+    (list
+      (quote =)
+      name
+      (list
+        (quote ~)
+        args
+        function
+      )
+    )
+  )
+)
+
+(=~ sum (a b) (+ a b))
+
+(repr (sum 1 2))

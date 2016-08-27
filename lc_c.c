@@ -90,6 +90,7 @@ struct object_t {
 
         // TYPE_MACRO
         struct {
+            struct object_t* macro_args;
             struct object_t* macro_body;
             struct object_t* macro_parent_env;
         };
@@ -174,8 +175,14 @@ object_t *new_construct(vm_state *vms, func_pointer_t *func) {
     return ret;
 }
 
-object_t *new_macro(vm_state *vms, object_t *macro_body, object_t* macro_parent_env) {
+object_t *new_macro(
+    vm_state *vms,
+    object_t *macro_args,
+    object_t *macro_body,
+    object_t* macro_parent_env
+) {
     object_t *ret = new_object_t(vms, TYPE_MACRO);
+    ret->macro_args = macro_args;
     ret->macro_body = macro_body;
     ret->macro_parent_env = macro_parent_env;
     return ret;
@@ -379,6 +386,10 @@ void print(vm_state *vms, object_t *o) {
 
         case TYPE_MACRO:
             c_fprintf(stdout, "(macro ");
+            if (o->macro_args->head) {
+                print(vms, o->macro_args);
+                c_fprintf(stdout, " ");
+            }
             print(vms, o->macro_body);
             c_fprintf(stdout, ")");
             break;
@@ -781,8 +792,26 @@ object_t *func_func(vm_state *vms, object_t *env, object_t *args_list) {
     return new_func(vms, args, body, env);
 }
 
+/*
+ * This function accepts either one or two arguments. E.g.:
+ *   (macro <body>)
+ *   (macro <args> <body>)
+ */
 object_t *macro_func(vm_state *vms, object_t *env, object_t *args_list) {
-    return new_macro(vms, args_list->head, env);
+    object_t *arg1 = args_list->head;
+    object_t *arg2 = args_list->tail->head;
+
+    object_t *args;
+    object_t *body;
+
+    if (arg2) {
+        args = arg1;
+        body = arg2;
+    } else {
+        args = new_pair(vms);
+        body = arg1;
+    }
+    return new_macro(vms, args, body, env);
 }
 
 void populate_child_env(
@@ -844,7 +873,18 @@ object_t *eval_list(vm_state *vms, object_t *env, object_t *o) {
     }
 
     if (func->type == TYPE_MACRO) {
-        ret = eval(vms, env, eval(vms, env, func->macro_body));
+        // Turn gc off in order to create the child env.
+        vms->gc_is_on = 0;
+        object_t *child_env = new_dict(vms, 4969);
+        vms->gc_is_on = 1;
+
+        ADD_ON_CALL_STACK(vms, child_env);
+
+        populate_child_env(
+            vms, func->macro_parent_env, child_env, func->macro_args, o->tail
+        );
+
+        ret = eval(vms, env, eval(vms, child_env, func->macro_body));
         goto eval_list_cleanup;
     }
 
@@ -1202,6 +1242,7 @@ void mark(object_t *o) {
             break;
 
         case TYPE_MACRO:
+            mark(o->macro_args);
             mark(o->macro_body);
             mark(o->macro_parent_env);
             break;
