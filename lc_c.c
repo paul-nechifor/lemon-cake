@@ -637,6 +637,8 @@ object_t *get_func(vm_state *vms, object_t *env, object_t *args_list) {
 
 uint64_t obj_len_func(object_t *o) {
     switch (o->type) {
+        case TYPE_INT:
+            return o->int_value;
         case TYPE_STRING:
             return o->string_length;
         case TYPE_SYMBOL:
@@ -812,6 +814,29 @@ object_t *macro_func(vm_state *vms, object_t *env, object_t *args_list) {
         body = arg1;
     }
     return new_macro(vms, args, body, env);
+}
+
+object_t *if_func(vm_state *vms, object_t *env, object_t *args_list) {
+    object_t *arg = args_list;
+    object_t *next_arg;
+
+    for (;;) {
+        if (!arg->head) {
+            return new_pair(vms);
+        }
+
+        next_arg = arg->tail;
+
+        if (!next_arg->head) {
+            return eval(vms, env, arg->head);
+        }
+
+        if (obj_len_func(eval(vms, env, arg->head))) {
+            return next_arg->head;
+        }
+
+        arg = next_arg->tail;
+    }
 }
 
 void populate_child_env(
@@ -1152,12 +1177,14 @@ char *construct_names[] = {
     "macro",
     "=",
     "~",
+    "if",
 };
 func_pointer_t *construct_pointers[] = {
     quote_func,
     macro_func,
     assign_func,
     func_func,
+    if_func,
 };
 
 vm_state *start_vm() {
