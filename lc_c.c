@@ -427,6 +427,36 @@ object_t *plus_func(vm_state *vms, object_t *env, object_t *args_list) {
     return new_int(vms, ret);
 }
 
+object_t *minus_func(vm_state *vms, object_t *env, object_t *args_list) {
+    uint64_t ret = 0;
+
+    object_t *pair = args_list;
+    object_t *o;
+
+    if (!pair->head) {
+        die("No first arg to -.");
+    }
+
+    o = pair->head;
+    if (o->type != TYPE_INT) {
+        die("Not int.");
+    }
+
+    ret = o->int_value;
+    pair = pair->tail;
+
+    while (pair->head) {
+        o = pair->head;
+        if (o->type != TYPE_INT) {
+            die("Not int.");
+        }
+        ret -= o->int_value;
+        pair = pair->tail;
+    }
+
+    return new_int(vms, ret);
+}
+
 void list_append(vm_state *vms, object_t *list, object_t *o) {
     object_t *p = list;
     while (p->head) {
@@ -832,7 +862,7 @@ object_t *if_func(vm_state *vms, object_t *env, object_t *args_list) {
         }
 
         if (obj_len_func(eval(vms, env, arg->head))) {
-            return next_arg->head;
+            return eval(vms, env, next_arg->head);
         }
 
         arg = next_arg->tail;
@@ -1153,6 +1183,7 @@ char *builtin_names[] = {
     "hashcode",
     "is",
     "+",
+    "-",
     "repr",
     "last",
 };
@@ -1168,6 +1199,7 @@ func_pointer_t *builtin_pointers[] = {
     hashcode_func,
     is_func,
     plus_func,
+    minus_func,
     repr_func,
     last_func,
 };

@@ -1,0 +1,16 @@
+# Recursive function, yay!
+
+(= fib (~ (n) (if
+  (is n 0) 0
+  (is n 1) 1
+  (+
+    (fib (- n 1))
+    (fib (- n 2))
+  )
+)))
+
+(repr (fib 2))
+(repr (fib 3))
+(repr (fib 4))
+(repr (fib 5))
+(repr (fib 6))
