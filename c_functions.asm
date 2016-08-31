@@ -60,7 +60,7 @@ load_c_functions:
   mov edi, libcso_str
   call dlopen
 
-  ; rbx is the dlopen handle for "libc.so".
+  ; rbx will now be the dlopen handle for "libc.so".
   mov rbx, rax
 
   ; rbp is holds the position of the function pointer and `rbp + 8` holds the

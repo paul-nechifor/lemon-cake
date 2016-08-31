@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
+#include <dlfcn.h> // TODO: Remove this.
 
 #define ADD_ON_CALL_STACK(vms, obj) \
     do { \
@@ -747,6 +748,75 @@ object_t *last_func(vm_state *vms, object_t *env, object_t *args_list) {
     return o->head;
 }
 
+object_t *dynsym_func(vm_state *vms, object_t *env, object_t *args_list) {
+    object_t *lib_name = args_list->head;
+    object_t *sym_name = args_list->tail->head;
+
+    object_t *dynlibs = dict_get_null(
+        vms, vms->env, new_symbol(vms, "$dynlibs", 4)
+    );
+
+    if (!dynlibs) {
+        die("Couldn't find $dynlibs.");
+    }
+
+    object_t *dl_lib = dict_get_null(vms, dynlibs, lib_name);
+    object_t *funcs_str = new_string(vms, "funcs", 5);
+    object_t *handle_str = new_string(vms, "handle", 6);
+    object_t *funcs;
+    object_t *handle;
+
+    if (!dl_lib) {
+        uint64_t handle_ptr = (uint64_t) dlopen(lib_name->string_pointer, 1);
+
+        if (!handle_ptr) {
+            die("Failed to open.");
+        }
+
+        dl_lib = new_dict(vms, 4969);
+        dict_add(dynlibs, lib_name, dl_lib);
+
+        funcs = new_dict(vms, 4969);
+
+        handle = new_int(vms, handle_ptr);
+        dict_add(dl_lib, handle_str, handle);
+        dict_add(dl_lib, funcs_str, funcs);
+
+    } else {
+        funcs = dict_get_null(vms, dl_lib, funcs_str);
+
+        if (!funcs) {
+            die("Failed to find 'funcs'.");
+        }
+        handle = dict_get_null(vms, dl_lib, handle_str);
+
+        if (!handle_str) {
+            die("Failed to find 'handle'.");
+        }
+    }
+
+    object_t *func = dict_get_null(vms, funcs, sym_name);
+
+    if (func) {
+        return func;
+    }
+
+    uint64_t sym = (uint64_t) dlsym(
+        (void *) handle->int_value,
+        sym_name->string_pointer
+    );
+
+    if (!sym) {
+        die("Failed to find the sym.");
+    }
+
+    object_t *sym_obj = new_int(vms, sym);
+
+    dict_add(funcs, sym_name, sym_obj);
+
+    return sym_obj;
+}
+
 object_t *get_env_of_name(vm_state *vms, object_t *env, object_t *name) {
     object_t *parent_sym = new_symbol(vms, "$parent", 7);
 
@@ -1186,6 +1256,7 @@ char *builtin_names[] = {
     "-",
     "repr",
     "last",
+    "dynsym",
 };
 func_pointer_t *builtin_pointers[] = {
     dict_func,
@@ -1202,6 +1273,7 @@ func_pointer_t *builtin_pointers[] = {
     minus_func,
     repr_func,
     last_func,
+    dynsym_func,
 };
 
 char *construct_names[] = {
@@ -1229,6 +1301,7 @@ vm_state *start_vm() {
     vms->env = new_dict(vms, 4969);
 
     dict_add(vms->env, new_symbol(vms, "$env", 4), vms->env);
+    dict_add(vms->env, new_symbol(vms, "$dynlibs", 4), new_dict(vms, 4969));
 
     object_t *d = vms->env;
     uint64_t n_pointers = sizeof(builtin_pointers) / sizeof(uint64_t);

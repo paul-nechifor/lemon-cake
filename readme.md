@@ -22,6 +22,16 @@ language.
 These are some of the things I plan to do, ordered by priority and bunched into
 groups.
 
+- Intern all the symbols and integers used by the VM.
+
+- FFI.
+
+- Initially open symbols from 1libc.so`.
+
+- Add another long GC test that uses lambdas.
+
+- Fix `die` to accept arguments.
+
 - Add a debugging flag which will trigger printing all the evaulated
   expressions.
 
@@ -30,8 +40,6 @@ groups.
 
 - Add a default script that's run. This way large parts could be implemented in
   LemonCake instead of C/Assembly.
-
-- Consider interning some commonly used symbols.
 
 - Make dicts resizable.
 
@@ -167,6 +175,8 @@ What I've used for inspiratior or plan to use in the future:
 
 * [Indentation-sensitive syntax for Lisp][lisp-indent]
 
+* [Let’s Build A Simple Interpreter][simple-interpreter]
+
 ## Reference
 
 x86-64:
@@ -186,3 +196,4 @@ ISC
 [verve]: http://tadeuzagallo.com/blog/introducing-verve/
 [verve-repo]: https://github.com/tadeuzagallo/verve-lang
 [lisp-indent]: http://srfi.schemers.org/srfi-49/srfi-49.html
+[simple-interpreter]: https://ruslanspivak.com/lsbasi-part1/
