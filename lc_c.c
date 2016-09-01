@@ -127,6 +127,13 @@ struct vm_state {
     // This is a linked list of all the objects that are still active in the
     // computation.
     object_t *call_stack_objects;
+
+    // This is a dict containing all the interned objects. The value for each
+    // key is the key.
+    object_t *interned;
+
+    // This structure contains all the elements above plus an embedded array of
+    // interned objects. See `start_vm()` to see how that's done.
 };
 typedef struct vm_state vm_state;
 
@@ -138,6 +145,27 @@ uint64_t objects_equal(object_t *a, object_t *b);
 void dict_add(object_t *d, object_t *key, object_t *value);
 object_t *dict_get(vm_state *vms, object_t *d, object_t *key);
 void gc(vm_state *vms);
+
+char *interned_symbols[] = {
+    "$env",
+    "$dynlibs",
+    "$parent",
+    "$args",
+    "last",
+    "funcs",
+    "handle",
+};
+
+#define FIRST_INTERNED_OBJ_PTR(vms) \
+    ((object_t **)(((char *) vms) + sizeof(vm_state)))
+
+#define DLR_ENV_SYM(vms) (FIRST_INTERNED_OBJ_PTR(vms)[0])
+#define DLR_DYNLIBS_SYM(vms) (FIRST_INTERNED_OBJ_PTR(vms)[1])
+#define DLR_PARENT_SYM(vms) (FIRST_INTERNED_OBJ_PTR(vms)[2])
+#define DLR_ARGS_SYM(vms) (FIRST_INTERNED_OBJ_PTR(vms)[3])
+#define LAST_SYM(vms) (FIRST_INTERNED_OBJ_PTR(vms)[4])
+#define FUNCS_SYM(vms) (FIRST_INTERNED_OBJ_PTR(vms)[5])
+#define HANDLE_SYM(vms) (FIRST_INTERNED_OBJ_PTR(vms)[6])
 
 static void die(char *msg) {
     c_fprintf(stderr, "%s\n", msg);
@@ -752,17 +780,13 @@ object_t *dynsym_func(vm_state *vms, object_t *env, object_t *args_list) {
     object_t *lib_name = args_list->head;
     object_t *sym_name = args_list->tail->head;
 
-    object_t *dynlibs = dict_get_null(
-        vms, vms->env, new_symbol(vms, "$dynlibs", 4)
-    );
+    object_t *dynlibs = dict_get_null(vms, vms->env, DLR_DYNLIBS_SYM(vms));
 
     if (!dynlibs) {
         die("Couldn't find $dynlibs.");
     }
 
     object_t *dl_lib = dict_get_null(vms, dynlibs, lib_name);
-    object_t *funcs_str = new_string(vms, "funcs", 5);
-    object_t *handle_str = new_string(vms, "handle", 6);
     object_t *funcs;
     object_t *handle;
 
@@ -779,18 +803,18 @@ object_t *dynsym_func(vm_state *vms, object_t *env, object_t *args_list) {
         funcs = new_dict(vms, 4969);
 
         handle = new_int(vms, handle_ptr);
-        dict_add(dl_lib, handle_str, handle);
-        dict_add(dl_lib, funcs_str, funcs);
+        dict_add(dl_lib, HANDLE_SYM(vms), handle);
+        dict_add(dl_lib, FUNCS_SYM(vms), funcs);
 
     } else {
-        funcs = dict_get_null(vms, dl_lib, funcs_str);
+        funcs = dict_get_null(vms, dl_lib, FUNCS_SYM(vms));
 
         if (!funcs) {
             die("Failed to find 'funcs'.");
         }
-        handle = dict_get_null(vms, dl_lib, handle_str);
+        handle = dict_get_null(vms, dl_lib, HANDLE_SYM(vms));
 
-        if (!handle_str) {
+        if (!handle) {
             die("Failed to find 'handle'.");
         }
     }
@@ -818,7 +842,7 @@ object_t *dynsym_func(vm_state *vms, object_t *env, object_t *args_list) {
 }
 
 object_t *get_env_of_name(vm_state *vms, object_t *env, object_t *name) {
-    object_t *parent_sym = new_symbol(vms, "$parent", 7);
+    object_t *parent_sym = DLR_PARENT_SYM(vms);
 
     object_t *parent;
     object_t *value;
@@ -946,8 +970,8 @@ void populate_child_env(
     object_t *arg_names,
     object_t *arg_values
 ) {
-    dict_add(child_env, new_symbol(vms, "$parent", 7), parent_env);
-    dict_add(child_env, new_symbol(vms, "$args", 5), arg_values);
+    dict_add(child_env, DLR_PARENT_SYM(vms), parent_env);
+    dict_add(child_env, DLR_ARGS_SYM(vms), arg_values);
 
     object_t *arg_name = arg_names;
     object_t *arg_value = arg_values;
@@ -1065,7 +1089,7 @@ object_t *eval(vm_state *vms, object_t *env, object_t *o) {
         case TYPE_SYMBOL:
             {
                 vms->gc_is_on = 0;
-                object_t *parent_sym = new_symbol(vms, "$parent", 7);
+                object_t *parent_sym = DLR_PARENT_SYM(vms);
                 vms->gc_is_on = 1;
 
                 object_t *parent;
@@ -1178,7 +1202,7 @@ object_t *parse(vm_state *vms, char *s, uint64_t len) {
     object_t *ret = new_pair(vms);
     object_t *pair = ret;
 
-    pair->head = new_symbol(vms, "last", 4);
+    pair->head = LAST_SYM(vms);
     pair->tail = new_pair(vms);
 
     while (i < len - 1) {
@@ -1292,22 +1316,47 @@ func_pointer_t *construct_pointers[] = {
 };
 
 vm_state *start_vm() {
-    vm_state *vms = c_malloc(sizeof(vm_state));
+    uint64_t n_interned_symbols = sizeof(interned_symbols) / sizeof(char *);
+    uint64_t n_interned_objects = n_interned_symbols; // + n_interned_ints;
+
+    vm_state *vms = c_malloc(
+        sizeof(vm_state) +
+        sizeof(object_t *) * n_interned_objects
+    );
+
     vms->n_objects = 0;
     vms->max_objects = 8;
     vms->gc_is_on = 0;
     vms->last_object = NULL;
     vms->call_stack_objects = NULL;
     vms->env = new_dict(vms, 4969);
+    vms->interned = new_dict(vms, 4969);
 
-    dict_add(vms->env, new_symbol(vms, "$env", 4), vms->env);
-    dict_add(vms->env, new_symbol(vms, "$dynlibs", 4), new_dict(vms, 4969));
-
-    object_t *d = vms->env;
-    uint64_t n_pointers = sizeof(builtin_pointers) / sizeof(uint64_t);
     uint64_t i;
+    uint64_t n;
+    object_t *d;
 
-    for (i = 0; i < n_pointers; i++) {
+    d = vms->interned;
+    n = sizeof(interned_symbols) / sizeof(char *);
+
+    for (i = 0; i < n; i++) {
+        object_t *s = new_symbol(
+            vms,
+            interned_symbols[i],
+            c_strlen(interned_symbols[i])
+        );
+        dict_add(d, s, s);
+
+        *(FIRST_INTERNED_OBJ_PTR(vms) + i) = s;
+    }
+
+    dict_add(vms->env, DLR_ENV_SYM(vms), vms->env);
+    dict_add(vms->env, DLR_DYNLIBS_SYM(vms), new_dict(vms, 4969));
+
+    d = vms->env;
+    n = sizeof(builtin_pointers) / sizeof(uint64_t);
+
+    for (i = 0; i < n; i++) {
         dict_add(
             d,
             new_symbol(vms, builtin_names[i], c_strlen(builtin_names[i])),
@@ -1315,9 +1364,9 @@ vm_state *start_vm() {
         );
     }
 
-    n_pointers = sizeof(construct_pointers) / sizeof(uint64_t);
+    n = sizeof(construct_pointers) / sizeof(uint64_t);
 
-    for (i = 0; i < n_pointers; i++) {
+    for (i = 0; i < n; i++) {
         dict_add(
             d,
             new_symbol(vms, construct_names[i], c_strlen(construct_names[i])),
@@ -1411,6 +1460,7 @@ void gc(vm_state *vms) {
     vms->gc_is_on = 0;
 
     mark(vms->env);
+    mark(vms->interned);
 
     object_t *next = vms->call_stack_objects;
 
