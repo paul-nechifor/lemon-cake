@@ -50,7 +50,7 @@ struct object_t {
 
     union {
         // TYPE_INT
-        uint64_t int_value;
+        int64_t int_value;
 
         // TYPE_STRING
         struct {
@@ -186,7 +186,7 @@ object_t *new_object_t(vm_state *vms, uint64_t type) {
     return o;
 }
 
-object_t *new_int(vm_state *vms, uint64_t n) {
+object_t *new_int(vm_state *vms, int64_t n) {
     object_t *ret = new_object_t(vms, TYPE_INT);
     ret->int_value = n;
     return ret;
@@ -268,7 +268,7 @@ object_t *new_pair(vm_state *vms) {
 
 object_t *read_int(vm_state *vms, char *s, uint64_t *i) {
     char digit;
-    uint64_t num = 0;
+    int64_t num = 0;
 
     for (;;) {
         digit = s[*i];
@@ -386,7 +386,7 @@ void print_dict(vm_state *vms, object_t *o) {
 void print(vm_state *vms, object_t *o) {
     switch (o->type) {
         case TYPE_INT:
-            c_fprintf(stdout, "%llu", o->int_value);
+            c_fprintf(stdout, "%lld", o->int_value);
             break;
 
         case TYPE_STRING:
@@ -439,7 +439,7 @@ void print(vm_state *vms, object_t *o) {
 }
 
 object_t *plus_func(vm_state *vms, object_t *env, object_t *args_list) {
-    uint64_t ret = 0;
+    int64_t ret = 0;
 
     object_t *pair = args_list;
     object_t *o;
@@ -457,7 +457,7 @@ object_t *plus_func(vm_state *vms, object_t *env, object_t *args_list) {
 }
 
 object_t *minus_func(vm_state *vms, object_t *env, object_t *args_list) {
-    uint64_t ret = 0;
+    int64_t ret = 0;
 
     object_t *pair = args_list;
     object_t *o;
@@ -694,10 +694,10 @@ object_t *get_func(vm_state *vms, object_t *env, object_t *args_list) {
     return dict_get(vms, args_list->head, args_list->tail->head);
 }
 
-uint64_t obj_len_func(object_t *o) {
+int64_t obj_len_func(object_t *o) {
     switch (o->type) {
         case TYPE_INT:
-            return o->int_value;
+            return o->int_value; // TODO: Use abs here.
         case TYPE_STRING:
             return o->string_length;
         case TYPE_SYMBOL:
@@ -1158,6 +1158,15 @@ object_t *parse_recursive(vm_state *vms, char *s, uint64_t *i, uint64_t len) {
             (*i)--;
             ret = read_int(vms, s, i);
             goto parse_recursive_discard_non_object;
+        }
+
+        if (c == '-' && *i < len) {
+            char c2 = s[*i];
+            if (c2 >= '0' && c2 <= '9') {
+                ret = read_int(vms, s, i);
+                ret->int_value = -ret->int_value;
+                goto parse_recursive_discard_non_object;
+            }
         }
 
         if (c == '\'') {

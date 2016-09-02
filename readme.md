@@ -22,9 +22,7 @@ language.
 These are some of the things I plan to do, ordered by priority and bunched into
 groups.
 
-- Support signed numbers.
-
-- Intern all the integers used by the VM.
+- Intern all the symbols and integers used by the VM.
 
 - Add an argument to `new\_object` to not run gc so that I don't have to set
   `gc_is_on` all the time (setting that doesn't check it was on in the first
