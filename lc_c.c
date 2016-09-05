@@ -154,6 +154,7 @@ char *interned_symbols[] = {
     "last",
     "funcs",
     "handle",
+    "quote",
 };
 
 #define FIRST_INTERNED_OBJ_PTR(vms) \
@@ -166,6 +167,7 @@ char *interned_symbols[] = {
 #define LAST_SYM(vms) (FIRST_INTERNED_OBJ_PTR(vms)[4])
 #define FUNCS_SYM(vms) (FIRST_INTERNED_OBJ_PTR(vms)[5])
 #define HANDLE_SYM(vms) (FIRST_INTERNED_OBJ_PTR(vms)[6])
+#define QUOTE_SYM(vms) (FIRST_INTERNED_OBJ_PTR(vms)[7])
 
 static void die(char *msg) {
     c_fprintf(stderr, "%s\n", msg);
@@ -1171,6 +1173,15 @@ object_t *parse_recursive(vm_state *vms, char *s, uint64_t *i, uint64_t len) {
 
         if (c == '\'') {
             ret = read_string(vms, s, i);
+            goto parse_recursive_discard_non_object;
+        }
+
+        if (c == ':') {
+            ret = new_pair(vms);
+            ret->head = QUOTE_SYM(vms);
+            ret->tail = new_pair(vms);
+            ret->tail->head = parse_recursive(vms, s, i, len);
+            ret->tail->tail = new_pair(vms);
             goto parse_recursive_discard_non_object;
         }
 

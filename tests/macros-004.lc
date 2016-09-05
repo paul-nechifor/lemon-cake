@@ -1,7 +1,7 @@
 (= add-with (macro (base) (list
-  (quote ~)
-  (quote (n))
-  (list (quote +) (quote n) base)
+  :~
+  :(n)
+  (list :+ :n base)
 )))
 
 (= adder-5 (add-with 5))

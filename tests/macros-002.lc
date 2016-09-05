@@ -1,4 +1,4 @@
-(set $env (quote x) 20)
-(set $env (quote y) 300)
-(set $env (quote foo) (macro (quote (+ x 1 y))))
+(set $env :x 20)
+(set $env :y 300)
+(set $env :foo (macro :(+ x 1 y)))
 (repr (foo))

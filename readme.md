@@ -24,13 +24,15 @@ groups.
 
 - Intern all the symbols and integers used by the VM.
 
+- Introduce C escape sequences for strings.
+
 - Add an argument to `new\_object` to not run gc so that I don't have to set
   `gc_is_on` all the time (setting that doesn't check it was on in the first
   place).
 
 - FFI.
 
-- Initially open symbols from 1libc.so`.
+- Initially open symbols from `libc.so`.
 
 - Add another long GC test that uses lambdas.
 
@@ -50,7 +52,6 @@ groups.
 - Get rid of `stdio`, `stderr`, and `stdout` from the binary. Link to them.
 
 - Define `s1 s2 s4 s8 u1 u2 u4 u8` to `signed int 8 bits, ...`
-- Use `@` for quoting instead of `'` in Lisp.
 
 - Rewrite the whole thing in Assembly (so it can self assemble in the future).
 

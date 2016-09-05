@@ -3,10 +3,10 @@
   (macro
     (name args function)
     (list
-      (quote =)
+      :=
       name
       (list
-        (quote ~)
+        :~
         args
         function
       )
