@@ -1,0 +1,6 @@
+(= printf-func (dynsym 'libc.so' 'printf'))
+(= printf (~ (a b) (ccall printf-func a b)))
+
+(printf 'hello%lld' 3)
+(printf 'hello%lld' 8)
+(printf 'hello %s end' 'str')

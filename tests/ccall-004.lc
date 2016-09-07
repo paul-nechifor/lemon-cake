@@ -1,0 +1,5 @@
+(ccall
+  (dynsym 'libc.so' 'printf')
+  'asdf %s %s %s %s %s'
+  'a' 'b' 'c' 'd' 'e'
+)

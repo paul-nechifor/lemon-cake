@@ -1,0 +1,3 @@
+(ccall (dynsym 'libc.so' 'printf') 'asdf')
+
+(ccall (dynsym 'libc.so' 'printf') 'another')

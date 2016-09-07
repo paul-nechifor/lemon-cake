@@ -41,7 +41,11 @@ enum {
 struct object_t;
 struct vm_state;
 struct dict_pair;
-typedef struct object_t *func_pointer_t(struct vm_state *, struct object_t *, struct object_t *);
+typedef struct object_t *func_pointer_t(
+    struct vm_state *,
+    struct object_t *,
+    struct object_t *
+);
 
 struct object_t {
     uint64_t type;
@@ -844,6 +848,104 @@ object_t *dynsym_func(vm_state *vms, object_t *env, object_t *args_list) {
     return sym_obj;
 }
 
+object_t *ccall_func(vm_state *vms, object_t *env, object_t *args_list) {
+    uint64_t len = obj_len_func(args_list) - 1;
+
+    void *func = (void *) args_list->head->int_value;
+
+    uint64_t *ptr_args = c_malloc(sizeof(uint64_t) * len);
+
+    uint64_t i;
+    object_t *next = args_list->tail;
+
+    for (i = 0; i < len; i++) {
+        object_t *arg = next->head;
+        switch (arg->type) {
+            case TYPE_INT:
+                ptr_args[i] = (uint64_t) arg->int_value;
+                break;
+            case TYPE_STRING:
+                ptr_args[i] = (uint64_t) arg->string_pointer;
+                break;
+            default:
+                die("Don't know how to convert that type.");
+                break;
+        }
+        next = next->tail;
+    }
+
+    switch (len) {
+        case 0:
+            return new_int(vms, ((uint64_t (*)()) func)());
+        case 1:
+            return new_int(vms, ((uint64_t (*)(
+                uint64_t
+            )) func)(
+                ptr_args[0]
+            ));
+        case 2:
+            return new_int(vms, ((uint64_t (*)(
+                uint64_t,
+                uint64_t
+            )) func)(
+                ptr_args[0],
+                ptr_args[1]
+            ));
+        case 3:
+            return new_int(vms, ((uint64_t (*)(
+                uint64_t,
+                uint64_t,
+                uint64_t
+            )) func)(
+                ptr_args[0],
+                ptr_args[1],
+                ptr_args[2]
+            ));
+        case 4:
+            return new_int(vms, ((uint64_t (*)(
+                uint64_t,
+                uint64_t,
+                uint64_t,
+                uint64_t
+            )) func)(
+                ptr_args[0],
+                ptr_args[1],
+                ptr_args[2],
+                ptr_args[3]
+            ));
+        case 5:
+            return new_int(vms, ((uint64_t (*)(
+                uint64_t,
+                uint64_t,
+                uint64_t,
+                uint64_t,
+                uint64_t
+            )) func)(
+                ptr_args[0],
+                ptr_args[1],
+                ptr_args[2],
+                ptr_args[3],
+                ptr_args[4]
+            ));
+        case 6:
+            return new_int(vms, ((uint64_t (*)(
+                uint64_t,
+                uint64_t,
+                uint64_t,
+                uint64_t,
+                uint64_t,
+                uint64_t
+            )) func)(
+                ptr_args[0],
+                ptr_args[1],
+                ptr_args[2],
+                ptr_args[3],
+                ptr_args[4],
+                ptr_args[5]
+            ));
+    }
+}
+
 object_t *get_env_of_name(vm_state *vms, object_t *env, object_t *name) {
     object_t *parent_sym = DLR_PARENT_SYM(vms);
 
@@ -1302,6 +1404,7 @@ char *builtin_names[] = {
     "repr",
     "last",
     "dynsym",
+    "ccall",
 };
 func_pointer_t *builtin_pointers[] = {
     dict_func,
@@ -1319,6 +1422,7 @@ func_pointer_t *builtin_pointers[] = {
     repr_func,
     last_func,
     dynsym_func,
+    ccall_func,
 };
 
 char *construct_names[] = {
