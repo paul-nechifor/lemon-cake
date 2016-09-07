@@ -1,0 +1,1 @@
+(- (dynsym 'libm.so' 'sqrt') (dynsym 'libm.so' 'sqrt'))

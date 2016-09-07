@@ -24,6 +24,7 @@ extern int (*c_fseek)(FILE *stream, long int offset, int whence);
 extern FILE *(*c_fopen)(const char *filename, const char *mode);
 
 extern uint64_t *prog_argc_ptr;
+extern char *libc_handle;
 
 enum {
     TYPE_INT = 1,
@@ -1393,6 +1394,14 @@ vm_state *start_vm() {
             new_construct(vms, construct_pointers[i])
         );
     }
+
+    object_t *dynlibs = dict_get_null(vms, vms->env, DLR_DYNLIBS_SYM(vms));
+
+    object_t *dl_lib = new_dict(vms, 4969);
+    dict_add(dynlibs, new_string(vms, "libc.so", 7), dl_lib);
+
+    dict_add(dl_lib, HANDLE_SYM(vms), new_int(vms, (uint64_t) libc_handle));
+    dict_add(dl_lib, FUNCS_SYM(vms), new_dict(vms, 4969));
 
     return vms;
 }

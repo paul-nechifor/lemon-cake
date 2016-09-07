@@ -14,6 +14,9 @@ section .data
 
 libcso_str: db "libc.so", 0
 
+global libc_handle
+libc_handle: dq 0
+
 function_string exit
 function_string fprintf
 function_string free
@@ -62,6 +65,9 @@ load_c_functions:
 
   ; rbx will now be the dlopen handle for "libc.so".
   mov rbx, rax
+
+  ; Also store it in `libc_handle` since you can only open a lib once.
+  mov [libc_handle], rax
 
   ; rbp is holds the position of the function pointer and `rbp + 8` holds the
   ; position of the name of the function.

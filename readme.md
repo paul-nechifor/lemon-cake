@@ -22,13 +22,24 @@ language.
 These are some of the things I plan to do, ordered by priority and bunched into
 groups.
 
-- Intern all the symbols and integers used by the VM.
-
 - Introduce C escape sequences for strings.
 
 - Add an argument to `new\_object` to not run gc so that I don't have to set
   `gc_is_on` all the time (setting that doesn't check it was on in the first
   place).
+
+- How to create new objects:
+  - a function that initializes the object structure.
+    - a function that adds an object to the call stack (uses the function above)
+  - new functions that take object structures and give their types the required
+    values.
+
+- Switch to using an actual stack for the stack values. This will be useful in
+  the future when exceptions are introduced (since I can place handlers on the
+  stack)
+
+- Stop implementing operators in C. Just define + as (reduce ...). That way I
+  just need to write C functions that take two arguments.
 
 - FFI.
 
@@ -37,6 +48,16 @@ groups.
 - Add another long GC test that uses lambdas.
 
 - Fix `die` to accept arguments.
+
+- Introduce types. Every variable should have a pointer to a dict which
+  represents a type. The dict will need:
+
+  - name: ?
+  - super: the super type
+  - methods: a dict of symbols to functions
+
+
+- Accessing a dict element should be something this: `([] d 4)`.
 
 - Add a debugging flag which will trigger printing all the evaulated
   expressions.
@@ -56,6 +77,8 @@ groups.
 - Rewrite the whole thing in Assembly (so it can self assemble in the future).
 
 - Write an assembler in LemonCake that can assemble the LemonCake source code.
+
+- JIT. Woop woop.
 
 - Write a (very) basic Markdown transformer so I can Write the source code in
   literate LemonCake.
