@@ -41,10 +41,6 @@ groups.
 - Stop implementing operators in C. Just define + as (reduce ...). That way I
   just need to write C functions that take two arguments.
 
-- FFI.
-
-- Initially open symbols from `libc.so`.
-
 - Add another long GC test that uses lambdas.
 
 - Fix `die` to accept arguments.
@@ -56,8 +52,7 @@ groups.
   - super: the super type
   - methods: a dict of symbols to functions
 
-
-- Accessing a dict element should be something this: `([] d 4)`.
+- Accessing a dict element should be something this: `(. d 4)`.
 
 - Add a debugging flag which will trigger printing all the evaulated
   expressions.
