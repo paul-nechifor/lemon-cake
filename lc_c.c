@@ -22,6 +22,10 @@ extern int (*c_fclose)(FILE *stream);
 extern long int (*c_ftell)(FILE *stream);
 extern int (*c_fseek)(FILE *stream, long int offset, int whence);
 extern FILE *(*c_fopen)(const char *filename, const char *mode);
+extern int (*c_fflush)(FILE *stream);
+extern void *(*c_memalign)(size_t alignment, size_t size);
+extern int (*c_mprotect)(void *addr, size_t len, int prot);
+extern long (*c_sysconf)(int name);
 
 extern uint64_t *prog_argc_ptr;
 extern char *libc_handle;
@@ -966,6 +970,68 @@ object_t *ccall_func(vm_state *vms, object_t *env, object_t *args_list) {
     }
 }
 
+// The call is something like this:
+//
+//    (= func (assemble :(
+//      (1 0x01 0x43 0x42)
+//      (2 0x423A 0xaabb)
+//      (1 0xcb)
+//    )))
+object_t *assemble_func(vm_state *vms, object_t *env, object_t *args_list) {
+    // Compute the total size required.
+    uint64_t n_bytes = 0;
+    object_t *inner_list;
+    object_t *outer_list = args_list->head;
+
+    while (outer_list->head) {
+        n_bytes += (
+            outer_list->head->head->int_value *
+            (list_length(outer_list->head) - 1)
+        );
+        outer_list = outer_list->tail;
+    }
+
+    // Get the page size.
+    int64_t page_size = c_sysconf(0x1e); // _SC_PAGE_SIZE
+    if (page_size == -1) {
+        die("Failed to get the page size.");
+    }
+
+    // Allocate the page aligned buffer.
+    int64_t aligned_size = page_size * (n_bytes / page_size + 1);
+    unsigned char *buffer = c_memalign(page_size, aligned_size);
+
+    // Allow both write and execute on these pages.
+    // 7 is PROT_EXEC | PROT_READ | PROT_WRITE
+    if (c_mprotect(buffer, aligned_size, 7)) {
+        die("mprotect failed");
+    }
+
+    // Write the bytes.
+    uint64_t i = 0;
+    uint64_t j;
+    uint64_t num_size;
+    uint64_t num;
+
+    outer_list = args_list->head;
+    while (outer_list->head) {
+        inner_list = outer_list->head;
+        num_size = inner_list->head->int_value;
+        inner_list = inner_list->tail;
+
+        while (inner_list->head) {
+            num = inner_list->head->int_value;
+            for (j = 0; j < num_size; j++, num = num >> 8) {
+                buffer[i++] = num & 0xff;
+            }
+            inner_list = inner_list->tail;
+        }
+        outer_list = outer_list->tail;
+    }
+
+    return new_int(vms, (uint64_t) buffer);
+}
+
 object_t *get_env_of_name(vm_state *vms, object_t *env, object_t *name) {
     object_t *parent_sym = DLR_PARENT_SYM(vms);
 
@@ -1281,7 +1347,6 @@ object_t *parse_recursive(vm_state *vms, char *s, uint64_t *i, uint64_t len) {
 
         if (c == '0' && *i + 1 < len && s[*i] == 'x') {
             (*i)++;
-            printf("parsing\n");
             ret = read_hex(vms, s, i);
             goto parse_recursive_discard_non_object;
         }
@@ -1432,6 +1497,7 @@ char *builtin_names[] = {
     "last",
     "dynsym",
     "ccall",
+    "assemble",
 };
 func_pointer_t *builtin_pointers[] = {
     dict_func,
@@ -1450,6 +1516,7 @@ func_pointer_t *builtin_pointers[] = {
     last_func,
     dynsym_func,
     ccall_func,
+    assemble_func,
 };
 
 char *construct_names[] = {
@@ -1708,4 +1775,7 @@ eval_lines_cleanup:
     }
     sweep(vms);
     c_free(vms);
+
+    c_fflush(stdout);
+    c_fflush(stderr);
 }

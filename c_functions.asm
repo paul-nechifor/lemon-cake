@@ -31,7 +31,10 @@ function_string fclose
 function_string ftell
 function_string fseek
 function_string fopen
-
+function_string fflush
+function_string memalign
+function_string mprotect
+function_string sysconf
 
 first_function_to_load:
 
@@ -49,6 +52,10 @@ function_pointer_and_name fclose
 function_pointer_and_name ftell
 function_pointer_and_name fseek
 function_pointer_and_name fopen
+function_pointer_and_name fflush
+function_pointer_and_name memalign
+function_pointer_and_name mprotect
+function_pointer_and_name sysconf
 
 end_of_functions_to_load:
 

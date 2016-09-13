@@ -1,0 +1,40 @@
+(= putchar-ptr (dynsym 'libc.so' 'putchar'))
+
+(= f (assemble (list
+
+  # mov rdi, 'A'
+  :(1 0xbf 0x41 0x00 0x00 0x00)
+
+  # mov rax, address_of_putchar
+  :(1 0x48 0xb8)
+  (list 8 putchar-ptr)
+
+  # call rax
+  :(1 0xff 0xd0)
+
+  # mov rdi, '\n'
+  :(1 0xbf 0x0a 0x00 0x00 0x00)
+
+  # mov rax, address_of_putchar
+  :(1 0x48 0xb8)
+  (list 8 putchar-ptr)
+
+  # call rax
+  :(1 0xff 0xd0)
+
+  # mov rdi, 'B'
+  :(1 0xbf 0x42 0x00 0x00 0x00)
+
+  # mov rax, address_of_putchar
+  :(1 0x48 0xb8)
+  (list 8 putchar-ptr)
+
+  # call rax
+  :(1 0xff 0xd0)
+
+  # ret
+  :(1 0xc3)
+
+)))
+
+(ccall f)
