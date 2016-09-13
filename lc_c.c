@@ -289,6 +289,26 @@ object_t *read_int(vm_state *vms, char *s, uint64_t *i) {
     return new_int(vms, num);
 }
 
+object_t *read_hex(vm_state *vms, char *s, uint64_t *i) {
+    char digit;
+    int64_t num = 0;
+
+    for (;;) {
+        digit = s[*i];
+        if (digit >= '0' && digit <= '9') {
+            num = num * 16 + digit - '0';
+        } else if (digit >= 'a' && digit <= 'f') {
+            num = num * 16 + (digit - 'a' + 10);
+        } else {
+            break;
+        }
+
+        (*i)++;
+    }
+
+    return new_int(vms, num);
+}
+
 object_t *read_string(vm_state *vms, char *s, uint64_t *i) {
     uint64_t start = *i;
     uint64_t end = start;
@@ -1256,6 +1276,13 @@ object_t *parse_recursive(vm_state *vms, char *s, uint64_t *i, uint64_t len) {
 
         if (c == ')') {
             ret = (object_t *) ')';
+            goto parse_recursive_discard_non_object;
+        }
+
+        if (c == '0' && *i + 1 < len && s[*i] == 'x') {
+            (*i)++;
+            printf("parsing\n");
+            ret = read_hex(vms, s, i);
             goto parse_recursive_discard_non_object;
         }
 
