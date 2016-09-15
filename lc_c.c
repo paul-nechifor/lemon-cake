@@ -154,6 +154,7 @@ uint64_t objects_equal(object_t *a, object_t *b);
 void dict_add(object_t *d, object_t *key, object_t *value);
 object_t *dict_get(vm_state *vms, object_t *d, object_t *key);
 void gc(vm_state *vms);
+object_t *eval_file(vm_state *vms, char *file_name);
 
 char *interned_symbols[] = {
     "$env",
@@ -1032,6 +1033,10 @@ object_t *assemble_func(vm_state *vms, object_t *env, object_t *args_list) {
     return new_int(vms, (uint64_t) buffer);
 }
 
+object_t *import_func(vm_state *vms, object_t *env, object_t *args_list) {
+    return eval_file(vms, args_list->head->string_pointer);
+}
+
 object_t *get_env_of_name(vm_state *vms, object_t *env, object_t *name) {
     object_t *parent_sym = DLR_PARENT_SYM(vms);
 
@@ -1498,6 +1503,7 @@ char *builtin_names[] = {
     "dynsym",
     "ccall",
     "assemble",
+    "import",
 };
 func_pointer_t *builtin_pointers[] = {
     dict_func,
@@ -1517,6 +1523,7 @@ func_pointer_t *builtin_pointers[] = {
     dynsym_func,
     ccall_func,
     assemble_func,
+    import_func,
 };
 
 char *construct_names[] = {
@@ -1705,6 +1712,52 @@ void gc(vm_state *vms) {
     vms->gc_is_on = 1;
 }
 
+object_t *eval_file(vm_state *vms, char *file_name) {
+    uint64_t file_length;
+    char *content = NULL;
+    FILE *f = c_fopen(file_name, "rb");
+    object_t *ret;
+
+    if (!f) {
+        c_fprintf(stderr, "Could not open '%s'.", file_name);
+        goto eval_file_cleanup;
+    }
+
+    // Find out the size of the file by going to the end.
+    c_fseek(f, 0, SEEK_END);
+    file_length = c_ftell(f);
+    c_fseek(f, 0, SEEK_SET);
+
+    content = c_malloc(file_length);
+
+    if (!content) {
+        c_fprintf(stderr, "Failed to malloc buffer for file '%s'.", file_name);
+        goto eval_file_cleanup;
+    }
+
+    if (c_fread(content, 1, file_length, f) != file_length) {
+        c_fprintf(stderr, "Failed to read the whole file '%s'.", file_name);
+        goto eval_file_cleanup;
+    }
+    c_fclose(f);
+
+    vms->gc_is_on = 0;
+    object_t *parsed = parse(vms, content, file_length);
+    vms->gc_is_on = 1;
+    ret = eval(vms, vms->env, parsed);
+    goto eval_file_cleanup2;
+
+eval_file_cleanup:
+    ret = new_pair(vms);
+
+eval_file_cleanup2:
+    if (content) {
+        c_free(content);
+    }
+
+    return ret;
+}
+
 void eval_lines() {
     char *line = NULL;
     size_t len = 0;
@@ -1734,37 +1787,9 @@ void eval_lines() {
         }
         goto eval_lines_cleanup;
     }
-    uint64_t file_length;
+
     char *file_name = *((char **)prog_argc_ptr + 2);
-    FILE *f = c_fopen(file_name, "rb");
-
-    if (!f) {
-        c_fprintf(stderr, "Could not open '%s'.", file_name);
-        goto eval_lines_cleanup;
-    }
-
-    // Find out the size of the file by going to the end.
-    c_fseek(f, 0, SEEK_END);
-    file_length = c_ftell(f);
-    c_fseek(f, 0, SEEK_SET);
-
-    line = c_malloc(file_length);
-
-    if (!line) {
-        c_fprintf(stderr, "Failed to malloc buffer for file '%s'.", file_name);
-        goto eval_lines_cleanup;
-    }
-
-    if (c_fread(line, 1, file_length, f) != file_length) {
-        c_fprintf(stderr, "Failed to read the whole file '%s'.", file_name);
-        goto eval_lines_cleanup;
-    }
-    c_fclose(f);
-
-    vms->gc_is_on = 0;
-    parsed = parse(vms, line, file_length);
-    vms->gc_is_on = 1;
-    eval(vms, vms->env, parsed);
+    eval_file(vms, file_name);
 
 eval_lines_cleanup:
     if (vms->gc_is_on) {
