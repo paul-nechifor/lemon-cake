@@ -22,6 +22,16 @@ language.
 These are some of the things I plan to do, ordered by priority and bunched into
 groups.
 
+- assemble should just accept a list of 8bit numbers.
+
+- (byte-explode (1 0xff 0xf1) (2 0xffaa))  ->  (0xff 0xf1 0xff 0xaa)
+
+```
+(assemble (stitch ...))
+```
+
+- Add `.call` and `.apply` functions from JavaScript.
+
 - Introduce C escape sequences for strings.
 
 - Add an argument to `new\_object` to not run gc so that I don't have to set
@@ -78,7 +88,6 @@ groups.
 - Write a (very) basic Markdown transformer so I can Write the source code in
   literate LemonCake.
 
-- Allow circular dependencies.
 - Change `new_object_t` to only malloc the size that's required for the object.
 - Per thread interpreter and GC? Communiction via messages.
 

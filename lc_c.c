@@ -1037,6 +1037,32 @@ object_t *import_func(vm_state *vms, object_t *env, object_t *args_list) {
     return eval_file(vms, args_list->head->string_pointer);
 }
 
+object_t *builtin_func(vm_state *vms, object_t *env, object_t *args_list) {
+    return new_builtin_func(vms, (func_pointer_t *) args_list->head->int_value);
+}
+
+object_t *stitch_func(vm_state *vms, object_t *env, object_t *args_list) {
+    object_t *ret = new_pair(vms);
+    object_t *ret_el = ret;
+    object_t *next_arg = args_list;
+    object_t *next_arg_el;
+
+    while (next_arg->head) {
+        next_arg_el = next_arg->head;
+
+        while (next_arg_el->head) {
+            ret_el->head = next_arg_el->head;
+            ret_el->tail = new_pair(vms);
+            ret_el = ret_el->tail;
+            next_arg_el = next_arg_el->tail;
+        }
+
+        next_arg = next_arg->tail;
+    }
+
+    return ret;
+}
+
 object_t *get_env_of_name(vm_state *vms, object_t *env, object_t *name) {
     object_t *parent_sym = DLR_PARENT_SYM(vms);
 
@@ -1504,6 +1530,8 @@ char *builtin_names[] = {
     "ccall",
     "assemble",
     "import",
+    "builtin",
+    "stitch",
 };
 func_pointer_t *builtin_pointers[] = {
     dict_func,
@@ -1524,6 +1552,8 @@ func_pointer_t *builtin_pointers[] = {
     ccall_func,
     assemble_func,
     import_func,
+    builtin_func,
+    stitch_func,
 };
 
 char *construct_names[] = {
