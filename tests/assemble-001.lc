@@ -1,6 +1,6 @@
 (= putchar-ptr (dynsym 'libc.so' 'putchar'))
 
-(= f (assemble (list
+(= f (assemble (byte-explode
 
   # mov rdi, 'A'
   :(1 0xbf 0x41 0x00 0x00 0x00)

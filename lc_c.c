@@ -971,26 +971,9 @@ object_t *ccall_func(vm_state *vms, object_t *env, object_t *args_list) {
     }
 }
 
-// The call is something like this:
-//
-//    (= func (assemble :(
-//      (1 0x01 0x43 0x42)
-//      (2 0x423A 0xaabb)
-//      (1 0xcb)
-//    )))
 object_t *assemble_func(vm_state *vms, object_t *env, object_t *args_list) {
     // Compute the total size required.
-    uint64_t n_bytes = 0;
-    object_t *inner_list;
-    object_t *outer_list = args_list->head;
-
-    while (outer_list->head) {
-        n_bytes += (
-            outer_list->head->head->int_value *
-            (list_length(outer_list->head) - 1)
-        );
-        outer_list = outer_list->tail;
-    }
+    uint64_t n_bytes = list_length(args_list->head);
 
     // Get the page size.
     int64_t page_size = c_sysconf(0x1e); // _SC_PAGE_SIZE
@@ -1008,26 +991,11 @@ object_t *assemble_func(vm_state *vms, object_t *env, object_t *args_list) {
         die("mprotect failed");
     }
 
-    // Write the bytes.
     uint64_t i = 0;
-    uint64_t j;
-    uint64_t num_size;
-    uint64_t num;
-
-    outer_list = args_list->head;
-    while (outer_list->head) {
-        inner_list = outer_list->head;
-        num_size = inner_list->head->int_value;
-        inner_list = inner_list->tail;
-
-        while (inner_list->head) {
-            num = inner_list->head->int_value;
-            for (j = 0; j < num_size; j++, num = num >> 8) {
-                buffer[i++] = num & 0xff;
-            }
-            inner_list = inner_list->tail;
-        }
-        outer_list = outer_list->tail;
+    object_t *next = args_list->head;
+    while (next->head) {
+        buffer[i++] = next->head->int_value & 0xff;
+        next = next->tail;
     }
 
     return new_int(vms, (uint64_t) buffer);
