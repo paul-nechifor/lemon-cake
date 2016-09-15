@@ -1063,6 +1063,35 @@ object_t *stitch_func(vm_state *vms, object_t *env, object_t *args_list) {
     return ret;
 }
 
+object_t *byte_explode_func(vm_state *vms, object_t *env, object_t *args_list) {
+    object_t *ret = new_pair(vms);
+    object_t *ret_el = ret;
+    object_t *outer_list = args_list;
+    object_t *inner_list;
+    uint64_t num_size;
+    uint64_t num;
+    uint64_t j;
+
+    while (outer_list->head) {
+        inner_list = outer_list->head;
+        num_size = inner_list->head->int_value;
+        inner_list = inner_list->tail;
+
+        while (inner_list->head) {
+            num = inner_list->head->int_value;
+            for (j = 0; j < num_size; j++, num = num >> 8) {
+                ret_el->head = new_int(vms, num & 0xff);
+                ret_el->tail = new_pair(vms);
+                ret_el = ret_el->tail;
+            }
+            inner_list = inner_list->tail;
+        }
+        outer_list = outer_list->tail;
+    }
+
+    return ret;
+}
+
 object_t *get_env_of_name(vm_state *vms, object_t *env, object_t *name) {
     object_t *parent_sym = DLR_PARENT_SYM(vms);
 
@@ -1532,6 +1561,7 @@ char *builtin_names[] = {
     "import",
     "builtin",
     "stitch",
+    "byte-explode"
 };
 func_pointer_t *builtin_pointers[] = {
     dict_func,
@@ -1554,6 +1584,7 @@ func_pointer_t *builtin_pointers[] = {
     import_func,
     builtin_func,
     stitch_func,
+    byte_explode_func,
 };
 
 char *construct_names[] = {
