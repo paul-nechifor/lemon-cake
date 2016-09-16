@@ -22,7 +22,18 @@ language.
 These are some of the things I plan to do, ordered by priority and bunched into
 groups.
 
-- assemble should just accept a list of 8bit numbers.
+```
+(switch expr
+  1 :one
+  2 :two
+  3 :three
+  :other
+)
+```
+
+- Files must only be imported once and they must know their own path. This could
+  by achived by storing $filename and $dirname in the env that gets passed to
+  them.
 
 - Add `.call` and `.apply` functions from JavaScript.
 

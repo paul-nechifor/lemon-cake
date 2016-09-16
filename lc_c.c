@@ -1182,6 +1182,30 @@ object_t *if_func(vm_state *vms, object_t *env, object_t *args_list) {
     }
 }
 
+object_t *switch_func(vm_state *vms, object_t *env, object_t *args_list) {
+    object_t *o = args_list->head;
+    object_t *arg = args_list->tail;
+    object_t *next_arg;
+
+    for (;;) {
+        if (!arg->head) {
+            return new_pair(vms);
+        }
+
+        next_arg = arg->tail;
+
+        if (!next_arg->head) {
+            return eval(vms, env, arg->head);
+        }
+
+        if (objects_equal(o, eval(vms, env, arg->head))) {
+            return eval(vms, env, next_arg->head);
+        }
+
+        arg = next_arg->tail;
+    }
+}
+
 void populate_child_env(
     vm_state *vms,
     object_t *parent_env,
@@ -1529,7 +1553,7 @@ char *builtin_names[] = {
     "import",
     "builtin",
     "stitch",
-    "byte-explode"
+    "byte-explode",
 };
 func_pointer_t *builtin_pointers[] = {
     dict_func,
@@ -1561,6 +1585,7 @@ char *construct_names[] = {
     "=",
     "~",
     "if",
+    "switch",
 };
 func_pointer_t *construct_pointers[] = {
     quote_func,
@@ -1568,6 +1593,7 @@ func_pointer_t *construct_pointers[] = {
     assign_func,
     func_func,
     if_func,
+    switch_func,
 };
 
 vm_state *start_vm() {
