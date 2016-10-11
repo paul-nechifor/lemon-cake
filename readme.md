@@ -22,15 +22,6 @@ language.
 These are some of the things I plan to do, ordered by priority and bunched into
 groups.
 
-```
-(switch expr
-  1 :one
-  2 :two
-  3 :three
-  :other
-)
-```
-
 - Files must only be imported once and they must know their own path. This could
   by achived by storing $filename and $dirname in the env that gets passed to
   them.
@@ -214,6 +205,14 @@ What I've used for inspiratior or plan to use in the future:
 
 * [Let’s Build A Simple Interpreter][simple-interpreter]
 
+* x86-64 instruction encoding:
+
+  * [x86 Instruction Encoding Revealed][x86-encoding]
+
+  * [OSDev: X86-64 Instruction Encoding][osdevx86enc]
+
+  * [X86 Opcode and Instruction Reference][x86opref]
+
 ## Reference
 
 x86-64:
@@ -234,3 +233,6 @@ ISC
 [verve-repo]: https://github.com/tadeuzagallo/verve-lang
 [lisp-indent]: http://srfi.schemers.org/srfi-49/srfi-49.html
 [simple-interpreter]: https://ruslanspivak.com/lsbasi-part1/
+[x86-encoding]: http://www.codeproject.com/Articles/662301/x-Instruction-Encoding-Revealed-Bit-Twiddling-fo
+[osdevx86enc]: http://wiki.osdev.org/X86-64_Instruction_Encoding
+[x86opref]: http://ref.x86asm.net/coder64.html
