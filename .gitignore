@@ -1,3 +1,4 @@
 *.o
 core
 lc
+lc.lc.h

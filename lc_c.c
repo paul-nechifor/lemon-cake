@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <dlfcn.h> // TODO: Remove this.
 
+#include "lc.lc.h"
+
 #define ADD_ON_CALL_STACK(vms, obj) \
     do { \
         obj->next_stack_object = vms->call_stack_objects; \
@@ -1820,6 +1822,12 @@ void eval_lines() {
     object_t *parsed;
     object_t *o;
     vm_state *vms = start_vm();
+
+    vms->gc_is_on = 0;
+    parsed = parse(vms, INITIAL_CODE, c_strlen(INITIAL_CODE));
+    vms->gc_is_on = 1;
+    eval(vms, vms->env, parsed);
+
 
     // If argc is 1, that means there are no arguments so just run a REPL.
     if (*prog_argc_ptr == 1) {

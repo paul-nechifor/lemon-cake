@@ -20,6 +20,8 @@ sub_compile() {
 
     nasm -f elf64 lc.asm
 
+    echo "#define INITIAL_CODE \"$(sed ':a;N;$!ba;s/\n/\\n/g' <lc.lc)\"" >lc.lc.h
+
     if [[ $debug ]]; then
         gcc -Os -g -c lc_c.c
         ld -o lc -dynamic-linker /lib64/ld-linux-x86-64.so.2 -lc -ldl --entry=main *.o

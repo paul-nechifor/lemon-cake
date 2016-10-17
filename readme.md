@@ -47,6 +47,8 @@ groups.
 - Stop implementing operators in C. Just define + as (reduce ...). That way I
   just need to write C functions that take two arguments.
 
+- Maybe include the required `.so` files here so that it works on all systems.
+
 - Add another long GC test that uses lambdas.
 
 - Fix `die` to accept arguments.
@@ -187,7 +189,8 @@ User = deftype
 What I've used for inspiratior or plan to use in the future:
 
 * [A Whirlwind Tutorial on Creating Really Teensy ELF Executables for
-  Linux][whirlwind-tutorial]
+  Linux][whirlwind-tutorial]: This is the article that made me love tiny
+  executables.
 
 * [(How to Write a (Lisp) Interpreter (in Python))][lisp-in-python]
 
@@ -213,6 +216,8 @@ What I've used for inspiratior or plan to use in the future:
 
   * [X86 Opcode and Instruction Reference][x86opref]
 
+  * [Intel 64 Tome (23 MiB PDF)][i64tome]
+
 ## Reference
 
 x86-64:
@@ -236,3 +241,4 @@ ISC
 [x86-encoding]: http://www.codeproject.com/Articles/662301/x-Instruction-Encoding-Revealed-Bit-Twiddling-fo
 [osdevx86enc]: http://wiki.osdev.org/X86-64_Instruction_Encoding
 [x86opref]: http://ref.x86asm.net/coder64.html
+[i64tome]: http://www.intel.co.uk/content/dam/www/public/us/en/documents/manuals/64-ia-32-architectures-software-developer-manual-325462.pdf
