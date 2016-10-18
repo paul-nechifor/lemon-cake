@@ -1079,6 +1079,32 @@ object_t *apply_func(vm_state *vms, object_t *env, object_t *args_list) {
     };
 }
 
+// Only joins two lists.
+object_t *join_func(vm_state *vms, object_t *env, object_t *args_list) {
+    object_t *ret = new_pair(vms);
+    object_t *ret_obj = ret;
+
+    object_t *next = args_list->head;
+
+    while (next->head) {
+        ret_obj->head = next->head;
+        ret_obj->tail = new_pair(vms);
+        next = next->tail;
+        ret_obj = ret_obj->tail;
+    }
+
+    next = args_list->tail->head;
+
+    while (next->head) {
+        ret_obj->head = next->head;
+        ret_obj->tail = new_pair(vms);
+        next = next->tail;
+        ret_obj = ret_obj->tail;
+    }
+
+    return ret;
+}
+
 object_t *get_env_of_name(vm_state *vms, object_t *env, object_t *name) {
     object_t *parent_sym = DLR_PARENT_SYM(vms);
 
@@ -1579,6 +1605,7 @@ char *builtin_names[] = {
     "byte-explode",
     "reduce",
     "apply",
+    "join",
 };
 func_pointer_t *builtin_pointers[] = {
     dict_func,
@@ -1604,6 +1631,7 @@ func_pointer_t *builtin_pointers[] = {
     byte_explode_func,
     reduce_func,
     apply_func,
+    join_func,
 };
 
 char *construct_names[] = {

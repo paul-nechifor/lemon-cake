@@ -26,6 +26,9 @@ groups.
   by achived by storing $filename and $dirname in the env that gets passed to
   them.
 
+- Look at a disassembly of the program to see which ar the most important
+  instructions that need to be supported.
+
 - Introduce C escape sequences for strings.
 
 - Add an argument to `new\_object` to not run gc so that I don't have to set
