@@ -1,2 +1,2 @@
-(= printf-func (dynsym 'libc.so' 'printf'))
-(= printf1 (~ (a) (ccall printf-func a)))
+(= + (~ (reduce add $args)))
+(= - (~ (reduce sub $args)))

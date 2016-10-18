@@ -157,6 +157,7 @@ void dict_add(object_t *d, object_t *key, object_t *value);
 object_t *dict_get(vm_state *vms, object_t *d, object_t *key);
 void gc(vm_state *vms);
 object_t *eval_file(vm_state *vms, char *file_name);
+object_t *call_func(vm_state *vms, object_t *func, object_t *args_list);
 
 char *interned_symbols[] = {
     "$env",
@@ -484,54 +485,6 @@ void print(vm_state *vms, object_t *o) {
 
 twoargfunc(add_func, +)
 twoargfunc(sub_func, -)
-
-object_t *plus_func(vm_state *vms, object_t *env, object_t *args_list) {
-    int64_t ret = 0;
-
-    object_t *pair = args_list;
-    object_t *o;
-
-    while (pair->head) {
-        o = pair->head;
-        if (o->type != TYPE_INT) {
-            die("Not int.");
-        }
-        ret += o->int_value;
-        pair = pair->tail;
-    }
-
-    return new_int(vms, ret);
-}
-
-object_t *minus_func(vm_state *vms, object_t *env, object_t *args_list) {
-    int64_t ret = 0;
-
-    object_t *pair = args_list;
-    object_t *o;
-
-    if (!pair->head) {
-        die("No first arg to -.");
-    }
-
-    o = pair->head;
-    if (o->type != TYPE_INT) {
-        die("Not int.");
-    }
-
-    ret = o->int_value;
-    pair = pair->tail;
-
-    while (pair->head) {
-        o = pair->head;
-        if (o->type != TYPE_INT) {
-            die("Not int.");
-        }
-        ret -= o->int_value;
-        pair = pair->tail;
-    }
-
-    return new_int(vms, ret);
-}
 
 void list_append(vm_state *vms, object_t *list, object_t *o) {
     object_t *p = list;
@@ -1107,6 +1060,25 @@ object_t *reduce_func(vm_state *vms, object_t *env, object_t *args_list) {
     return memo;
 }
 
+object_t *apply_func(vm_state *vms, object_t *env, object_t *args_list) {
+    // TODO: Handle all 4 callable types: BUILTIN_FUNC, CONSTRUCT, MACRO,
+    // and FUNC.
+    object_t *fn = args_list->head;
+
+    switch (fn->type) {
+        case TYPE_BUILTIN_FUNC:
+            return ((func_pointer_t *) args_list->head->builtin)(
+                vms,
+                env,
+                args_list->tail->head
+            );
+        case TYPE_FUNC:
+            return call_func(vms, fn, args_list->tail->head);
+        default:
+            die("Deal with this case.");
+    };
+}
+
 object_t *get_env_of_name(vm_state *vms, object_t *env, object_t *name) {
     object_t *parent_sym = DLR_PARENT_SYM(vms);
 
@@ -1284,6 +1256,21 @@ void populate_child_env(
     }
 }
 
+object_t *call_func(vm_state *vms, object_t *func, object_t *args_list) {
+    // Turn gc off in order to create the child env.
+    vms->gc_is_on = 0;
+    object_t *child_env = new_dict(vms, 4969);
+    vms->gc_is_on = 1;
+
+    ADD_ON_CALL_STACK(vms, child_env);
+
+    populate_child_env(
+        vms, func->func_parent_env, child_env, func->func_args, args_list
+    );
+
+    return eval(vms, child_env, func->func_body);
+}
+
 object_t *eval_list(vm_state *vms, object_t *env, object_t *o) {
     object_t *ret;
     object_t *top_call_stack_elem = vms->call_stack_objects;
@@ -1337,18 +1324,7 @@ object_t *eval_list(vm_state *vms, object_t *env, object_t *o) {
     eval_args_list(vms, env, args_list, o->tail);
 
     if (func->type == TYPE_FUNC) {
-        // Turn gc off in order to create the child env.
-        vms->gc_is_on = 0;
-        object_t *child_env = new_dict(vms, 4969);
-        vms->gc_is_on = 1;
-
-        ADD_ON_CALL_STACK(vms, child_env);
-
-        populate_child_env(
-            vms, func->func_parent_env, child_env, func->func_args, args_list
-        );
-
-        ret = eval(vms, child_env, func->func_body);
+        ret = call_func(vms, func, args_list);
         goto eval_list_cleanup;
     }
 
@@ -1592,8 +1568,6 @@ char *builtin_names[] = {
     "is",
     "add",
     "sub",
-    "+",
-    "-",
     "repr",
     "last",
     "dynsym",
@@ -1604,6 +1578,7 @@ char *builtin_names[] = {
     "stitch",
     "byte-explode",
     "reduce",
+    "apply",
 };
 func_pointer_t *builtin_pointers[] = {
     dict_func,
@@ -1618,8 +1593,6 @@ func_pointer_t *builtin_pointers[] = {
     is_func,
     add_func,
     sub_func,
-    plus_func,
-    minus_func,
     repr_func,
     last_func,
     dynsym_func,
@@ -1630,6 +1603,7 @@ func_pointer_t *builtin_pointers[] = {
     stitch_func,
     byte_explode_func,
     reduce_func,
+    apply_func,
 };
 
 char *construct_names[] = {

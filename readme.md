@@ -26,8 +26,6 @@ groups.
   by achived by storing $filename and $dirname in the env that gets passed to
   them.
 
-- Add `.call` and `.apply` functions from JavaScript.
-
 - Introduce C escape sequences for strings.
 
 - Add an argument to `new\_object` to not run gc so that I don't have to set
