@@ -472,6 +472,19 @@ void print(vm_state *vms, object_t *o) {
     }
 }
 
+#define twoargfunc(name, operator) \
+    object_t *name(vm_state *vms, object_t *env, object_t *args_list) { \
+        return new_int( \
+            vms, \
+            args_list->head->int_value \
+            operator \
+            args_list->tail->head->int_value \
+        ); \
+    }
+
+twoargfunc(add_func, +)
+twoargfunc(sub_func, -)
+
 object_t *plus_func(vm_state *vms, object_t *env, object_t *args_list) {
     int64_t ret = 0;
 
@@ -1062,6 +1075,38 @@ object_t *byte_explode_func(vm_state *vms, object_t *env, object_t *args_list) {
     return ret;
 }
 
+object_t *reduce_func(vm_state *vms, object_t *env, object_t *args_list) {
+    object_t *fn = args_list->head;
+    object_t *tmp = args_list->tail;
+    object_t *list = tmp->head;
+    object_t *memo;
+    object_t *call_args;
+    tmp = tmp->tail;
+
+    if (tmp->head) {
+        memo = tmp->head;
+    } else {
+        memo = list->head;
+        list = list->tail;
+    }
+
+    while (list->head) {
+        call_args = new_pair(vms);
+        call_args->head = memo;
+        tmp = call_args->tail = new_pair(vms);
+        tmp->head = list->head;
+        tmp->tail = new_pair(vms);
+
+        // TODO: Handle all 4 callable types: BUILTIN_FUNC, CONSTRUCT, MACRO,
+        // and FUNC.
+        memo = ((func_pointer_t *) fn->builtin)(vms, env, call_args);
+
+        list = list->tail;
+    }
+
+    return memo;
+}
+
 object_t *get_env_of_name(vm_state *vms, object_t *env, object_t *name) {
     object_t *parent_sym = DLR_PARENT_SYM(vms);
 
@@ -1545,6 +1590,8 @@ char *builtin_names[] = {
     "tail",
     "hashcode",
     "is",
+    "add",
+    "sub",
     "+",
     "-",
     "repr",
@@ -1556,6 +1603,7 @@ char *builtin_names[] = {
     "builtin",
     "stitch",
     "byte-explode",
+    "reduce",
 };
 func_pointer_t *builtin_pointers[] = {
     dict_func,
@@ -1568,6 +1616,8 @@ func_pointer_t *builtin_pointers[] = {
     tail_func,
     hashcode_func,
     is_func,
+    add_func,
+    sub_func,
     plus_func,
     minus_func,
     repr_func,
@@ -1579,6 +1629,7 @@ func_pointer_t *builtin_pointers[] = {
     builtin_func,
     stitch_func,
     byte_explode_func,
+    reduce_func,
 };
 
 char *construct_names[] = {
