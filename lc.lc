@@ -1,2 +1,7 @@
 (= + (~ (reduce add $args)))
 (= - (~ (reduce sub $args)))
+
+(= partial (~ (fn) (last
+    (= args (tail $args))
+    (~ (apply fn (join args $args)))
+)))

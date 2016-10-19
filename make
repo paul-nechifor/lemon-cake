@@ -20,7 +20,9 @@ sub_compile() {
 
     nasm -f elf64 lc.asm
 
-    echo "#define INITIAL_CODE \"$(sed ':a;N;$!ba;s/\n/\\n/g' <lc.lc)\"" >lc.lc.h
+    echo "#define INITIAL_CODE \"$(
+        tr '\n' ' ' <lc.lc | sed -e 's/\s\+/ /g'
+    )\"" >lc.lc.h
 
     if [[ $debug ]]; then
         gcc -Os -g -c lc_c.c

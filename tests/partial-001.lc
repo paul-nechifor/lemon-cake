@@ -1,0 +1,3 @@
+(= inc (partial add 1))
+(repr (inc 1))
+(repr (inc 6))
