@@ -485,6 +485,8 @@ void print(vm_state *vms, object_t *o) {
 
 twoargfunc(add_func, +)
 twoargfunc(sub_func, -)
+twoargfunc(mul_func, *)
+twoargfunc(div_func, /)
 
 void list_append(vm_state *vms, object_t *list, object_t *o) {
     object_t *p = list;
@@ -1594,6 +1596,8 @@ char *builtin_names[] = {
     "is",
     "add",
     "sub",
+    "mul",
+    "div",
     "repr",
     "last",
     "dynsym",
@@ -1620,6 +1624,8 @@ func_pointer_t *builtin_pointers[] = {
     is_func,
     add_func,
     sub_func,
+    mul_func,
+    div_func,
     repr_func,
     last_func,
     dynsym_func,

@@ -45,9 +45,6 @@ groups.
   the future when exceptions are introduced (since I can place handlers on the
   stack)
 
-- Stop implementing operators in C. Just define + as (reduce ...). That way I
-  just need to write C functions that take two arguments.
-
 - Maybe include the required `.so` files here so that it works on all systems.
 
 - Add another long GC test that uses lambdas.

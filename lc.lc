@@ -1,5 +1,7 @@
 (= + (~ (reduce add $args)))
 (= - (~ (reduce sub $args)))
+(= * (~ (reduce mul $args)))
+(= / (~ (reduce div $args)))
 
 (= partial (~ (fn) (last
     (= args (tail $args))
