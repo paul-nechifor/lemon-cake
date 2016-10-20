@@ -37,10 +37,6 @@ sub_compile() {
 }
 
 run_tests() {
-    # More tests:
-    # "(do (multi-assign (a b c) (1 2 3)) (list c a b))" "(3 1 2)"
-    # "((func 4))" "4"
-    # "((func (+ 1 (head args))) 2 3 4)" "3"
     for test_file in tests/*.lc; do
         local base_name="${test_file%.lc}"
         assert_output \
