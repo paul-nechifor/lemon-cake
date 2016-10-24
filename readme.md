@@ -22,6 +22,8 @@ language.
 These are some of the things I plan to do, ordered by priority and bunched into
 groups.
 
+- Add support for `$1, $2, ...` args.
+
 - Make sure files are never imported twice.
 
 - Look at a disassembly of the program to see which ar the most important

@@ -1078,23 +1078,30 @@ object_t *reduce_func(vm_state *vms, object_t *env, object_t *args_list) {
     return memo;
 }
 
-object_t *apply_func(vm_state *vms, object_t *env, object_t *args_list) {
-    // TODO: Handle all 4 callable types: BUILTIN_FUNC, CONSTRUCT, MACRO,
-    // and FUNC.
-    object_t *fn = args_list->head;
-
+// TODO: Handle all 4 callable types: BUILTIN_FUNC, CONSTRUCT, MACRO,
+// and FUNC.
+object_t *eval_func_call(
+    vm_state *vms,
+    object_t *fn,
+    object_t *env,
+    object_t *args_list
+) {
     switch (fn->type) {
         case TYPE_BUILTIN_FUNC:
-            return ((func_pointer_t *) args_list->head->builtin)(
+            return ((func_pointer_t *) fn->builtin)(
                 vms,
                 env,
-                args_list->tail->head
+                args_list
             );
         case TYPE_FUNC:
-            return call_func(vms, fn, args_list->tail->head);
+            return call_func(vms, fn, args_list);
         default:
             die("Deal with this case.");
     };
+}
+
+object_t *apply_func(vm_state *vms, object_t *env, object_t *args_list) {
+    return eval_func_call(vms, args_list->head, env, args_list->tail->head);
 }
 
 // Only joins two lists.
@@ -1118,6 +1125,33 @@ object_t *join_func(vm_state *vms, object_t *env, object_t *args_list) {
         ret_obj->tail = new_pair(vms);
         next = next->tail;
         ret_obj = ret_obj->tail;
+    }
+
+    return ret;
+}
+
+object_t *map_func(vm_state *vms, object_t *env, object_t *args_list) {
+    object_t *list = args_list->head;
+    object_t *fn = args_list->tail->head;
+
+    object_t *ret = new_pair(vms);
+    object_t *next = ret;
+    object_t *fn_args;
+    uint64_t index = 0;
+
+    while (list->head) {
+        fn_args = new_pair(vms);
+        fn_args->head = list->head;
+        fn_args->tail = new_pair(vms);
+        fn_args->tail->head = new_int(vms, index);
+        fn_args->tail->tail = new_pair(vms);
+
+        next->head = eval_func_call(vms, fn, env, fn_args);
+        next->tail = new_pair(vms);
+
+        list = list->tail;
+        next = next->tail;
+        index++;
     }
 
     return ret;
@@ -1626,6 +1660,7 @@ char *builtin_names[] = {
     "reduce",
     "apply",
     "join",
+    "map",
 };
 func_pointer_t *builtin_pointers[] = {
     dict_func,
@@ -1654,6 +1689,7 @@ func_pointer_t *builtin_pointers[] = {
     reduce_func,
     apply_func,
     join_func,
+    map_func,
 };
 
 char *construct_names[] = {
