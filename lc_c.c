@@ -10,6 +10,8 @@
         vms->call_stack_objects = obj; \
     } while (0)
 
+#define PATH_MAX 4096
+
 extern void (*c_exit)(int status);
 extern int (*c_fprintf)(FILE *stream, const char *format, ...);
 extern void (*c_free)(void *ptr);
@@ -28,6 +30,8 @@ extern int (*c_fflush)(FILE *stream);
 extern void *(*c_memalign)(size_t alignment, size_t size);
 extern int (*c_mprotect)(void *addr, size_t len, int prot);
 extern long (*c_sysconf)(int name);
+extern char *(*c_getcwd)(char* buffer, size_t size);
+extern char *(*c_strcat)(char *destination, char *source);
 
 extern uint64_t *prog_argc_ptr;
 extern char *libc_handle;
@@ -156,7 +160,7 @@ uint64_t objects_equal(object_t *a, object_t *b);
 void dict_add(object_t *d, object_t *key, object_t *value);
 object_t *dict_get(vm_state *vms, object_t *d, object_t *key);
 void gc(vm_state *vms);
-object_t *eval_file(vm_state *vms, char *file_name);
+object_t *eval_file(vm_state *vms, char *dir, char *file_path);
 object_t *call_func(vm_state *vms, object_t *func, object_t *args_list);
 
 char *interned_symbols[] = {
@@ -168,6 +172,8 @@ char *interned_symbols[] = {
     "funcs",
     "handle",
     "quote",
+    "$dir",
+    "$file",
 };
 
 #define FIRST_INTERNED_OBJ_PTR(vms) \
@@ -181,6 +187,8 @@ char *interned_symbols[] = {
 #define FUNCS_SYM(vms) (FIRST_INTERNED_OBJ_PTR(vms)[5])
 #define HANDLE_SYM(vms) (FIRST_INTERNED_OBJ_PTR(vms)[6])
 #define QUOTE_SYM(vms) (FIRST_INTERNED_OBJ_PTR(vms)[7])
+#define DLR_DIR_SYM(vms) (FIRST_INTERNED_OBJ_PTR(vms)[8])
+#define DLR_FILE_SYM(vms) (FIRST_INTERNED_OBJ_PTR(vms)[9])
 
 static void die(char *msg) {
     c_fprintf(stderr, "%s\n", msg);
@@ -972,7 +980,15 @@ object_t *assemble_func(vm_state *vms, object_t *env, object_t *args_list) {
 }
 
 object_t *import_func(vm_state *vms, object_t *env, object_t *args_list) {
-    return eval_file(vms, args_list->head->string_pointer);
+    object_t *dir_str = dict_get_null(vms, env, DLR_DIR_SYM(vms));
+    if (dir_str == NULL) {
+        die("Couldn't find $dir.");
+    }
+    return eval_file(
+        vms,
+        dir_str->string_pointer,
+        args_list->head->string_pointer
+    );
 }
 
 object_t *builtin_func(vm_state *vms, object_t *env, object_t *args_list) {
@@ -1803,6 +1819,30 @@ void sweep(vm_state *vms) {
     }
 }
 
+void get_dir_and_file(
+    char *src_dir,
+    char *src_file,
+    char *dst_dir,
+    char *dst_file
+) {
+    uint64_t len;
+
+    if (src_file[0] == '/') {
+        len = c_strlen(src_file);
+        c_memcpy(dst_file, src_file, len);
+    } else {
+        len = c_strlen(src_dir);
+        c_memcpy(dst_file, src_dir, len);
+        c_strcat(dst_file, "/");
+        c_strcat(dst_file, src_file);
+        len = c_strlen(dst_file);
+    }
+
+    c_memcpy(dst_dir, dst_file, len);
+    while (dst_dir[--len] != '/');
+    dst_dir[len] = '\0';
+}
+
 /*
  * You need to check that vms->gc_is_on is true before calling this function.
  */
@@ -1828,14 +1868,19 @@ void gc(vm_state *vms) {
     vms->gc_is_on = 1;
 }
 
-object_t *eval_file(vm_state *vms, char *file_name) {
+object_t *eval_file(vm_state *vms, char *dir, char *file_path) {
+    char actual_file_path[PATH_MAX + 1];
+    char actual_file_parent[PATH_MAX + 1];
+
+    get_dir_and_file(dir, file_path, actual_file_parent, actual_file_path);
+
     uint64_t file_length;
     char *content = NULL;
-    FILE *f = c_fopen(file_name, "rb");
+    FILE *f = c_fopen(actual_file_path, "rb");
     object_t *ret;
 
     if (!f) {
-        c_fprintf(stderr, "Could not open '%s'.", file_name);
+        c_fprintf(stderr, "Could not open '%s'.", actual_file_path);
         goto eval_file_cleanup;
     }
 
@@ -1847,20 +1892,43 @@ object_t *eval_file(vm_state *vms, char *file_name) {
     content = c_malloc(file_length);
 
     if (!content) {
-        c_fprintf(stderr, "Failed to malloc buffer for file '%s'.", file_name);
+        c_fprintf(
+            stderr, "Failed to malloc buffer for file '%s'.", actual_file_path
+        );
         goto eval_file_cleanup;
     }
 
     if (c_fread(content, 1, file_length, f) != file_length) {
-        c_fprintf(stderr, "Failed to read the whole file '%s'.", file_name);
+        c_fprintf(
+            stderr, "Failed to read the whole file '%s'.", actual_file_path
+        );
         goto eval_file_cleanup;
     }
     c_fclose(f);
 
+    // Parse the file and create the child_env which will store the '$file' and
+    // '$dir' variables.
     vms->gc_is_on = 0;
     object_t *parsed = parse(vms, content, file_length);
+    object_t *child_env = new_dict(vms, 4969);
     vms->gc_is_on = 1;
-    ret = eval(vms, vms->env, parsed);
+
+    ADD_ON_CALL_STACK(vms, child_env);
+    dict_add(child_env, DLR_PARENT_SYM(vms), vms->env);
+    vms->gc_is_on = 0;
+    dict_add(
+        child_env,
+        DLR_DIR_SYM(vms),
+        new_string(vms, actual_file_parent, c_strlen(actual_file_parent))
+    );
+    dict_add(
+        child_env,
+        DLR_FILE_SYM(vms),
+        new_string(vms, actual_file_path, c_strlen(actual_file_path))
+    );
+    vms->gc_is_on = 1;
+
+    ret = eval(vms, child_env, parsed);
     goto eval_file_cleanup2;
 
 eval_file_cleanup:
@@ -1887,7 +1955,6 @@ void eval_lines() {
     vms->gc_is_on = 1;
     eval(vms, vms->env, parsed);
 
-
     // If argc is 1, that means there are no arguments so just run a REPL.
     if (*prog_argc_ptr == 1) {
         for (;;) {
@@ -1910,8 +1977,14 @@ void eval_lines() {
         goto eval_lines_cleanup;
     }
 
-    char *file_name = *((char **)prog_argc_ptr + 2);
-    eval_file(vms, file_name);
+    char *file_path = *((char **)prog_argc_ptr + 2);
+    char cwd[PATH_MAX + 1];
+
+    if (c_getcwd(cwd, PATH_MAX + 1) == NULL) {
+        die("getcwd failed");
+    }
+
+    eval_file(vms, cwd, file_path);
 
 eval_lines_cleanup:
     if (vms->gc_is_on) {

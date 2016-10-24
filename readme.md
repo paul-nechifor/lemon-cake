@@ -22,9 +22,7 @@ language.
 These are some of the things I plan to do, ordered by priority and bunched into
 groups.
 
-- Files must only be imported once and they must know their own path. This could
-  by achived by storing $filename and $dirname in the env that gets passed to
-  them.
+- Make sure files are never imported twice.
 
 - Look at a disassembly of the program to see which ar the most important
   instructions that need to be supported.

@@ -35,6 +35,8 @@ function_string fflush
 function_string memalign
 function_string mprotect
 function_string sysconf
+function_string getcwd
+function_string strcat
 
 first_function_to_load:
 
@@ -56,6 +58,8 @@ function_pointer_and_name fflush
 function_pointer_and_name memalign
 function_pointer_and_name mprotect
 function_pointer_and_name sysconf
+function_pointer_and_name getcwd
+function_pointer_and_name strcat
 
 end_of_functions_to_load:
 
