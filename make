@@ -109,6 +109,8 @@ random_plus_expression() {
         if [[ "$nr" != "0" && "$(( RANDOM % 6 ))" == "0" ]]; then
             echo -n ' '
             random_plus_expression "$nr"
+        elif [[ "$(( RANDOM % 4 ))" == "0" ]]; then
+            echo -n " ((~ $nr))"
         else
             echo -n " $nr"
         fi
