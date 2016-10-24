@@ -1157,6 +1157,46 @@ object_t *map_func(vm_state *vms, object_t *env, object_t *args_list) {
     return ret;
 }
 
+object_t *range_func(vm_state *vms, object_t *env, object_t *args_list) {
+    uint64_t start = 0;
+    uint64_t stop;
+    uint64_t step = 1;
+
+    object_t *tmp = args_list->tail;
+    object_t *arg2 = tmp->head;
+
+    if (arg2) {
+        start = args_list->head->int_value;
+        stop = arg2->int_value;
+        tmp = tmp->tail;
+
+        if (tmp->head) {
+            step = tmp->head->int_value;
+        }
+    } else {
+        stop = args_list->head->int_value;
+    }
+
+    object_t *ret = new_pair(vms);
+    object_t *next = ret;
+
+    if (start < stop) {
+        for (; start < stop; start += step) {
+            next->head = new_int(vms, start);
+            next->tail = new_pair(vms);
+            next = next->tail;
+        }
+    } else {
+        for (; start > stop; start += step) {
+            next->head = new_int(vms, start);
+            next->tail = new_pair(vms);
+            next = next->tail;
+        }
+    }
+
+    return ret;
+}
+
 object_t *get_env_of_name(vm_state *vms, object_t *env, object_t *name) {
     object_t *parent_sym = DLR_PARENT_SYM(vms);
 
@@ -1661,6 +1701,7 @@ char *builtin_names[] = {
     "apply",
     "join",
     "map",
+    "range",
 };
 func_pointer_t *builtin_pointers[] = {
     dict_func,
@@ -1690,6 +1731,7 @@ func_pointer_t *builtin_pointers[] = {
     apply_func,
     join_func,
     map_func,
+    range_func,
 };
 
 char *construct_names[] = {
