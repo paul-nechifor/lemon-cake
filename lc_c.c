@@ -32,6 +32,7 @@ extern int (*c_mprotect)(void *addr, size_t len, int prot);
 extern long (*c_sysconf)(int name);
 extern char *(*c_getcwd)(char* buffer, size_t size);
 extern char *(*c_strcat)(char *destination, char *source);
+extern char *(*c_strstr)(const char *haystack, const char *needle);
 
 extern uint64_t *prog_argc_ptr;
 extern char *libc_handle;
@@ -1197,6 +1198,28 @@ object_t *range_func(vm_state *vms, object_t *env, object_t *args_list) {
     return ret;
 }
 
+object_t *split_func(vm_state *vms, object_t *env, object_t *args_list) {
+    char *needle = args_list->head->string_pointer;
+    uint64_t needle_len = c_strlen(needle);
+    char *haystack = args_list->tail->head->string_pointer;
+
+    object_t *ret = new_pair(vms);
+    object_t *next = ret;
+    char *match;
+
+    while (match = c_strstr(haystack, needle)) {
+        next->head = new_string(vms, haystack, match - haystack);
+        next->tail = new_pair(vms);
+        next = next->tail;
+        haystack = match + needle_len;
+    }
+
+    next->head = new_string(vms, haystack, c_strlen(haystack));
+    next->tail = new_pair(vms);
+
+    return ret;
+}
+
 object_t *get_env_of_name(vm_state *vms, object_t *env, object_t *name) {
     object_t *parent_sym = DLR_PARENT_SYM(vms);
 
@@ -1702,6 +1725,7 @@ char *builtin_names[] = {
     "join",
     "map",
     "range",
+    "split",
 };
 func_pointer_t *builtin_pointers[] = {
     dict_func,
@@ -1732,6 +1756,7 @@ func_pointer_t *builtin_pointers[] = {
     join_func,
     map_func,
     range_func,
+    split_func,
 };
 
 char *construct_names[] = {

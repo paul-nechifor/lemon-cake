@@ -37,6 +37,7 @@ function_string mprotect
 function_string sysconf
 function_string getcwd
 function_string strcat
+function_string strstr
 
 first_function_to_load:
 
@@ -60,6 +61,7 @@ function_pointer_and_name mprotect
 function_pointer_and_name sysconf
 function_pointer_and_name getcwd
 function_pointer_and_name strcat
+function_pointer_and_name strstr
 
 end_of_functions_to_load:
 

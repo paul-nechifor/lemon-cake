@@ -22,6 +22,16 @@ language.
 These are some of the things I plan to do, ordered by priority and bunched into
 groups.
 
+
+- Reworking assembly:
+
+    (asm
+      '
+        mov rax, simbol1
+      '
+      (dict simbol1 12345)
+    )
+
 - Add support for `$1, $2, ...` args.
 
 - Make sure files are never imported twice.
