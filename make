@@ -12,11 +12,11 @@ main() {
         return
     fi
     sub_compile
-    [[ "$notests" ]] || run_tests
+    [[ "${notests:-}" ]] || run_tests
 }
 
 sub_compile() {
-    rm -fr *.o lc
+    rm -fr ./*.o lc
 
     nasm -f elf64 lc.asm
 
@@ -24,16 +24,16 @@ sub_compile() {
         tr '\n' ' ' <lc.lc | sed -e 's/\s\+/ /g'
     )\"" >lc.lc.h
 
-    if [[ $debug ]]; then
+    if [[ ${debug:-} ]]; then
         gcc -Os -g -c lc_c.c
-        ld -o lc -dynamic-linker /lib64/ld-linux-x86-64.so.2 -lc -ldl --entry=main *.o
+        ld -o lc -dynamic-linker /lib64/ld-linux-x86-64.so.2 -lc -ldl --entry=main ./*.o
     else
         gcc -Os -c lc_c.c
-        ld -o lc -dynamic-linker /lib64/ld-linux-x86-64.so.2 -lc -ldl --entry=main *.o
+        ld -o lc -dynamic-linker /lib64/ld-linux-x86-64.so.2 -lc -ldl --entry=main ./*.o
         strip -R .eh_frame -R .gnu.version -R .hash -R .comment --strip-all lc
     fi
 
-    rm -fr *.o
+    rm -fr ./*.o
 }
 
 run_tests() {
@@ -57,7 +57,7 @@ run_tests() {
 
     tests_done
 
-    if [[ $all ]]; then
+    if [[ ${all:-} ]]; then
         check_summation 50 1000 200
     fi
 }
