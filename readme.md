@@ -22,24 +22,7 @@ language.
 These are some of the things I plan to do, ordered by priority and bunched into
 groups.
 
-
-- Reworking assembly:
-
-    (asm
-      '
-        mov rax, simbol1
-      '
-      (dict simbol1 12345)
-    )
-
-- Add support for `$1, $2, ...` args.
-
-- Make sure files are never imported twice.
-
-- Look at a disassembly of the program to see which ar the most important
-  instructions that need to be supported.
-
-- Introduce C escape sequences for strings.
+- Fix the memory leak!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 - Add an argument to `new\_object` to not run gc so that I don't have to set
   `gc_is_on` all the time (setting that doesn't check it was on in the first
@@ -50,6 +33,40 @@ groups.
     - a function that adds an object to the call stack (uses the function above)
   - new functions that take object structures and give their types the required
     values.
+
+
+- Reworking assembly:
+
+    (asm
+      '
+        mov rax, simbol1
+      '
+      (dict simbol1 12345)
+    )
+
+
+    this function
+        (assemble-bytes 'mov rax, sim1', (dict sim1 1234))
+    returns
+        (:(0xa4 0x7b ...) :((4 2 0xfa4b) (2 4 232313) ...))
+
+        - first: the list of bytes for the whole code
+        - a list of 3-uples (0-based byte offset, n-bytes, start relative no.)
+
+        In the byte list those byte positions should be all zeros. The numbers
+        will have to be overriden over those places based on the relative
+        position of the start of the code segment.
+
+
+
+- Add support for `$1, $2, ...` args.
+
+- Make sure files are never imported twice.
+
+- Look at a disassembly of the program to see which ar the most important
+  instructions that need to be supported.
+
+- Introduce C escape sequences for strings.
 
 - Switch to using an actual stack for the stack values. This will be useful in
   the future when exceptions are introduced (since I can place handlers on the
