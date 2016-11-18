@@ -1342,6 +1342,31 @@ object_t *if_func(vm_state *vms, object_t *env, object_t *args_list) {
     }
 }
 
+object_t *or_func(vm_state *vms, object_t *env, object_t *args_list) {
+    object_t *prev = eval(vms, env, args_list->head);
+    object_t *next = args_list->tail;
+    object_t *evaled_now;
+
+    if (obj_len_func(prev)) {
+        return prev;
+    }
+
+    for (;;) {
+        if (!next->head) {
+            return prev;
+        }
+
+        evaled_now = eval(vms, env, next->head);
+
+        if (obj_len_func(evaled_now)) {
+            return evaled_now;
+        }
+
+        next = next->tail;
+        prev = evaled_now;
+    }
+}
+
 object_t *switch_func(vm_state *vms, object_t *env, object_t *args_list) {
     object_t *o = args_list->head;
     object_t *arg = args_list->tail;
@@ -1766,6 +1791,7 @@ char *construct_names[] = {
     "~",
     "if",
     "switch",
+    "or",
 };
 func_pointer_t *construct_pointers[] = {
     quote_func,
@@ -1774,6 +1800,7 @@ func_pointer_t *construct_pointers[] = {
     func_func,
     if_func,
     switch_func,
+    or_func,
 };
 
 vm_state *start_vm() {
