@@ -111,6 +111,10 @@ random_plus_expression() {
             random_plus_expression "$nr"
         elif [[ "$nr" != "0" && "$(( RANDOM % 3 ))" == "0" ]]; then
             echo -n " (+ $nr 0 0 0 0 0)"
+        elif [[ "$nr" != "0" && "$(( RANDOM % 2 ))" == "0" ]]; then
+            echo -n " (+ (- $nr 1) 1)"
+        elif [[ "$nr" != "0" && "$(( RANDOM % 2 ))" == "0" ]]; then
+            echo -n " (/ (* $nr 2) 2)"
         elif [[ "$(( RANDOM % 2 ))" == "0" ]]; then
             echo -n " ((~ $nr))"
         else
