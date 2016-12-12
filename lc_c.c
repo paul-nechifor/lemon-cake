@@ -1063,11 +1063,13 @@ object_t *reduce_func(vm_state *vms, object_t *env, object_t *args_list) {
     }
 
     while (list->head) {
+        vms->gc_is_on = 0;
         call_args = new_pair(vms);
         call_args->head = memo;
         tmp = call_args->tail = new_pair(vms);
         tmp->head = list->head;
         tmp->tail = new_pair(vms);
+        vms->gc_is_on = 1;
 
         // TODO: Handle all 4 callable types: BUILTIN_FUNC, CONSTRUCT, MACRO,
         // and FUNC.
@@ -1426,9 +1428,8 @@ object_t *call_func(vm_state *vms, object_t *func, object_t *args_list) {
     // Turn gc off in order to create the child env.
     vms->gc_is_on = 0;
     object_t *child_env = new_dict(vms, 4969);
-    vms->gc_is_on = 1;
-
     ADD_ON_CALL_STACK(vms, child_env);
+    vms->gc_is_on = 1;
 
     populate_child_env(
         vms, func->func_parent_env, child_env, func->func_args, args_list
@@ -1468,9 +1469,8 @@ object_t *eval_list(vm_state *vms, object_t *env, object_t *o) {
         // Turn gc off in order to create the child env.
         vms->gc_is_on = 0;
         object_t *child_env = new_dict(vms, 4969);
-        vms->gc_is_on = 1;
-
         ADD_ON_CALL_STACK(vms, child_env);
+        vms->gc_is_on = 1;
 
         populate_child_env(
             vms, func->macro_parent_env, child_env, func->macro_args, o->tail
@@ -1483,9 +1483,8 @@ object_t *eval_list(vm_state *vms, object_t *env, object_t *o) {
     // Turn gc off in order to create the eval args list.
     vms->gc_is_on = 0;
     object_t *args_list = new_pair(vms);
-    vms->gc_is_on = 1;
-
     ADD_ON_CALL_STACK(vms, args_list);
+    vms->gc_is_on = 1;
 
     eval_args_list(vms, env, args_list, o->tail);
 
@@ -2041,11 +2040,9 @@ object_t *eval_file(vm_state *vms, char *dir, char *file_path) {
     vms->gc_is_on = 0;
     object_t *parsed = parse(vms, content, file_length);
     object_t *child_env = new_dict(vms, 4969);
-    vms->gc_is_on = 1;
-
     ADD_ON_CALL_STACK(vms, child_env);
+
     dict_add(child_env, DLR_PARENT_SYM(vms), vms->env);
-    vms->gc_is_on = 0;
     dict_add(
         child_env,
         DLR_DIR_SYM(vms),
