@@ -347,7 +347,14 @@ object_t *read_symbol(vm_state *vms, char *s, uint64_t *i) {
 
     for (;;) {
         c = s[*i];
-        if (c == ' ' || c == '\n' || c == '\r' || c == '\t' || c == ')') {
+        if (
+            c == ' ' ||
+            c == '\n' ||
+            c == '\r' ||
+            c == '\t' ||
+            c == ')' ||
+            c == '('
+        ) {
             break;
         }
         (*i)++;
