@@ -22,7 +22,12 @@ language.
 These are some of the things I plan to do, ordered by priority and bunched into
 groups.
 
-- Fix the memory leak!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+- Try to see if you can come up with an elf template. It would look like a list
+  of bytes. What you would need to do is just add some bytes at position x and
+  fix some fields based on the length of x. This will answer the question of how
+  to handle sections.
+
+- A function to write a string to disk.
 
 - Add an argument to `new\_object` to not run gc so that I don't have to set
   `gc_is_on` all the time (setting that doesn't check it was on in the first
@@ -35,7 +40,7 @@ groups.
     values.
 
 
-- Reworking assembly:
+- This is how assembly should look like:
 
     (asm
       '
@@ -43,6 +48,82 @@ groups.
       '
       (dict simbol1 12345)
     )
+
+- It should assemble to machine code in memory that's executable.
+
+- It should return a list with two values:
+
+    - a number representing a pointer to the first byte of the executable code
+      (it should be possible to free this with a single free call)
+    - a dictionary of strings to pointers representing the exported things
+      (`asm` needs to add the program offset since `assemble-bytes` returns
+      origin-relative values)
+
+- The function above is a high level function intended to be able to execute
+  code dynamically. For writing to disk we need other lower level functions.
+
+- This function generates a list of numbers representing each byte of the
+  machine code with the offsets comming separatelly.
+
+    (assemble-bytes
+      'mov rax, simbol1'
+      (dict simbol1 12345)
+    )
+
+- It will return:
+
+    - a list of numbers of bytes of the machine code. all the bytes representing
+      position dependent numbers will be 0.
+    - a list of pairs representing numbers to be overriden where the elements are:
+        - the offset where to write to
+        - the number of bytes
+        - the value. this number needs the program origin added to it before
+          it's written.
+    - a dict of exported values (relative to the origin)
+
+- A function that writes the list of bytes:
+
+    (write-asm-bytes
+      :(0x12 0x5A 0xA9) # The list of bytes.
+      0x12346754 # Pointer where to write to. Must be long enough to be able to write all of the bytes above.
+      0x0020000 # The program origin. This will be the number that's added the the list of offsets.
+    )
+
+    - `asm` will use same buffer and program origin and the buffer will be in executable memory.
+    - `fs-asm` will use different numbers and the write the buffer to disk
+
+- THIS IS BROKEN? HOW WOULD YOU HANDLE `dd _end - ehdr`. I have to compute all
+  the labels before generating instructions
+
+- WHAT ABOUT sections!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+- How to assemble. (Won't support all nasm concepts.)
+    - Build the environment. it will contain:
+        - symbols (the dict of passed-in symbols)
+        - relative-symbols (this will be populated by instructions. For example
+          `_start:` will add `'_start'` with the current offset to the dict)
+          (This should error if the name exists in `symbols`.)
+        - relative-patches (an instruction like `jmp load_instr` cannot write
+          the address directly if `load_instr` is a label and it's after the
+          `jmp`). A list of:
+            - a string reffering to the value that should be in
+              `relative-symbols`
+            - offset
+            - the number of bytes (sizeof number)
+        - instr (the list off instructions)
+        - end (the tail of `instr`, used for appending)
+        - length (the number of bytes in `instr`)
+        - globals (dict of names to values. an instruction like `global _start`
+          will add `_start` with `()`. An instruction like `_start:` will lookup
+          to see if it needs to be exported and if so it will replace `()` with
+          the actual position dependant value.)
+    - Split lines by '\n' and process each line.
+    - Trim whitespace. Remove comments. Ignore whitespace.
+    - write the relative-patches
+
+
+
+- The purpose of the code above is to
 
 
     this function
@@ -56,6 +137,11 @@ groups.
         In the byte list those byte positions should be all zeros. The numbers
         will have to be overriden over those places based on the relative
         position of the start of the code segment.
+
+
+    input
+        string of 
+    output
 
 
 
@@ -152,6 +238,10 @@ groups.
   purpuses and it could we used for dead code elimination.
 
 - Add runtime checks (which could be skipped in live).
+
+- Try writing a simple OS (using the Linux kerner) that uses LemonCake as the
+  basis for almost everything. For example a program like `ls` would just output
+  data and a stylesheet and the shell manages the display.
 
 ## Ideas (this needs to be organized better)
 
