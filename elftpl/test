@@ -5,3 +5,9 @@ nasm -f bin -o a.out tiny.asm
 chmod +x a.out
 ./a.out
 echo $?
+
+rm a.out
+nasm -f bin -o a.out tiny2.asm
+chmod +x a.out
+./a.out
+echo $?

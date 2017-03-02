@@ -2,8 +2,8 @@ BITS 64
 org 0x08048000
 
 ehdr: ; Elf64_Ehdr
-  db 0x7F, "ELF", 1, 1, 1, 0 ; e_ident
-  db 0, 0, 0, 0, 0, 0, 0, 0
+  db 0x7F, "ELF", 2, 1, 1, 0 ; e_ident
+  dq 0
   dw 2                       ; e_type
   dw 0x3E                    ; e_machine
   dd 1                       ; e_version
