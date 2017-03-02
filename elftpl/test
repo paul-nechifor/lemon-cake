@@ -1,0 +1,7 @@
+#!/bin/bash
+
+rm a.out
+nasm -f bin -o a.out tiny.asm
+chmod +x a.out
+./a.out
+echo $?
