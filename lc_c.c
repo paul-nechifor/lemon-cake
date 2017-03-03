@@ -1229,6 +1229,38 @@ object_t *split_func(vm_state *vms, object_t *env, object_t *args_list) {
     return ret;
 }
 
+object_t *fs_read_func(vm_state *vms, object_t *env, object_t *args_list) {
+}
+
+void read_file(char *file_path, char **content, uint64_t *file_length) {
+    FILE *f = c_fopen(file_path, "rb");
+    object_t *ret;
+
+    if (!f) {
+        die("File error.");
+    }
+
+    // Find out the size of the file by going to the end.
+    c_fseek(f, 0, SEEK_END);
+    *file_length = c_ftell(f);
+    c_fseek(f, 0, SEEK_SET);
+
+    *content = c_malloc(*file_length);
+
+    if (!*content) {
+        die("File error.");
+    }
+
+    if (c_fread(*content, 1, *file_length, f) != *file_length) {
+        die("File error.");
+    }
+
+    c_fclose(f);
+}
+
+object_t *fs_write_func(vm_state *vms, object_t *env, object_t *args_list) {
+}
+
 object_t *get_env_of_name(vm_state *vms, object_t *env, object_t *name) {
     object_t *parent_sym = DLR_PARENT_SYM(vms);
 
@@ -1757,6 +1789,8 @@ char *builtin_names[] = {
     "map",
     "range",
     "split",
+    "fs-read",
+    "fs-write",
 };
 func_pointer_t *builtin_pointers[] = {
     dict_func,
@@ -1788,6 +1822,8 @@ func_pointer_t *builtin_pointers[] = {
     map_func,
     range_func,
     split_func,
+    fs_read_func,
+    fs_write_func,
 };
 
 char *construct_names[] = {
@@ -2011,36 +2047,9 @@ object_t *eval_file(vm_state *vms, char *dir, char *file_path) {
     get_dir_and_file(dir, file_path, actual_file_parent, actual_file_path);
 
     uint64_t file_length;
-    char *content = NULL;
-    FILE *f = c_fopen(actual_file_path, "rb");
-    object_t *ret;
+    char *content;
 
-    if (!f) {
-        c_fprintf(stderr, "Could not open '%s'.", actual_file_path);
-        goto eval_file_cleanup;
-    }
-
-    // Find out the size of the file by going to the end.
-    c_fseek(f, 0, SEEK_END);
-    file_length = c_ftell(f);
-    c_fseek(f, 0, SEEK_SET);
-
-    content = c_malloc(file_length);
-
-    if (!content) {
-        c_fprintf(
-            stderr, "Failed to malloc buffer for file '%s'.", actual_file_path
-        );
-        goto eval_file_cleanup;
-    }
-
-    if (c_fread(content, 1, file_length, f) != file_length) {
-        c_fprintf(
-            stderr, "Failed to read the whole file '%s'.", actual_file_path
-        );
-        goto eval_file_cleanup;
-    }
-    c_fclose(f);
+    read_file(actual_file_path, &content, &file_length);
 
     // Parse the file and create the child_env which will store the '$file' and
     // '$dir' variables.
@@ -2062,6 +2071,7 @@ object_t *eval_file(vm_state *vms, char *dir, char *file_path) {
     );
     vms->gc_is_on = 1;
 
+    object_t *ret;
     ret = eval(vms, child_env, parsed);
     goto eval_file_cleanup2;
 
