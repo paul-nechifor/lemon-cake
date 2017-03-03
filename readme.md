@@ -22,12 +22,12 @@ language.
 These are some of the things I plan to do, ordered by priority and bunched into
 groups.
 
+- Add ability to escape \' \n and fix fs-read-001.in
+
 - Try to see if you can come up with an elf template. It would look like a list
   of bytes. What you would need to do is just add some bytes at position x and
   fix some fields based on the length of x. This will answer the question of how
   to handle sections.
-
-- A function to write a string to disk.
 
 - Add an argument to `new\_object` to not run gc so that I don't have to set
   `gc_is_on` all the time (setting that doesn't check it was on in the first

@@ -1,0 +1,2 @@
+(fs-write 'wot' 'I am a file. What are you?')
+(repr (fs-read 'wot'))

@@ -38,22 +38,8 @@ sub_compile() {
 }
 
 run_tests() {
-    for test_file in tests/*.lc; do
-        local base_name="${test_file%.lc}"
-        assert_output \
-            "$(basename "$test_file" .lc)" \
-            "$(cat "$base_name".out)" \
-            "$(./lc "$test_file" 2>/dev/null)" \
-            "$(./lc "$test_file" 2>&1)"
-    done
-
-    for test_file in tests/*.in; do
-        local base_name="${test_file%.in}"
-        assert_output \
-            "$(basename "$test_file" .in)" \
-            "$(cat "$base_name".out)" \
-            "$(./lc < "$test_file" 2>/dev/null)" \
-            "$(./lc < "$test_file" 2>&1)"
+    for test_file in tests/*.{lc,in}; do
+        run_test "$test_file"
     done
 
     tests_done
@@ -61,6 +47,41 @@ run_tests() {
     if [[ ${all:-} ]]; then
         check_summation 50 1000 200
     fi
+}
+
+run_test() {
+    local file="$1"
+    local filename="$(basename "$file")"
+    local extension="${filename##*.}"
+    local input="${filename%.*}"
+
+    local args=(
+        "$input"
+
+        "$(cat "tests/${input}.out")"
+
+        "$(
+            mkdir tmp_test_dir
+            if [[ $extension == lc ]]; then
+                ./lc "$file" 2>/dev/null
+            else
+                ./lc < "$file" 2>/dev/null
+            fi
+            rm -fr tmp_test_dir
+        )"
+
+        "$(
+            mkdir tmp_test_dir
+            if [[ $extension == lc ]]; then
+                ./lc "$file" 2>&1
+            else
+                ./lc < "$file" 2>&1
+            fi
+            rm -fr tmp_test_dir
+        )"
+    )
+
+    assert_output "${args[@]}"
 }
 
 assert_output() {

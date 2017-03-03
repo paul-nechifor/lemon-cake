@@ -33,6 +33,7 @@ extern long (*c_sysconf)(int name);
 extern char *(*c_getcwd)(char* buffer, size_t size);
 extern char *(*c_strcat)(char *destination, char *source);
 extern char *(*c_strstr)(const char *haystack, const char *needle);
+extern size_t (*c_fwrite)(void *ptr, size_t size, size_t nmemb, FILE *stream);
 
 extern uint64_t *prog_argc_ptr;
 extern char *libc_handle;
@@ -1229,12 +1230,8 @@ object_t *split_func(vm_state *vms, object_t *env, object_t *args_list) {
     return ret;
 }
 
-object_t *fs_read_func(vm_state *vms, object_t *env, object_t *args_list) {
-}
-
 void read_file(char *file_path, char **content, uint64_t *file_length) {
     FILE *f = c_fopen(file_path, "rb");
-    object_t *ret;
 
     if (!f) {
         die("File error.");
@@ -1258,7 +1255,38 @@ void read_file(char *file_path, char **content, uint64_t *file_length) {
     c_fclose(f);
 }
 
+object_t *fs_read_func(vm_state *vms, object_t *env, object_t *args_list) {
+    uint64_t file_length;
+    char *content;
+
+    read_file(args_list->head->string_pointer, &content, &file_length);
+
+    return new_string(vms, content, file_length);
+}
+
+void write_file(char *file_path, char *content, uint64_t file_length) {
+    FILE *f = c_fopen(file_path, "wb");
+
+    if (!f) {
+        die("File error.");
+    }
+
+    if (c_fwrite(content, 1, file_length, f) != file_length) {
+        die("File error.");
+    }
+
+    c_fclose(f);
+}
+
 object_t *fs_write_func(vm_state *vms, object_t *env, object_t *args_list) {
+    object_t *content = args_list->tail->head;
+    write_file(
+        args_list->head->string_pointer,
+        content->string_pointer,
+        content->string_length
+    );
+
+    return new_pair(vms);
 }
 
 object_t *get_env_of_name(vm_state *vms, object_t *env, object_t *name) {
