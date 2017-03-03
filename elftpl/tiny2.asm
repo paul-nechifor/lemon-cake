@@ -1,5 +1,5 @@
 BITS 64
-; org 0x08048000 ???
+
 
 ehdr: ; Elf64_Ehdr
   db 0x7F, "ELF", 2, 1, 1, 0 ; e_ident
@@ -38,22 +38,31 @@ phdr: ; Elf64_Phdr
   dq 0x200000    ; p_align
 
 
-
+; .text
+start:
   mov rax, 60
   mov rdi, 42
   syscall
+end:
 
-  db 0x08, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01
+; .data
+data:
+  dq 0x0102030405060708
+end_data:
 
-  db 0x00
-  db 0x2e, 0x73, 0x68, 0x73, 0x74, 0x72, 0x74, 0x61, 0x62, 0x00
-  db 0x2e, 0x74, 0x65, 0x78, 0x74, 0x00
-  db 0x2e, 0x64, 0x61, 0x74, 0x61, 0x00
-  db 0x00, 0x00, 0x00, 0x00, 0x00
+; .shstrtab
+section_null_name:
+  db 0
+section_shstrtab_name:
+  db '.shstrtab', 0
+section_text_name:
+  db '.text', 0
+section_data_name:
+  db '.data', 0
+  db 0, 0, 0, 0, 0 ; padding
 
 
-
-
+; null section
   dd 0 ; sh_name
   dd 0 ; sh_type
   dq 0 ; sh_flags
@@ -65,6 +74,7 @@ phdr: ; Elf64_Phdr
   dq 0 ; sh_addralign
   dq 0 ; sh_entsize
 
+; .text section
   dd 0x0b ; sh_name
   dd 1 ; sh_type
   dq 0x06 ; sh_flags
@@ -76,6 +86,7 @@ phdr: ; Elf64_Phdr
   dq 0x10 ; sh_addralign
   dq 0 ; sh_entsize
 
+; .data section
   dd 0x11 ; sh_name
   dd 1 ; sh_type
   dq 0x03 ; sh_flags
@@ -87,6 +98,7 @@ phdr: ; Elf64_Phdr
   dq 4 ; sh_addralign
   dq 0 ; sh_entsize
 
+; .shstrtab section
   dd 0x01 ; sh_name
   dd 3 ; sh_type
   dq 0x00 ; sh_flags
