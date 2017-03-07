@@ -1,0 +1,4 @@
+(len '\n')
+(len 'a\n')
+(len '\nb')
+(len 'a\nb')

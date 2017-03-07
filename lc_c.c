@@ -330,13 +330,57 @@ object_t *read_hex(vm_state *vms, char *s, uint64_t *i) {
 object_t *read_string(vm_state *vms, char *s, uint64_t *i) {
     uint64_t start = *i;
     uint64_t end = start;
-    while (s[end] != '\'') {
+    uint64_t n_chars = 0;
+    uint64_t j;
+    char *str;
+    char c;
+
+    // Compute the length of the final string (i.e. `\'` is a single char).
+    for (;;) {
+        c = s[end];
+
+        if (c == '\'') {
+            goto length_computation_done;
+        }
+        if (c == '\\') {
+            end++;
+        }
+
+        n_chars++;
         end++;
     }
 
-    object_t *o = new_string(vms, &s[start], end - start);
+length_computation_done:
 
     *i = end + 1;
+
+    str = c_malloc(n_chars);
+
+    end = start;
+    j = 0;
+    for (;;) {
+        c = s[end];
+
+        if (c == '\'') {
+            break;
+        }
+        if (c == '\\') {
+            end++;
+            c = s[end];
+            if (c == 'n') {
+                str[j] = '\n';
+            } else {
+                str[j] = c;
+            }
+        } else {
+            str[j] = c;
+        }
+
+        j++;
+        end++;
+    }
+
+    object_t *o = new_string(vms, str, n_chars);
 
     return o;
 }
@@ -386,6 +430,33 @@ object_t *read_list(vm_state *vms, char *s, uint64_t *i, uint64_t len) {
         tail->head = read_obj;
         tail->tail = new_pair(vms);
     }
+}
+
+void print_string(char *str, uint64_t length) {
+    uint64_t i;
+    char c[2] = {0, 0};
+
+    c_fprintf(stdout, "\'");
+
+    for (i = 0; i < length; i++) {
+        switch (str[i]) {
+            case '\'':
+                c_fprintf(stdout, "\\'");
+                continue;
+            case '\\':
+                c_fprintf(stdout, "\\\\");
+                continue;
+            case '\n':
+                c_fprintf(stdout, "\\n");
+                continue;
+            default:
+                c[0] = str[i];
+                break;
+        }
+        c_fprintf(stdout, c);
+    }
+
+    c_fprintf(stdout, "\'");
 }
 
 void print_list(vm_state *vms, object_t *o) {
@@ -442,7 +513,7 @@ void print(vm_state *vms, object_t *o) {
             break;
 
         case TYPE_STRING:
-            c_fprintf(stdout, "\'%s\'", o->string_pointer);
+            print_string(o->string_pointer, o->string_length);
             break;
 
         case TYPE_LIST:
