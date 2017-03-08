@@ -1360,6 +1360,41 @@ object_t *fs_write_func(vm_state *vms, object_t *env, object_t *args_list) {
     return new_pair(vms);
 }
 
+object_t *chr_func(vm_state *vms, object_t *env, object_t *args_list) {
+    char c = (char) args_list->head->int_value;
+    return new_string(vms, &c, 1);
+}
+
+object_t *cat_func(vm_state *vms, object_t *env, object_t *args_list) {
+    uint64_t length = 0;
+    object_t *next = args_list;
+    object_t *curr_head;
+
+    while (next->head) {
+        length += next->head->string_length;
+        next = next->tail;
+    }
+
+    char *str = c_malloc(length);
+
+    uint64_t i = 0;
+    uint64_t str_len;
+
+    next = args_list;
+
+    while (next->head) {
+        curr_head = next->head;
+        str_len = curr_head->string_length;
+
+        c_memcpy(&str[i], curr_head->string_pointer, str_len);
+
+        i += str_len;
+        next = next->tail;
+    }
+
+    return new_string(vms, str, length);
+}
+
 object_t *get_env_of_name(vm_state *vms, object_t *env, object_t *name) {
     object_t *parent_sym = DLR_PARENT_SYM(vms);
 
@@ -1890,6 +1925,8 @@ char *builtin_names[] = {
     "split",
     "fs-read",
     "fs-write",
+    "chr",
+    "cat",
 };
 func_pointer_t *builtin_pointers[] = {
     dict_func,
@@ -1923,6 +1960,8 @@ func_pointer_t *builtin_pointers[] = {
     split_func,
     fs_read_func,
     fs_write_func,
+    chr_func,
+    cat_func,
 };
 
 char *construct_names[] = {

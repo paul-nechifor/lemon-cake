@@ -61,7 +61,7 @@ run_test() {
         "$(cat "tests/${input}.out")"
 
         "$(
-            mkdir tmp_test_dir
+            mkdir -p tmp_test_dir
             if [[ $extension == lc ]]; then
                 ./lc "$file" 2>/dev/null
             else
@@ -71,7 +71,7 @@ run_test() {
         )"
 
         "$(
-            mkdir tmp_test_dir
+            mkdir -p tmp_test_dir
             if [[ $extension == lc ]]; then
                 ./lc "$file" 2>&1
             else

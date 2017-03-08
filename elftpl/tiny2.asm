@@ -2,7 +2,7 @@ BITS 64
 
 
 ehdr: ; Elf64_Ehdr
-  db 0x7F, "ELF", 2, 1, 1, 0 ; e_ident
+  db 0x7F, 0x45, 0x4C, 0x46, 2, 1, 1, 0 ; e_ident
   dq 0
   dw 2                       ; e_type
   dw 0x3E                    ; e_machine
