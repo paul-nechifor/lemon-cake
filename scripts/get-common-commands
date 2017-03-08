@@ -1,0 +1,49 @@
+#!/usr/bin/env python2
+
+import re
+from os.path import dirname, join
+from subprocess import check_output
+from itertools import groupby
+
+
+def main():
+    lc_bin = join(dirname(__file__), '..', 'lc')
+    output = check_output(['objdump', '-dM', 'intel', lc_bin])
+    instrs = sorted(filter(None, (
+        clean_instr(x.split('\t')) for x in output.split('\n')
+    )))
+
+    grouped_instr = groupby(instrs, lambda x: x[0])
+
+    new_l = []
+
+    for cmd, l in grouped_instr:
+        l = list(l)
+        for x in l:
+            new_l.append([len(l)] + x)
+
+    new_l.sort(key=lambda x: -x[0])
+
+    for x in new_l:
+        print x
+
+
+def clean_instr(s):
+    if len(s) <= 2:
+        return
+
+    s = s[2]
+    s = re.sub(r'[QD]?WORD PTR ', '', s)
+    s = re.sub(r'\s+', ' ', s)
+    split = s.split(' # ')
+    s = split[0].strip()
+    cmd_args = s.split(' ')
+
+    ret = [cmd_args[0]]
+    if len(cmd_args) > 1:
+        ret += cmd_args[1].split(',')
+    return ret
+
+
+if __name__ == '__main__':
+    main()
