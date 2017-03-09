@@ -1,6 +1,5 @@
 #include <stdint.h>
 #include <stdio.h>
-#include <dlfcn.h> // TODO: Remove this.
 
 #include "lc.lc.h"
 
@@ -34,6 +33,9 @@ extern char *(*c_getcwd)(char* buffer, size_t size);
 extern char *(*c_strcat)(char *destination, char *source);
 extern char *(*c_strstr)(const char *haystack, const char *needle);
 extern size_t (*c_fwrite)(void *ptr, size_t size, size_t nmemb, FILE *stream);
+
+extern void *dlopen(const char *filename, int flag);
+extern void *dlsym(void *handle, const char *symbol);
 
 extern uint64_t *prog_argc_ptr;
 extern char *libc_handle;

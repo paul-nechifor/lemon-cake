@@ -150,8 +150,6 @@ groups.
 - Look at a disassembly of the program to see which ar the most important
   instructions that need to be supported.
 
-- Introduce C escape sequences for strings.
-
 - Switch to using an actual stack for the stack values. This will be useful in
   the future when exceptions are introduced (since I can place handlers on the
   stack)
@@ -168,8 +166,6 @@ groups.
   - name: ?
   - super: the super type
   - methods: a dict of symbols to functions
-
-- Accessing a dict element should be something this: `(. d 4)`.
 
 - Add a debugging flag which will trigger printing all the evaulated
   expressions.
