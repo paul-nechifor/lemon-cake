@@ -1,0 +1,62 @@
+#!/usr/bin/env python2
+
+from itertools import product
+from os.path import join, dirname
+from subprocess import check_output
+from os import remove
+
+registers = zip(*[
+    ['al', 'ax', 'eax', 'rax'],
+    ['cl', 'cx', 'ecx', 'rcx'],
+    ['dl', 'dx', 'edx', 'rdx'],
+    ['bl', 'bx', 'ebx', 'rbx'],
+    ['ah', 'sp', 'esp', 'rsp'],
+    ['ch', 'bp', 'ebp', 'rbp'],
+    ['dh', 'si', 'esi', 'rsi'],
+    ['bh', 'di', 'edi', 'rdi'],
+    ['r8b', 'r8w', 'r8d', 'r8'],
+    ['r9b', 'r9w', 'r9d', 'r9'],
+    ['r10b', 'r10w', 'r10d', 'r10'],
+    ['r11b', 'r11w', 'r11d', 'r11'],
+    ['r12b', 'r12w', 'r12d', 'r12'],
+    ['r13b', 'r13w', 'r13d', 'r13'],
+    ['r14b', 'r14w', 'r14d', 'r14'],
+    ['r15b', 'r15w', 'r15d', 'r15'],
+])
+
+incompatible = set(registers[0][4:])
+
+
+def main():
+    for x in get_encoding(instructions()):
+        print x
+
+
+def instructions():
+    for regs in registers:
+        for a, b in product(regs, repeat=2):
+            if a in incompatible and b in incompatible:
+                continue
+            yield 'add %s,%s' % (a, b)
+
+
+def get_encoding(instr):
+    instr_str = 'BITS 64\n' + '\n'.join(instr)
+    asm = join(dirname(__file__), '..', 'a.asm')
+    elf = join(dirname(__file__), '..', 'a.out')
+    open(asm, 'w').write(instr_str)
+    check_output(['nasm', '-f', 'bin', '-o', elf, asm])
+    output = check_output([
+        'objdump', '-D', '-Mintel,x86-64', '-bbinary', '-mi386', elf
+    ])
+    remove(asm)
+    remove(elf)
+    return map(process_line, output.split('\n')[7:-1])
+
+
+def process_line(line):
+    return line.split('\t')
+
+
+if __name__ == '__main__':
+    main()
