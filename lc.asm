@@ -50,6 +50,9 @@ libc_handle: dq 0
   function_string strcat
   function_string strstr
   function_string fwrite
+  function_string stderr
+  function_string stdout
+  function_string stdin
 
 first_function_to_load:
 
@@ -75,6 +78,9 @@ first_function_to_load:
   function_pointer_and_name strcat
   function_pointer_and_name strstr
   function_pointer_and_name fwrite
+  function_pointer_and_name stderr
+  function_pointer_and_name stdout
+  function_pointer_and_name stdin
 
 end_of_functions_to_load:
 

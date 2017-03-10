@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include "lc.lc.h"
 
 #define ADD_ON_CALL_STACK(vms, obj) \
@@ -8,9 +7,15 @@
     } while (0)
 
 #define PATH_MAX 4096
+#define NULL 0
+#define SEEK_SET 0
+#define SEEK_END 2
 
 typedef unsigned long long int uint64_t;
 typedef signed long long int int64_t;
+typedef void * FILE;
+typedef uint64_t size_t;
+typedef uint64_t ssize_t;
 
 extern void (*c_exit)(int status);
 extern int (*c_fprintf)(FILE *stream, const char *format, ...);
@@ -34,6 +39,9 @@ extern char *(*c_getcwd)(char* buffer, size_t size);
 extern char *(*c_strcat)(char *destination, char *source);
 extern char *(*c_strstr)(const char *haystack, const char *needle);
 extern size_t (*c_fwrite)(void *ptr, size_t size, size_t nmemb, FILE *stream);
+extern FILE **c_stderr;
+extern FILE **c_stdout;
+extern FILE **c_stdin;
 
 extern void *dlopen(const char *filename, int flag);
 extern void *dlsym(void *handle, const char *symbol);
@@ -196,7 +204,7 @@ char *interned_symbols[] = {
 #define DLR_FILE_SYM(vms) (FIRST_INTERNED_OBJ_PTR(vms)[9])
 
 static void die(char *msg) {
-    c_fprintf(stderr, "%s\n", msg);
+    c_fprintf(*c_stderr, "%s\n", msg);
     c_exit(1);
 }
 
@@ -439,31 +447,31 @@ void print_string(char *str, uint64_t length) {
     uint64_t i;
     char c[2] = {0, 0};
 
-    c_fprintf(stdout, "\'");
+    c_fprintf(*c_stdout, "\'");
 
     for (i = 0; i < length; i++) {
         switch (str[i]) {
             case '\'':
-                c_fprintf(stdout, "\\'");
+                c_fprintf(*c_stdout, "\\'");
                 continue;
             case '\\':
-                c_fprintf(stdout, "\\\\");
+                c_fprintf(*c_stdout, "\\\\");
                 continue;
             case '\n':
-                c_fprintf(stdout, "\\n");
+                c_fprintf(*c_stdout, "\\n");
                 continue;
             default:
                 c[0] = str[i];
                 break;
         }
-        c_fprintf(stdout, c);
+        c_fprintf(*c_stdout, c);
     }
 
-    c_fprintf(stdout, "\'");
+    c_fprintf(*c_stdout, "\'");
 }
 
 void print_list(vm_state *vms, object_t *o) {
-    c_fprintf(stdout, "(");
+    c_fprintf(*c_stdout, "(");
     uint64_t first_elem = 1;
 
     object_t *pair = o;
@@ -472,18 +480,18 @@ void print_list(vm_state *vms, object_t *o) {
         if (first_elem) {
             first_elem = 0;
         } else {
-            c_fprintf(stdout, " ");
+            c_fprintf(*c_stdout, " ");
         }
         print(vms, pair->head);
         pair = pair->tail;
     }
 
 end_print_list:
-    c_fprintf(stdout, ")");
+    c_fprintf(*c_stdout, ")");
 }
 
 void print_dict(vm_state *vms, object_t *o) {
-    c_fprintf(stdout, "(dict");
+    c_fprintf(*c_stdout, "(dict");
 
     dict_pair *table = o->dict_table;
     dict_pair *pair;
@@ -494,9 +502,9 @@ void print_dict(vm_state *vms, object_t *o) {
         pair = &table[i];
         for (;;) {
             if (pair->value) {
-                c_fprintf(stdout, " ");
+                c_fprintf(*c_stdout, " ");
                 print(vms, pair->key);
-                c_fprintf(stdout, " ");
+                c_fprintf(*c_stdout, " ");
                 print(vms, pair->value);
             }
             if (!pair->next) {
@@ -506,13 +514,13 @@ void print_dict(vm_state *vms, object_t *o) {
         }
     }
 
-    c_fprintf(stdout, ")");
+    c_fprintf(*c_stdout, ")");
 }
 
 void print(vm_state *vms, object_t *o) {
     switch (o->type) {
         case TYPE_INT:
-            c_fprintf(stdout, "%lld", o->int_value);
+            c_fprintf(*c_stdout, "%lld", o->int_value);
             break;
 
         case TYPE_STRING:
@@ -524,7 +532,7 @@ void print(vm_state *vms, object_t *o) {
             break;
 
         case TYPE_SYMBOL:
-            c_fprintf(stdout, "%s", o->symbol_pointer);
+            c_fprintf(*c_stdout, "%s", o->symbol_pointer);
             break;
 
         case TYPE_DICT:
@@ -532,35 +540,35 @@ void print(vm_state *vms, object_t *o) {
             break;
 
         case TYPE_BUILTIN_FUNC:
-            c_fprintf(stdout, "(builtin %p)", o->builtin);
+            c_fprintf(*c_stdout, "(builtin %p)", o->builtin);
             break;
 
         case TYPE_CONSTRUCT:
-            c_fprintf(stdout, "(construct %p)", o->construct);
+            c_fprintf(*c_stdout, "(construct %p)", o->construct);
             break;
 
         case TYPE_MACRO:
-            c_fprintf(stdout, "(macro ");
+            c_fprintf(*c_stdout, "(macro ");
             if (o->macro_args->head) {
                 print(vms, o->macro_args);
-                c_fprintf(stdout, " ");
+                c_fprintf(*c_stdout, " ");
             }
             print(vms, o->macro_body);
-            c_fprintf(stdout, ")");
+            c_fprintf(*c_stdout, ")");
             break;
 
         case TYPE_FUNC:
-            c_fprintf(stdout, "(~ ");
+            c_fprintf(*c_stdout, "(~ ");
             if (o->func_args->head) {
                 print(vms, o->func_args);
-                c_fprintf(stdout, " ");
+                c_fprintf(*c_stdout, " ");
             }
             print(vms, o->func_body);
-            c_fprintf(stdout, ")");
+            c_fprintf(*c_stdout, ")");
             break;
 
         default:
-            c_fprintf(stdout, "[Unknown type.]");
+            c_fprintf(*c_stdout, "[Unknown type.]");
     }
 }
 
@@ -2243,8 +2251,8 @@ void eval_lines() {
     // If argc is 1, that means there are no arguments so just run a REPL.
     if (*prog_argc_ptr == 1) {
         for (;;) {
-            c_fprintf(stderr, "> ");
-            read = c_getline(&line, &len, stdin);
+            c_fprintf(*c_stderr, "> ");
+            read = c_getline(&line, &len, *c_stdin);
             if (read == -1) {
                 break;
             }
@@ -2253,7 +2261,7 @@ void eval_lines() {
             vms->gc_is_on = 1;
             o = eval(vms, vms->env, parsed);
             print(vms, o);
-            c_fprintf(stdout, "\n");
+            c_fprintf(*c_stdout, "\n");
             if (vms->gc_is_on) {
                 gc(vms);
             }
@@ -2281,6 +2289,6 @@ eval_lines_cleanup:
     sweep(vms);
     c_free(vms);
 
-    c_fflush(stdout);
-    c_fflush(stderr);
+    c_fflush(*c_stdout);
+    c_fflush(*c_stderr);
 }
