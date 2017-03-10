@@ -1,6 +1,4 @@
-#include <stdint.h>
 #include <stdio.h>
-
 #include "lc.lc.h"
 
 #define ADD_ON_CALL_STACK(vms, obj) \
@@ -10,6 +8,9 @@
     } while (0)
 
 #define PATH_MAX 4096
+
+typedef unsigned long long int uint64_t;
+typedef signed long long int int64_t;
 
 extern void (*c_exit)(int status);
 extern int (*c_fprintf)(FILE *stream, const char *format, ...);
