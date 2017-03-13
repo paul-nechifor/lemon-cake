@@ -327,6 +327,12 @@ What I've used for inspiratior or plan to use in the future:
 
   * [Intel 64 Tome (23 MiB PDF)][i64tome]
 
+  * [Linux Standard Base Core Specification for AMD64 4.1][elf64] [(or
+    PDF)][elf64pdf]
+
+  * [System V Application Binary Interface — AMD64 Architecture Processor
+    Supplement (PDF)][sysvabi]
+
 ## Reference
 
 x86-64:
@@ -351,3 +357,6 @@ ISC
 [osdevx86enc]: http://wiki.osdev.org/X86-64_Instruction_Encoding
 [x86opref]: http://ref.x86asm.net/coder64.html
 [i64tome]: http://www.intel.co.uk/content/dam/www/public/us/en/documents/manuals/64-ia-32-architectures-software-developer-manual-325462.pdf
+[elf64]: http://refspecs.linuxfoundation.org/LSB_4.1.0/LSB-Core-AMD64/LSB-Core-AMD64/book1.html
+[elf64pdf]: https://refspecs.linuxfoundation.org/LSB_4.1.0/LSB-Core-AMD64/LSB-Core-AMD64.pdf
+[sysvabi]: http://refspecs.linux-foundation.org/elf/x86_64-abi-0.95.pdf
