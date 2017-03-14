@@ -58,7 +58,13 @@ run_test() {
     local args=(
         "$input"
 
-        "$(cat "tests/${input}.out")"
+        "$(
+            if [[ -e "tests/${input}.out" ]]; then
+                cat "tests/${input}.out"
+            else
+                ./lc < "tests/${input}.eout" 2>/dev/null
+            fi
+        )"
 
         "$(
             mkdir -p tmp_test_dir

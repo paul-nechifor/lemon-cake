@@ -2,8 +2,37 @@
 (= - (~ (reduce sub $args)))
 (= * (~ (reduce mul $args)))
 (= / (~ (reduce div $args)))
+(= | (~ (reduce binor $args)))
+(= & (~ (reduce binand $args)))
+(= join (~ (reduce join-lists $args)))
 
 (= partial (~ (fn) (last
-    (= args (tail $args))
-    (~ (apply fn (join args $args)))
+  (= args (tail $args))
+  (~ (apply fn (join args $args)))
 )))
+
+(= tie (~ (str xs)
+  (apply cat (tail (apply join (map xs
+    (~ (x) (list str x))
+  ))))
+))
+
+(= reg0 (dict
+  'al' 0
+  'cl' 1
+  'dl' 2
+  'bl' 3
+  'ah' 4
+  'ch' 5
+  'dh' 6
+  'bh' 7
+))
+
+(= asm-instr (dict
+  'add' (~ (a b) (if
+
+    (and (in a reg0) (in b reg0))
+    (list 0x00 (| 0xc0 (<< (get reg0 b) 3) (get reg0 a) ))
+
+  ))
+))

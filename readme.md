@@ -22,6 +22,10 @@ language.
 These are some of the things I plan to do, ordered by priority and bunched into
 groups.
 
+- Allow comments in `lc.lc`.
+
+- Disassemble `lc` and see how many instructions are encodable by `lc`.
+
 - Try to see if you can come up with an elf template. It would look like a list
   of bytes. What you would need to do is just add some bytes at position x and
   fix some fields based on the length of x. This will answer the question of how
