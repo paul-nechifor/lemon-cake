@@ -586,6 +586,10 @@ twoargfunc(add_func, +)
 twoargfunc(sub_func, -)
 twoargfunc(mul_func, *)
 twoargfunc(div_func, /)
+twoargfunc(binor_func, |)
+twoargfunc(binand_func, &)
+twoargfunc(shl_func, <<)
+twoargfunc(shr_func, >>)
 
 void list_append(vm_state *vms, object_t *list, object_t *o) {
     object_t *p = list;
@@ -793,6 +797,11 @@ object_t *set_func(vm_state *vms, object_t *env, object_t *args_list) {
 
 object_t *get_func(vm_state *vms, object_t *env, object_t *args_list) {
     return dict_get(vms, args_list->head, args_list->tail->head);
+}
+
+object_t *in_func(vm_state *vms, object_t *env, object_t *args_list) {
+    object_t *ret = dict_get_null(vms, args_list->tail->head, args_list->head);
+    return new_int(vms, ret ? 1 : 0);
 }
 
 int64_t obj_len_func(object_t *o) {
@@ -1553,6 +1562,31 @@ object_t *or_func(vm_state *vms, object_t *env, object_t *args_list) {
     }
 }
 
+object_t *and_func(vm_state *vms, object_t *env, object_t *args_list) {
+    object_t *prev = eval(vms, env, args_list->head);
+    object_t *next = args_list->tail;
+    object_t *evaled_now;
+
+    if (!obj_len_func(prev)) {
+        return prev;
+    }
+
+    for (;;) {
+        if (!next->head) {
+            return prev;
+        }
+
+        evaled_now = eval(vms, env, next->head);
+
+        if (!obj_len_func(evaled_now)) {
+            return evaled_now;
+        }
+
+        next = next->tail;
+        prev = evaled_now;
+    }
+}
+
 object_t *switch_func(vm_state *vms, object_t *env, object_t *args_list) {
     object_t *o = args_list->head;
     object_t *arg = args_list->tail;
@@ -1908,6 +1942,7 @@ char *builtin_names[] = {
     "dict",
     "set",
     "get",
+    "in",
     "len",
     "list",
     "append",
@@ -1919,6 +1954,10 @@ char *builtin_names[] = {
     "sub",
     "mul",
     "div",
+    "binor",
+    "binand",
+    "<<",
+    ">>",
     "repr",
     "last",
     "dynsym",
@@ -1943,6 +1982,7 @@ func_pointer_t *builtin_pointers[] = {
     dict_func,
     set_func,
     get_func,
+    in_func,
     len_func,
     list_func,
     append_func,
@@ -1954,6 +1994,10 @@ func_pointer_t *builtin_pointers[] = {
     sub_func,
     mul_func,
     div_func,
+    binor_func,
+    binand_func,
+    shl_func,
+    shr_func,
     repr_func,
     last_func,
     dynsym_func,
@@ -1983,6 +2027,7 @@ char *construct_names[] = {
     "if",
     "switch",
     "or",
+    "and",
 };
 func_pointer_t *construct_pointers[] = {
     quote_func,
@@ -1992,6 +2037,7 @@ func_pointer_t *construct_pointers[] = {
     if_func,
     switch_func,
     or_func,
+    and_func,
 };
 
 vm_state *start_vm() {
