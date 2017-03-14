@@ -1206,8 +1206,7 @@ object_t *apply_func(vm_state *vms, object_t *env, object_t *args_list) {
     return eval_func_call(vms, args_list->head, env, args_list->tail->head);
 }
 
-// Only joins two lists.
-object_t *join_func(vm_state *vms, object_t *env, object_t *args_list) {
+object_t *join_lists_func(vm_state *vms, object_t *env, object_t *args_list) {
     object_t *ret = new_pair(vms);
     object_t *ret_obj = ret;
 
@@ -1969,7 +1968,7 @@ char *builtin_names[] = {
     "byte-explode",
     "reduce",
     "apply",
-    "join",
+    "join-lists",
     "map",
     "range",
     "split",
@@ -2009,7 +2008,7 @@ func_pointer_t *builtin_pointers[] = {
     byte_explode_func,
     reduce_func,
     apply_func,
-    join_func,
+    join_lists_func,
     map_func,
     range_func,
     split_func,
