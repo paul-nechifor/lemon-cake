@@ -30,10 +30,16 @@ incompatible = set(registers[0][4:])
 
 def main():
     for x in get_encoding(instructions()):
-        print x
+        xx = x[0].split(' ')
+        if len(xx) > 2 or xx[0] != '00':
+            continue
+        print x[1].ljust(30), x[0], binary(x[0])
 
 
 def instructions():
+    for a, b in product(registers[0][:8], repeat=2):
+        yield 'add %s,%s' % (a, b)
+    return
     for regs in registers:
         for a, b in product(regs, repeat=2):
             if a in incompatible and b in incompatible:
@@ -63,9 +69,7 @@ def get_encoding(instr):
     ])
     remove(asm)
     remove(elf)
-    out = process_output(output.split('\n')[7:-1])
-    for x in out:
-        print x[1].ljust(30), x[0]
+    return process_output(output.split('\n')[7:-1])
 
 
 def process_output(lines):
@@ -82,6 +86,10 @@ def process_output(lines):
         ])
 
     return ret
+
+
+def binary(string):
+    return ' '.join('{:08b}'.format(int(x, 16)) for x in string.split(' '))
 
 
 if __name__ == '__main__':
