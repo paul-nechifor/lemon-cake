@@ -21,8 +21,14 @@ sub_compile() {
     nasm -f elf64 -o lc_asm.o lc.asm
 
     echo "#define INITIAL_CODE \"$(
-        tr '\n' ' ' <lc.lc | sed -e 's/\s\+/ /g' |
-        sed 's/ (/(/g' | sed 's/) /)/g' | sed 's/) )/))/g' | sed 's/( (/((/g'
+        cat lc.lc |
+        egrep -v '^#' |
+        tr '\n' ' ' |
+        sed -e 's/\s\+/ /g' |
+        sed 's/ (/(/g' |
+        sed 's/) /)/g' |
+        sed 's/) )/))/g' |
+        sed 's/( (/((/g'
     )\"" >lc.lc.h
 
     if [[ ${debug:-} ]]; then
