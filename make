@@ -18,7 +18,7 @@ main() {
 sub_compile() {
     rm -fr ./*.o lc
 
-    nasm -f elf64 lc.asm
+    nasm -f elf64 -o lc_asm.o lc.asm
 
     echo "#define INITIAL_CODE \"$(
         tr '\n' ' ' <lc.lc | sed -e 's/\s\+/ /g' |
@@ -26,10 +26,10 @@ sub_compile() {
     )\"" >lc.lc.h
 
     if [[ ${debug:-} ]]; then
-        gcc -Os -g -c lc_c.c
+        gcc -Os -g -c lc.c
         ld -o lc -dynamic-linker /lib64/ld-linux-x86-64.so.2 -lc -ldl --entry=main ./*.o
     else
-        gcc -Os -c lc_c.c
+        gcc -Os -c lc.c
         ld -o lc -dynamic-linker /lib64/ld-linux-x86-64.so.2 -lc -ldl --entry=main ./*.o
         strip -R .eh_frame -R .gnu.version -R .hash -R .comment --strip-all lc
     fi
