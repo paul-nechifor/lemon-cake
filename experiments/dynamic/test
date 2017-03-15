@@ -1,0 +1,25 @@
+#!/bin/bash -e
+
+root="$(cd "$(dirname "$BASH_SOURCE")"; pwd)"
+
+main() {
+    cd "$root"
+    hex_asm c1.c
+    hex_asm c2.c
+    diff c1.hex c2.hex > diff
+}
+
+hex_asm() {
+    local src="$1"
+    gcc -Os -c "$src"
+    ld -o d -dynamic-linker /lib64/ld-linux-x86-64.so.2 -lc --entry=main ./*.o
+    strip -R .eh_frame -R .gnu.version -R .hash -R .comment --strip-all d
+
+    python > "$(basename "$src" .c)".hex <<END
+for x in open('d').read():
+    print '%02X' % ord(x)
+END
+    rm d *.o
+}
+
+main "$@"
