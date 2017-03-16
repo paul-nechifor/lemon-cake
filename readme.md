@@ -22,6 +22,8 @@ language.
 These are some of the things I plan to do, ordered by priority and bunched into
 groups.
 
+- Add function composition and refactor `doc-code`.
+
 - Disassemble `lc` and see how many instructions are encodable by `lc`.
 
 - Try to see if you can come up with an elf template. It would look like a list

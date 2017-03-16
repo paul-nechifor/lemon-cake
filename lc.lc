@@ -47,16 +47,22 @@
   ))
 ))
 
-(= doc-code (~ (input output) (fs-write output (cat
-  '<!doctype html>'
-  '<html>'
-    '<head>'
-      '<title>LemonCake</title>'
-    '</head>'
-    '<body>'
-      '<pre>'
-        (fs-read input)
-      '</pre>'
-    '</body>'
-  '</html>'
-))))
+(= doc-code (~ (input output) (last
+  (= repl (~ (a b) (~ (x) (if (is x a) b x))))
+  (= trans (~ (d) (last
+    (apply cat (map (map (split '' d) (repl '<' '&lt;')) (repl '>' '&gt;')))
+  )))
+  (fs-write output (cat
+    '<!doctype html>'
+    '<html>'
+      '<head>'
+        '<title>LemonCake</title>'
+      '</head>'
+      '<body>'
+        '<pre>'
+          (trans (fs-read input))
+        '</pre>'
+      '</body>'
+    '</html>'
+  ))
+)))

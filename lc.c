@@ -1301,13 +1301,26 @@ object_t *range_func(vm_state *vms, object_t *env, object_t *args_list) {
 object_t *split_func(vm_state *vms, object_t *env, object_t *args_list) {
     char *needle = args_list->head->string_pointer;
     uint64_t needle_len = c_strlen(needle);
-    char *haystack = args_list->tail->head->string_pointer;
+    object_t *haystack_obj = args_list->tail->head;
+    char *haystack = haystack_obj->string_pointer;
+    char *haystack_end = haystack + haystack_obj->string_length;
 
     object_t *ret = new_pair(vms);
     object_t *next = ret;
-    char *match;
+    char *match = haystack;
 
-    while (match = c_strstr(haystack, needle)) {
+    for (;;) {
+        if (needle_len) {
+            match = c_strstr(haystack, needle);
+            if (!match) {
+                break;
+            }
+        } else {
+            match++;
+            if (match >= haystack_end) {
+                break;
+            }
+        }
         next->head = new_string(vms, haystack, match - haystack);
         next->tail = new_pair(vms);
         next = next->tail;
