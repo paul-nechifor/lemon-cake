@@ -1,5 +1,6 @@
 *.o
 a.out
 core
+doc.html
 lc
 lc.lc.h

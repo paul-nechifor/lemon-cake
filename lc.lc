@@ -46,3 +46,17 @@
 
   ))
 ))
+
+(= doc-code (~ (input output) (fs-write output (cat
+  '<!doctype html>'
+  '<html>'
+    '<head>'
+      '<title>LemonCake</title>'
+    '</head>'
+    '<body>'
+      '<pre>'
+        (fs-read input)
+      '</pre>'
+    '</body>'
+  '</html>'
+))))

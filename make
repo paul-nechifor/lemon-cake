@@ -13,6 +13,7 @@ main() {
     fi
     sub_compile
     [[ "${notests:-}" ]] || run_tests
+    docs
 }
 
 sub_compile() {
@@ -187,6 +188,10 @@ check_summation() {
             fi
         done
     )
+}
+
+docs() {
+    ./lc <<<"(doc-code 'lc.lc' 'doc.html')" &>/dev/null
 }
 
 main "$@"
