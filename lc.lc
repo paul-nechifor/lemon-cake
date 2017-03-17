@@ -69,11 +69,16 @@
   ))
 )))
 
+(= repeat (~ (x n) (map (range n) (~ x))))
+
+(= at (~ (l i) (head ((apply comp (repeat tail i)) l))))
+
 (= comp (~ (eval
   (list :~ :(x) (join
     :(last)
     (map $args (~ (fn)
       (list := :x (list fn :x))
     ))
+    :(x)
   ))
 )))

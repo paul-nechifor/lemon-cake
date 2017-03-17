@@ -1690,6 +1690,7 @@ object_t *eval_list(vm_state *vms, object_t *env, object_t *o) {
     if (
         first_elem->type == TYPE_SYMBOL ||
         first_elem->type == TYPE_LIST ||
+        first_elem->type == TYPE_BUILTIN_FUNC ||
         first_elem->type == TYPE_FUNC
     ) {
         func = eval(vms, env, first_elem);
@@ -1753,6 +1754,7 @@ object_t *eval(vm_state *vms, object_t *env, object_t *o) {
         case TYPE_DICT:
         case TYPE_MACRO:
         case TYPE_FUNC:
+        case TYPE_BUILTIN_FUNC:
             return o;
 
         case TYPE_SYMBOL:
