@@ -1687,7 +1687,11 @@ object_t *eval_list(vm_state *vms, object_t *env, object_t *o) {
     object_t *first_elem = o->head;
     object_t *func;
 
-    if (first_elem->type == TYPE_SYMBOL || first_elem->type == TYPE_LIST) {
+    if (
+        first_elem->type == TYPE_SYMBOL ||
+        first_elem->type == TYPE_LIST ||
+        first_elem->type == TYPE_FUNC
+    ) {
         func = eval(vms, env, first_elem);
     } else {
         die("For lists to be evaled they need to start with a symbol or a list");

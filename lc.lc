@@ -68,3 +68,12 @@
     '</html>'
   ))
 )))
+
+(= comp (~ (eval
+  (list :~ :(x) (join
+    :(last)
+    (map $args (~ (fn)
+      (list := :x (list fn :x))
+    ))
+  ))
+)))
