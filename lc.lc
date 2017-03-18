@@ -47,6 +47,47 @@
   ))
 ))
 
+(= split-parts (~ (str) (last
+  (= left (dict 0 ''))
+  (= right (dict))
+  (= n 0)
+  (= prev-is-left 1)
+
+  (map (split '\n' str) (~ (l) (last
+    (= lsplit (split '' l))
+    (= is-left (is (at lsplit 0) '#'))
+    (if is-left
+      (if prev-is-left
+        (set left n (cat (get left n) '\n' (apply cat (tail lsplit))))
+        (last
+          (= n (+ n 1))
+          (set left n (apply cat (tail lsplit)))
+        )
+      )
+      (if prev-is-left
+        (set right n l)
+        (set right n (cat (get right n) '\n' l))
+      )
+    )
+    (= prev-is-left is-left)
+  )))
+
+  (cat
+    '<table>'
+    (apply cat (map (range (+ n 1)) (~ (i) (cat
+      '<tr>'
+        '<td><pre>'
+          (get left i)
+        '</pre></td>'
+        '<td><pre>'
+          (get right i)
+        '</pre></td>'
+      '</tr>'
+    ))))
+    '</table>'
+  )
+)))
+
 (= doc-code (~ (input output) (last
   (= trans (~ (d) (last
     (apply cat (map
@@ -59,11 +100,15 @@
     '<html>'
       '<head>'
         '<title>LemonCake</title>'
+        '<style>'
+          'body {margin: 0}'
+          'table {max-width: 1200px; margin: 0 auto; border-collapse: collapse}'
+          'td {width: 50%; vertical-align: top}'
+          'td:last-child {background: #eee}'
+        '</style>'
       '</head>'
       '<body>'
-        '<pre>'
-          (trans (fs-read input))
-        '</pre>'
+        (split-parts (trans (fs-read input)))
       '</body>'
     '</html>'
   ))

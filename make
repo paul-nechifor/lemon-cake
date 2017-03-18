@@ -23,7 +23,7 @@ sub_compile() {
 
     echo "#define INITIAL_CODE \"$(
         cat lc.lc |
-        egrep -v '^#' |
+        egrep -v '^ *#' |
         tr '\n' ' ' |
         sed -e 's/\s\+/ /g' |
         sed 's/ (/(/g' |
