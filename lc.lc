@@ -2,6 +2,8 @@
 #
 # A programming language that combines the speed of Ruby, with the flexibility
 # of Assembly and the consistency of Lisp.
+
+# ## Operators
 (= + (~ (reduce add $args)))
 (= - (~ (reduce sub $args)))
 (= * (~ (reduce mul $args)))
@@ -10,6 +12,20 @@
 (= & (~ (reduce binand $args)))
 (= join (~ (reduce join-lists $args)))
 
+# ### partial
+#
+# Creates a partial function.
+#
+# Example:
+#
+# > (= f (partial + 1 2))
+# > (f 4 1)
+# > > 8
+#
+# Which is the same as running:
+#
+# > (+ 1 2 4 1)
+# > 8
 (= partial (~ (fn) (last
   (= args (tail $args))
   (~ (apply fn (join args $args)))
@@ -49,54 +65,91 @@
   ))
 ))
 
-(= split-parts (~ (str) (last
-  (= left (dict 0 ''))
-  (= right (dict))
-  (= n 0)
-  (= prev-is-left 1)
-
-  (map (split '\n' str) (~ (l) (last
-    (= lsplit (split '' l))
-    (= is-left (is (at lsplit 0) '#'))
-    (if is-left
-      (if prev-is-left
-        (set left n (cat (get left n) '\n' (apply cat (tail lsplit))))
-        (last
-          (= n (+ n 1))
-          (set left n (apply cat (tail lsplit)))
-        )
-      )
-      (if prev-is-left
-        (set right n l)
-        (set right n (cat (get right n) '\n' l))
-      )
-    )
-    (= prev-is-left is-left)
-  )))
-
-  (cat
-    '<div class="doc">'
-    (apply cat (map (range (+ n 1)) (~ (i) (cat
-      '<div class="sect">'
-        '<div class="part left"><div class="text">'
-          (get left i)
-        '</div></div>'
-        '<div class="part right"><div class="code">'
-          (get right i)
-        '</div></div>'
-      '</div>'
-    ))))
-    '</div>'
-  )
-)))
-
+# ### doc-code
 (= doc-code (~ (input output) (last
-  (= trans (~ (d) (last
+  (= encode (~ (d) (last
     (apply cat (map
       (split '' d)
       (~ (x) (if (is x '<') '&lt;' (is x '>') '&gt;' x))
     ))
   )))
+
+  (= process-comment (~ (c) (last
+    (= surround (~ (tag chars)
+      (cat '<' tag '>' (encode (apply cat (tail (tail chars)))) '</' tag '>')
+    ))
+    (= lines (split '\n' c))
+    (= lines (map lines (~ (line) (last
+      (= chars (split '' line))
+      (if
+        (is (len line) 0)
+        '<p>'
+
+        (is (at chars 0) '>')
+        (surround 'pre' chars)
+
+        (is (at chars 0) '#')
+        (if
+          (is (at chars 1) '#')
+          (if
+            (is (at chars 2) '#')
+            (surround 'h3' (tail (tail chars)))
+            (surround 'h2' (tail chars))
+          )
+          (surround 'h1' chars)
+        )
+
+        (encode line)
+      )
+    ))))
+    (tie '\n' lines)
+  )))
+
+  (= split-parts (~ (str) (last
+    (= left (dict 0 ''))
+    (= right (dict))
+    (= n 0)
+    (= prev-is-left 1)
+    (= clean (~ (cs) (last
+      (= cs2 (tail cs))
+      (apply cat (if (len cs2) (tail cs2) cs2))
+    )))
+
+    (map (split '\n' str) (~ (l) (last
+      (= lsplit (split '' l))
+      (= is-left (is (at lsplit 0) '#'))
+      (if is-left
+        (if prev-is-left
+          (set left n (cat (get left n) '\n' (clean lsplit)))
+          (last
+            (= n (+ n 1))
+            (set left n (clean lsplit))
+          )
+        )
+        (if prev-is-left
+          (set right n l)
+          (set right n (cat (get right n) '\n' l))
+        )
+      )
+      (= prev-is-left is-left)
+    )))
+
+    (cat
+      '<div class="doc">'
+      (apply cat (map (range (+ n 1)) (~ (i) (cat
+        '<div class="sect">'
+          '<div class="part left"><div class="text">'
+            (process-comment (get left i))
+          '</div></div>'
+          '<div class="part right"><div class="code">'
+            (encode (get right i))
+          '</div></div>'
+        '</div>'
+      ))))
+      '</div>'
+    )
+  )))
+
   (fs-write output (cat
     '<!doctype html>'
     '<html>'
@@ -104,17 +157,31 @@
         '<title>LemonCake</title>'
         '<style>'
           'div{box-sizing:border-box}'
-          'body{margin:0}'
+          'body{'
+            'margin:0;'
+            'background:linear-gradient('
+              'to right,#fff 0%,#fff 50%,#f4f4f4 50%,#f4f4f4 100%'
+            ')'
+          '}'
           '.sect{clear:both}'
-          '.part{width:50%;padding-top:20px}'
+          '.part{width:50%;padding-top:30px}'
           '.left{float:left}'
           '.right{float:right;background:#f4f4f4}'
-          '.text{width:100%;max-width:600px;padding-right:10px;float:right}'
+          'pre{background:#f4f4f4;margin:0;padding:6px 10px}'
+          'pre+pre{padding-top:0}'
+          '.text{'
+            'width:100%;'
+            'max-width:600px;'
+            'padding-right:10px;'
+            'float:right;'
+            'font-family:sans-serif'
+          '}'
+          'h1,h2,h3{margin:0}'
           '.code{padding-left:10px;font-family:monospace;white-space:pre}'
         '</style>'
       '</head>'
       '<body>'
-        (split-parts (trans (fs-read input)))
+        (split-parts (fs-read input))
       '</body>'
     '</html>'
   ))

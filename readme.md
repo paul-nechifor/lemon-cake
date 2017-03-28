@@ -23,6 +23,8 @@ language.
 These are some of the things I plan to do, ordered by priority and bunched into
 groups.
 
+- I've used `>` for code instead of indentation or triple tick. Use triple tick.
+
 - Add function composition and refactor `doc-code`.
 
 - Disassemble `lc` and see how many instructions are encodable by `lc`.
