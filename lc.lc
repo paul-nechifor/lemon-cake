@@ -1,5 +1,7 @@
 # # LemonCake
-
+#
+# A programming language that combines the speed of Ruby, with the flexibility
+# of Assembly and the consistency of Lisp.
 (= + (~ (reduce add $args)))
 (= - (~ (reduce sub $args)))
 (= * (~ (reduce mul $args)))
@@ -73,18 +75,18 @@
   )))
 
   (cat
-    '<table>'
+    '<div class="doc">'
     (apply cat (map (range (+ n 1)) (~ (i) (cat
-      '<tr>'
-        '<td><pre>'
+      '<div class="sect">'
+        '<div class="part left"><div class="text">'
           (get left i)
-        '</pre></td>'
-        '<td><pre>'
+        '</div></div>'
+        '<div class="part right"><div class="code">'
           (get right i)
-        '</pre></td>'
-      '</tr>'
+        '</div></div>'
+      '</div>'
     ))))
-    '</table>'
+    '</div>'
   )
 )))
 
@@ -101,10 +103,14 @@
       '<head>'
         '<title>LemonCake</title>'
         '<style>'
-          'body {margin: 0}'
-          'table {max-width: 1200px; margin: 0 auto; border-collapse: collapse}'
-          'td {width: 50%; vertical-align: top}'
-          'td:last-child {background: #eee}'
+          'div{box-sizing:border-box}'
+          'body{margin:0}'
+          '.sect{clear:both}'
+          '.part{width:50%;padding-top:20px}'
+          '.left{float:left}'
+          '.right{float:right;background:#f4f4f4}'
+          '.text{width:100%;max-width:600px;padding-right:10px;float:right}'
+          '.code{padding-left:10px;font-family:monospace;white-space:pre}'
         '</style>'
       '</head>'
       '<body>'

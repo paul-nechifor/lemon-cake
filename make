@@ -29,7 +29,8 @@ sub_compile() {
         sed 's/ (/(/g' |
         sed 's/) /)/g' |
         sed 's/) )/))/g' |
-        sed 's/( (/((/g'
+        sed 's/( (/((/g' |
+        sed 's/"/\\"/g'
     )\"" >lc.lc.h
 
     if [[ ${debug:-} ]]; then

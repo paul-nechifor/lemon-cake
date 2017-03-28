@@ -1,6 +1,7 @@
 # LemonCake
 
-A highly flexible programming language.
+A programming language that combines the speed of Ruby, with the flexibility of
+Assembly and the consistency of Lisp.
 
 This language is in the very early stages of being implemented. My plans for it
 are very chaotic, but hopefully it will converge towards something nice.
