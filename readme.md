@@ -1,7 +1,7 @@
 # LemonCake
 
 A programming language that combines the speed of Ruby, with the flexibility of
-Assembly and the consistency of Lisp.
+x86-64 Assembly, and the consistency of Lisp.
 
 This language is in the very early stages of being implemented. My plans for it
 are very chaotic, but hopefully it will converge towards something nice.
@@ -23,9 +23,11 @@ language.
 These are some of the things I plan to do, ordered by priority and bunched into
 groups.
 
-- I've used `>` for code instead of indentation or triple tick. Use triple tick.
+- Add a `zip` function.
 
-- Add function composition and refactor `doc-code`.
+- Call functions in comp in reverse order (last first).
+
+- I've used `>` for code instead of indentation or triple tick. Use triple tick.
 
 - Disassemble `lc` and see how many instructions are encodable by `lc`.
 

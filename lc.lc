@@ -1,7 +1,7 @@
 # # LemonCake
 #
 # A programming language that combines the speed of Ruby, with the flexibility
-# of Assembly and the consistency of Lisp.
+# of x86-64 Assembly, and the consistency of Lisp.
 
 # ## Operators
 (= + (~ (reduce add $args)))
@@ -11,6 +11,8 @@
 (= | (~ (reduce binor $args)))
 (= & (~ (reduce binand $args)))
 (= join (~ (reduce join-lists $args)))
+
+# ## Builtin functions
 
 # ### partial
 #
@@ -45,25 +47,58 @@
   ))))
 ))
 
-(= reg0 (dict
-  'al' 0
-  'cl' 1
-  'dl' 2
-  'bl' 3
-  'ah' 4
-  'ch' 5
-  'dh' 6
-  'bh' 7
-))
+# ### repeat
+#
+# Creates a list contaning `n` repetitions of a given value.
+#
+# Example:
+#
+# > (repeat 'a' 3)
+# > > ('a' 'a' 'a')
+(= repeat (~ (x n) (map (range n) (~ x))))
 
-(= asm-instr (dict
-  'add' (~ (a b) (if
+# ### at
+#
+# Get the value from a list that's at zero-based index `i`.
+#
+# Example:
+#
+# > (at :(1 2 3) 2)
+# > 3
+(= at (~ (l i) (head ((apply comp (repeat tail i)) l))))
 
-    (and (in a reg0) (in b reg0))
-    (list 0x00 (| 0xc0 (<< (get reg0 b) 3) (get reg0 a) ))
-
+# ### comp
+#
+# Generates a function that composes multiple functions that only accept one
+# argument.
+#
+# So given functions `f`, `g`, `h`, these two lines are equivalent:
+#
+# > (~ (x) (f (g (h x))))
+# > (comp h g f)
+#
+# Note that the functions are applied in the order in which they are given.
+#
+# TODO Fix the order.
+#
+# Example:
+#
+# > (= plus1 (~ (x) (+ x 1)))
+# > (= double (~ (x) (list x x)))
+# > (= fn (comp plus1 double double))
+# > (fn 2)
+# > > ((3 3) (3 3))
+(= comp (~ (eval
+  (list :~ :(x) (join
+    :(last)
+    (map $args (~ (fn)
+      (list := :x (list fn :x))
+    ))
+    :(x)
   ))
-))
+)))
+
+# ## Util functions
 
 # ### doc-code
 (= doc-code (~ (input output) (last
@@ -164,7 +199,7 @@
             ')'
           '}'
           '.sect{clear:both}'
-          '.part{width:50%;padding-top:30px}'
+          '.part{width:50%;padding-top:50px}'
           '.left{float:left}'
           '.right{float:right;background:#f4f4f4}'
           'pre{background:#f4f4f4;margin:0;padding:6px 10px}'
@@ -187,16 +222,24 @@
   ))
 )))
 
-(= repeat (~ (x n) (map (range n) (~ x))))
+# ## Assembler functions
 
-(= at (~ (l i) (head ((apply comp (repeat tail i)) l))))
+(= reg0 (dict
+  'al' 0
+  'cl' 1
+  'dl' 2
+  'bl' 3
+  'ah' 4
+  'ch' 5
+  'dh' 6
+  'bh' 7
+))
 
-(= comp (~ (eval
-  (list :~ :(x) (join
-    :(last)
-    (map $args (~ (fn)
-      (list := :x (list fn :x))
-    ))
-    :(x)
+(= asm-instr (dict
+  'add' (~ (a b) (if
+
+    (and (in a reg0) (in b reg0))
+    (list 0x00 (| 0xc0 (<< (get reg0 b) 3) (get reg0 a) ))
+
   ))
-)))
+))
