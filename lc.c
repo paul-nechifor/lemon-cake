@@ -1438,6 +1438,18 @@ object_t *pair_func(vm_state *vms, object_t *env, object_t *args_list) {
     return ret;
 }
 
+object_t *set_head_func(vm_state *vms, object_t *env, object_t *args_list) {
+    object_t *set = args_list->tail->head;
+    args_list->head->head = set;
+    return set;
+}
+
+object_t *set_tail_func(vm_state *vms, object_t *env, object_t *args_list) {
+    object_t *set = args_list->tail->head;
+    args_list->head->tail = set;
+    return set;
+}
+
 object_t *get_env_of_name(vm_state *vms, object_t *env, object_t *name) {
     object_t *parent_sym = DLR_PARENT_SYM(vms);
 
@@ -2008,6 +2020,8 @@ char *builtin_names[] = {
     "cat",
     "eval",
     "pair",
+    "set-head",
+    "set-tail",
 };
 func_pointer_t *builtin_pointers[] = {
     dict_func,
@@ -2050,6 +2064,8 @@ func_pointer_t *builtin_pointers[] = {
     cat_func,
     eval_func,
     pair_func,
+    set_head_func,
+    set_tail_func,
 };
 
 char *construct_names[] = {
