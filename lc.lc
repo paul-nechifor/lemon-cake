@@ -14,6 +14,9 @@
 
 # ## Builtin functions
 
+# ### identity
+(= identity (~ (x) x))
+
 # ### partial
 #
 # Creates a partial function.

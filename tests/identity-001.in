@@ -1,0 +1,3 @@
+(identity 1234)
+(identity :asdf)
+(identity (~ (x) (+ 1 x)))

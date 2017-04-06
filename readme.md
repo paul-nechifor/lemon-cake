@@ -23,6 +23,8 @@ language.
 These are some of the things I plan to do, ordered by priority and bunched into
 groups.
 
+- Add a `pair` function.
+
 - Add a `zip` function.
 
 - Call functions in comp in reverse order (last first).
