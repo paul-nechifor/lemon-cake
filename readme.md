@@ -23,6 +23,12 @@ language.
 These are some of the things I plan to do, ordered by priority and bunched into
 groups.
 
+- Replace the call stack with a dict simulating a stack. For example it starts
+  off with `(dict len 0)` and all the other items will be numbers pointing to
+  objects.
+
+- Add a `return` function.
+
 - Add a `pair` function.
 
 - Add a `zip` function.
@@ -293,7 +299,7 @@ pi = import math@'1.0.0'
 )))
 
 # A function that takes to string arguments and returns their concatenation.
-connectWords = (firstWord str) (secondWord str) ~
+connectWords = ((firstWord str) (secondWord str)) ~
   firstWord + secondWord
 
 # Defining a type with typed attributes.
@@ -302,7 +308,50 @@ User = deftype
   email Email
   age int
   admin bool
+
+# Comma lists:
+
+put 2,3,4
+
+# ...should be equivalent to:
+
+put (2 3 4)
+
+# Easy way to convert between a function that takes n-arguments an a function
+that takes a list of n elements:
+
+put (sum 2 3 4)
+
+put ((single sum) :(2 3 4))
+
+put (%sum :(2 3 4))
+
+put (%sum 2,3,4)
+
+# Library
+
+- The language should be available as a library so that C programs can use it.
+
+- It should be as modular as possible so that certain parts of it can be
+  excluded.
+
+# Tracer
+
+- You should include a tracer for the language. This should be used for
+  debugging.
+
 ```
+
+## LemonCake 2
+
+Basic types:
+
+    dict (can immitate list, set, string (list of one char symbols)...)
+    int
+    symbol
+    function
+
+
 
 ## Links
 
