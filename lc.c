@@ -2,8 +2,13 @@
 
 #define ADD_ON_CALL_STACK(vms, obj) \
     do { \
-        obj->next_stack_object = vms->call_stack_objects; \
-        vms->call_stack_objects = obj; \
+        uint64_t n = dict_get_null( \
+            vms, \
+            vms->call_stack, \
+            LEN_SYM(vms) \
+        )->int_value; \
+        dict_add(vms->call_stack, LEN_SYM(vms), new_int(vms, n + 1)); \
+        dict_add(vms->call_stack, new_int(vms, n), obj); \
     } while (0)
 
 #define PATH_MAX 4096
@@ -152,9 +157,8 @@ struct vm_state {
     // garbage collection.
     object_t *last_object;
 
-    // This is a linked list of all the objects that are still active in the
-    // computation.
-    object_t *call_stack_objects;
+    // The call stack.
+    object_t *call_stack;
 
     // This is a dict containing all the interned objects. The value for each
     // key is the key.
@@ -187,6 +191,7 @@ char *interned_symbols[] = {
     "quote",
     "$dir",
     "$file",
+    "len",
 };
 
 #define FIRST_INTERNED_OBJ_PTR(vms) \
@@ -202,6 +207,7 @@ char *interned_symbols[] = {
 #define QUOTE_SYM(vms) (FIRST_INTERNED_OBJ_PTR(vms)[7])
 #define DLR_DIR_SYM(vms) (FIRST_INTERNED_OBJ_PTR(vms)[8])
 #define DLR_FILE_SYM(vms) (FIRST_INTERNED_OBJ_PTR(vms)[9])
+#define LEN_SYM(vms) (FIRST_INTERNED_OBJ_PTR(vms)[10])
 
 static void die(char *msg) {
     c_fprintf(*c_stderr, "%s\n", msg);
@@ -1693,7 +1699,11 @@ object_t *call_func(vm_state *vms, object_t *func, object_t *args_list) {
 
 object_t *eval_list(vm_state *vms, object_t *env, object_t *o) {
     object_t *ret;
-    object_t *top_call_stack_elem = vms->call_stack_objects;
+    uint64_t top_call_stack = dict_get_null(
+        vms,
+        vms->call_stack,
+        LEN_SYM(vms)
+    )->int_value;
 
     ADD_ON_CALL_STACK(vms, o);
 
@@ -1761,7 +1771,7 @@ object_t *eval_list(vm_state *vms, object_t *env, object_t *o) {
     die("That's not a function.");
 
 eval_list_cleanup:
-    vms->call_stack_objects = top_call_stack_elem;
+    dict_add(vms->call_stack, LEN_SYM(vms), new_int(vms, top_call_stack));
 
     return ret;
 }
@@ -2102,7 +2112,7 @@ vm_state *start_vm() {
     vms->max_objects = 8;
     vms->gc_is_on = 0;
     vms->last_object = NULL;
-    vms->call_stack_objects = NULL;
+    vms->call_stack = new_dict(vms, 4969);
     vms->env = new_dict(vms, 4969);
     vms->interned = new_dict(vms, 4969);
 
@@ -2126,6 +2136,8 @@ vm_state *start_vm() {
 
     dict_add(vms->env, DLR_ENV_SYM(vms), vms->env);
     dict_add(vms->env, DLR_DYNLIBS_SYM(vms), new_dict(vms, 4969));
+
+    dict_add(vms->call_stack, LEN_SYM(vms), new_int(vms, 0));
 
     d = vms->env;
     n = sizeof(builtin_pointers) / sizeof(uint64_t);
@@ -2267,15 +2279,7 @@ void gc(vm_state *vms) {
 
     mark(vms->env);
     mark(vms->interned);
-
-    object_t *next = vms->call_stack_objects;
-
-    uint64_t n_st = 0;
-    while (next) {
-        mark(next);
-        next = next->next_stack_object;
-        n_st++;
-    }
+    mark(vms->call_stack);
 
     sweep(vms);
 

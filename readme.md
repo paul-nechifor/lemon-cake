@@ -23,10 +23,6 @@ language.
 These are some of the things I plan to do, ordered by priority and bunched into
 groups.
 
-- Replace the call stack with a dict simulating a stack. For example it starts
-  off with `(dict len 0)` and all the other items will be numbers pointing to
-  objects.
-
 - Add a `return` function.
 
 - Add a `pair` function.
