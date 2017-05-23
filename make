@@ -12,8 +12,10 @@ main() {
         return
     fi
     sub_compile
-    [[ "${notests:-}" ]] || run_tests
-    docs
+    if [[ ! "${notests:-}" ]]; then
+        run_tests
+        docs
+    fi
 }
 
 sub_compile() {

@@ -1,0 +1,11 @@
+(= f (~ (a b) ($trap (last
+  (= ret 0)
+  (map (range a b) (~ (a) (if (- a 10)
+    (= ret (+ ret a))
+    ($entrap (list 'will not go above 10' ret a))
+  )))
+  ret
+))))
+
+(repr (f 2 20))
+(repr (f 2 5))

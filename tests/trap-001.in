@@ -1,0 +1,7 @@
+($trap 4)
+($trap (+ 1 2))
+($trap ($entrap 5))
+($trap (+ 1 2 ($entrap 'a')))
+($trap (if 1 ($entrap 'b')))
+($trap (if 0 ($entrap 'b') (+ 4 4)))
+($trap (+ 1 2 ($entrap (+ 8 8))))

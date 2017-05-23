@@ -23,7 +23,8 @@ language.
 These are some of the things I plan to do, ordered by priority and bunched into
 groups.
 
-- Add a `return` function.
+- Add `>`, `<` and all the other operators based on arithmetic operatos in
+  `lc.lc`.
 
 - Add a `pair` function.
 

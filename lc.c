@@ -16,6 +16,9 @@
 #define SEEK_SET 0
 #define SEEK_END 2
 
+#define ENTRAP_SYM "$entrap"
+#define TRAP_SYM "$trap"
+
 typedef unsigned long long int uint64_t;
 typedef signed long long int int64_t;
 typedef void * FILE;
@@ -617,28 +620,6 @@ object_t *head_func(vm_state *vms, object_t *env, object_t *args_list) {
 
 object_t *tail_func(vm_state *vms, object_t *env, object_t *args_list) {
     return args_list->head->tail;
-}
-
-void eval_args_list(vm_state *vms, object_t *env, object_t* args_list, object_t *list) {
-    object_t *unevaled = list;
-
-    if (!unevaled->head) {
-        return;
-    }
-
-    object_t *evaled = args_list;
-
-    for (;;) {
-        evaled->head = eval(vms, env, unevaled->head);
-        evaled->tail = new_pair(vms);
-        unevaled = unevaled->tail;
-
-        if (!unevaled->head) {
-            break;
-        }
-
-        evaled = evaled->tail;
-    }
 }
 
 uint64_t hash_bytes(char *bytes, uint64_t n) {
@@ -1244,6 +1225,7 @@ object_t *map_func(vm_state *vms, object_t *env, object_t *args_list) {
     object_t *ret = new_pair(vms);
     object_t *next = ret;
     object_t *fn_args;
+    object_t *eval_ret;
     uint64_t index = 0;
 
     while (list->head) {
@@ -1253,7 +1235,17 @@ object_t *map_func(vm_state *vms, object_t *env, object_t *args_list) {
         fn_args->tail->head = new_int(vms, index);
         fn_args->tail->tail = new_pair(vms);
 
-        next->head = eval_func_call(vms, fn, env, fn_args);
+        eval_ret = eval_func_call(vms, fn, env, fn_args);
+
+        if (
+            eval_ret->type == TYPE_LIST &&
+            eval_ret->head->type == TYPE_SYMBOL &&
+            !c_strcmp(eval_ret->head->symbol_pointer, ENTRAP_SYM)
+        ) {
+            return eval_ret;
+        }
+
+        next->head = eval_ret;
         next->tail = new_pair(vms);
 
         list = list->tail;
@@ -1454,6 +1446,12 @@ object_t *set_tail_func(vm_state *vms, object_t *env, object_t *args_list) {
     object_t *set = args_list->tail->head;
     args_list->head->tail = set;
     return set;
+}
+
+// This is only called when there's no $entrap. The trap case is handled in
+// eval_list().
+object_t *trap_func(vm_state *vms, object_t *env, object_t *args_list) {
+    return args_list->head;
 }
 
 object_t *get_env_of_name(vm_state *vms, object_t *env, object_t *name) {
@@ -1716,6 +1714,19 @@ object_t *eval_list(vm_state *vms, object_t *env, object_t *o) {
     object_t *first_elem = o->head;
     object_t *func;
 
+    // If this is `($entrap arg1)` then return `($entrap evaled-arg1)`.
+    if (
+        first_elem->type == TYPE_SYMBOL &&
+        !c_strcmp(first_elem->symbol_pointer, ENTRAP_SYM)
+    ) {
+        ret = new_pair(vms);
+        ret->head = first_elem;
+        ret->tail = new_pair(vms);
+        ret->tail->head = eval(vms, env, o->tail->head);
+        ret->tail->tail = new_pair(vms);
+        goto eval_list_cleanup;
+    }
+
     if (
         first_elem->type == TYPE_SYMBOL ||
         first_elem->type == TYPE_LIST ||
@@ -1754,7 +1765,47 @@ object_t *eval_list(vm_state *vms, object_t *env, object_t *o) {
     ADD_ON_CALL_STACK(vms, args_list);
     vms->gc_is_on = 1;
 
-    eval_args_list(vms, env, args_list, o->tail);
+    object_t *unevaled = o->tail;
+
+    if (unevaled->head) {
+        object_t *evaled = args_list;
+        object_t *evaled_elem;
+
+        for (;;) {
+            evaled_elem = eval(vms, env, unevaled->head);
+            // If one of the arguments evals to something like `($entrap ...)`
+            // then we don't need to apply the current function.
+            if (
+                evaled_elem->type == TYPE_LIST &&
+                evaled_elem->head &&
+                evaled_elem->head->type == TYPE_SYMBOL &&
+                !c_strcmp(evaled_elem->head->symbol_pointer, ENTRAP_SYM)
+            ) {
+                if (
+                    first_elem->type == TYPE_SYMBOL &&
+                    !c_strcmp(first_elem->symbol_pointer, TRAP_SYM)
+                ) {
+                    // When the current function is `$trap` we want to sent the
+                    // entrapped value.
+                    ret = evaled_elem->tail->head;
+                } else {
+                    // In other cases just pass the `($entrap ...)` list up
+                    // until a `$trap` is encountered.
+                    ret = evaled_elem;
+                }
+                goto eval_list_cleanup;
+            }
+            evaled->head = evaled_elem;
+            evaled->tail = new_pair(vms);
+            unevaled = unevaled->tail;
+
+            if (!unevaled->head) {
+                break;
+            }
+
+            evaled = evaled->tail;
+        }
+    }
 
     if (func->type == TYPE_FUNC) {
         ret = call_func(vms, func, args_list);
@@ -2032,6 +2083,7 @@ char *builtin_names[] = {
     "pair",
     "set-head",
     "set-tail",
+    TRAP_SYM,
 };
 func_pointer_t *builtin_pointers[] = {
     dict_func,
@@ -2076,6 +2128,7 @@ func_pointer_t *builtin_pointers[] = {
     pair_func,
     set_head_func,
     set_tail_func,
+    trap_func,
 };
 
 char *construct_names[] = {
