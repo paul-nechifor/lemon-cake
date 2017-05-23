@@ -23,7 +23,7 @@ language.
 These are some of the things I plan to do, ordered by priority and bunched into
 groups.
 
-- Add `>`, `<` and all the other operators based on arithmetic operatos in
+- Add `>`, `<` and all the other operators based on arithmetic operators in
   `lc.lc`.
 
 - Add a `pair` function.
@@ -75,7 +75,7 @@ groups.
   code dynamically. For writing to disk we need other lower level functions.
 
 - This function generates a list of numbers representing each byte of the
-  machine code with the offsets comming separatelly.
+  machine code with the offsets coming separately.
 
     (assemble-bytes
       'mov rax, simbol1'
@@ -84,9 +84,9 @@ groups.
 
 - It will return:
 
-    - a list of numbers of bytes of the machine code. all the bytes representing
+    - a list of numbers of bytes of the machine code. All the bytes representing
       position dependent numbers will be 0.
-    - a list of pairs representing numbers to be overriden where the elements are:
+    - a list of pairs representing numbers to be overridden where the elements are:
         - the offset where to write to
         - the number of bytes
         - the value. this number needs the program origin added to it before
@@ -110,7 +110,7 @@ groups.
 - WHAT ABOUT sections!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 - How to assemble. (Won't support all nasm concepts.)
-    - Build the environment. it will contain:
+    - Build the environment. It will contain:
         - symbols (the dict of passed-in symbols)
         - relative-symbols (this will be populated by instructions. For example
           `_start:` will add `'_start'` with the current offset to the dict)
@@ -161,7 +161,7 @@ groups.
 
 - Make sure files are never imported twice.
 
-- Look at a disassembly of the program to see which ar the most important
+- Look at a disassembly of the program to see which are the most important
   instructions that need to be supported.
 
 - Switch to using an actual stack for the stack values. This will be useful in
@@ -181,18 +181,13 @@ groups.
   - super: the super type
   - methods: a dict of symbols to functions
 
-- Add a debugging flag which will trigger printing all the evaulated
+- Add a debugging flag which will trigger printing all the evaluated
   expressions.
 
 - Write tests for broken programs (e.g.: `(+ 1`) and make sure they don't end up
   in an infinite loop.
 
-- Add a default script that's run. This way large parts could be implemented in
-  LemonCake instead of C/Assembly.
-
-- Make dicts resizable.
-
-- Get rid of `stdio`, `stderr`, and `stdout` from the binary. Link to them.
+- Make dicts resizeable.
 
 - Define `s1 s2 s4 s8 u1 u2 u4 u8` to `signed int 8 bits, ...`
 
@@ -202,15 +197,13 @@ groups.
 
 - JIT. Woop woop.
 
-- Write a (very) basic Markdown transformer so I can Write the source code in
-  literate LemonCake.
-
 - Change `new_object_t` to only malloc the size that's required for the object.
-- Per thread interpreter and GC? Communiction via messages.
+- Per thread interpreter and GC? Communication via messages.
 
 # Principles
 
 - There should be one default way of doing it, but many alternatives.
+
 - The last expression in a file is what's exported by default. So a file
   defining the value of pi would just contain '3.14...\n'
 
@@ -218,10 +211,10 @@ groups.
   - full-featured means it contains code, tests, benchmarks, compilation
     messages, warning &c.
 
-- EVERYTHING is versioned. `if` isn't a hardcoded builtin. It's whats defined in
-  `lc.lang.if`.
+- EVERYTHING is versioned. `if` isn't a hardcoded builtin. It's what's defined
+  in `lc.lang.if`.
 
-- nested requirements. packages can contain nested versioned packages.
+- Nested requirements. Packages can contain nested versioned packages.
 
 - should have good defaults for repository (i.e. where src, tests and the rest
   are supposed to be).
@@ -232,10 +225,10 @@ groups.
 - everything that imports from `node.something` is equivalent to nodejs's
   require.
 
-- top-level instructions must be asignments
+- top-level instructions must be assignments
 
 - You should be able to add listeners for everything even for example accessing
-  a variable. That way you can add a dynamic deprication warning even for
+  a variable. That way you can add a dynamic deprecation warning even for
   variables.
 
 - A package imported as 'lc.math.sin' can be found in './lc/math/sin', or
@@ -243,11 +236,11 @@ groups.
   `lc.math.sin` by having a file `lc-math-sin`
 
 - It should be easy to wrap everything in an expression for instrumentation
-  purpuses and it could we used for dead code elimination.
+  purposes and it could we used for dead code elimination.
 
 - Add runtime checks (which could be skipped in live).
 
-- Try writing a simple OS (using the Linux kerner) that uses LemonCake as the
+- Try writing a simple OS (using the Linux kernel) that uses LemonCake as the
   basis for almost everything. For example a program like `ls` would just output
   data and a stylesheet and the shell manages the display.
 
@@ -348,11 +341,9 @@ Basic types:
     symbol
     function
 
-
-
 ## Links
 
-What I've used for inspiratior or plan to use in the future:
+What I've used for inspiration or plan to use in the future:
 
 * [A Whirlwind Tutorial on Creating Really Teensy ELF Executables for
   Linux][whirlwind-tutorial]: This is the article that made me love tiny
