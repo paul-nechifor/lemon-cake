@@ -41,7 +41,7 @@ groups.
   fix some fields based on the length of x. This will answer the question of how
   to handle sections.
 
-- Add an argument to `new\_object` to not run gc so that I don't have to set
+- Add an argument to `new\_object` to not run GC so that I don't have to set
   `gc_is_on` all the time (setting that doesn't check it was on in the first
   place).
 

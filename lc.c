@@ -599,6 +599,10 @@ twoargfunc(binor_func, |)
 twoargfunc(binand_func, &)
 twoargfunc(shl_func, <<)
 twoargfunc(shr_func, >>)
+twoargfunc(lt_func, <)
+twoargfunc(lte_func, <=)
+twoargfunc(gt_func, >)
+twoargfunc(gte_func, >=)
 
 void list_append(vm_state *vms, object_t *list, object_t *o) {
     object_t *p = list;
@@ -2084,6 +2088,10 @@ char *builtin_names[] = {
     "set-head",
     "set-tail",
     TRAP_SYM,
+    "lt",
+    "lte",
+    "gt",
+    "gte",
 };
 func_pointer_t *builtin_pointers[] = {
     dict_func,
@@ -2129,6 +2137,10 @@ func_pointer_t *builtin_pointers[] = {
     set_head_func,
     set_tail_func,
     trap_func,
+    lt_func,
+    lte_func,
+    gt_func,
+    gte_func,
 };
 
 char *construct_names[] = {

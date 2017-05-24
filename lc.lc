@@ -11,6 +11,10 @@
 (= | (~ (reduce binor $args)))
 (= & (~ (reduce binand $args)))
 (= join (~ (reduce join-lists $args)))
+(= < (~ (reduce lt $args)))
+(= <= (~ (reduce lte $args)))
+(= > (~ (reduce gt $args)))
+(= >= (~ (reduce gte $args)))
 
 # ## Builtin functions
 
