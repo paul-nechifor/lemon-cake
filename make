@@ -194,7 +194,7 @@ check_summation() {
 }
 
 docs() {
-    ./lc <<<"(doc-code 'lc.lc' 'doc.html')" &>/dev/null
+    ./lc <<<"(doc-code 'lc.lc' 'doc.html')" &>/dev/null || echo 'Failed docs.'
 }
 
 main "$@"
