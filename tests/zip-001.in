@@ -1,0 +1,5 @@
+(zip :(1 2) :(a b))
+(zip :(1 2) :(a b) :(A B))
+(zip :(1 2 c) :(a b) :(A B))
+(zip :(1 2 c) :(a b c) :(A B))
+(zip :(1 2 c) :(a b c) :(A B c))

@@ -18,6 +18,7 @@
 
 #define ENTRAP_SYM "$entrap"
 #define TRAP_SYM "$trap"
+#define INITIAL_DICT_LEN 4969
 
 typedef unsigned long long int uint64_t;
 typedef signed long long int int64_t;
@@ -722,14 +723,14 @@ object_t *dict_func(vm_state *vms, object_t *env, object_t *args_list) {
 void dict_add(object_t *d, object_t *key, object_t *value) {
     uint64_t hash = hashcode_object(key);
 
-    if (d->dict_n_filled + 1 >= d->dict_n_size) {
-        die("Fuck, need to grow it.");
-    }
-
     dict_pair *pair = &d->dict_table[hash % d->dict_n_size];
 
     for (;;) {
         if (!pair->value) {
+            if (d->dict_n_filled + 1 >= d->dict_n_size) {
+                die("Fuck, need to grow it.");
+            }
+            d->dict_n_filled++;
             pair->key = key;
             pair->value = value;
             return;
@@ -741,6 +742,11 @@ void dict_add(object_t *d, object_t *key, object_t *value) {
         }
 
         if (!pair->next) {
+            if (d->dict_n_filled + 1 >= d->dict_n_size) {
+                die("Fuck, need to grow it.");
+            }
+            d->dict_n_filled++;
+
             pair->next = c_malloc(sizeof(dict_pair));
             pair = pair->next;
             pair->key = key;
@@ -898,10 +904,10 @@ object_t *dynsym_func(vm_state *vms, object_t *env, object_t *args_list) {
             die("Failed to open.");
         }
 
-        dl_lib = new_dict(vms, 4969);
+        dl_lib = new_dict(vms, INITIAL_DICT_LEN);
         dict_add(dynlibs, lib_name, dl_lib);
 
-        funcs = new_dict(vms, 4969);
+        funcs = new_dict(vms, INITIAL_DICT_LEN);
 
         handle = new_int(vms, handle_ptr);
         dict_add(dl_lib, HANDLE_SYM(vms), handle);
@@ -1163,7 +1169,16 @@ object_t *reduce_func(vm_state *vms, object_t *env, object_t *args_list) {
 
         // TODO: Handle all 4 callable types: BUILTIN_FUNC, CONSTRUCT, MACRO,
         // and FUNC.
-        memo = ((func_pointer_t *) fn->builtin)(vms, env, call_args);
+        switch (fn->type) {
+            case TYPE_BUILTIN_FUNC:
+                memo = ((func_pointer_t *) fn->builtin)(vms, env, call_args);
+                break;
+            case TYPE_FUNC:
+                memo = call_func(vms, fn, call_args);
+                break;
+            default:
+                die("Handle all 4.");
+        }
 
         list = list->tail;
     }
@@ -1243,6 +1258,7 @@ object_t *map_func(vm_state *vms, object_t *env, object_t *args_list) {
 
         if (
             eval_ret->type == TYPE_LIST &&
+            eval_ret->head &&
             eval_ret->head->type == TYPE_SYMBOL &&
             !c_strcmp(eval_ret->head->symbol_pointer, ENTRAP_SYM)
         ) {
@@ -1688,7 +1704,7 @@ void populate_child_env(
 object_t *call_func(vm_state *vms, object_t *func, object_t *args_list) {
     // Turn gc off in order to create the child env.
     vms->gc_is_on = 0;
-    object_t *child_env = new_dict(vms, 4969);
+    object_t *child_env = new_dict(vms, INITIAL_DICT_LEN);
     ADD_ON_CALL_STACK(vms, child_env);
     vms->gc_is_on = 1;
 
@@ -1751,7 +1767,7 @@ object_t *eval_list(vm_state *vms, object_t *env, object_t *o) {
     if (func->type == TYPE_MACRO) {
         // Turn gc off in order to create the child env.
         vms->gc_is_on = 0;
-        object_t *child_env = new_dict(vms, 4969);
+        object_t *child_env = new_dict(vms, INITIAL_DICT_LEN);
         ADD_ON_CALL_STACK(vms, child_env);
         vms->gc_is_on = 1;
 
@@ -2177,9 +2193,9 @@ vm_state *start_vm() {
     vms->max_objects = 8;
     vms->gc_is_on = 0;
     vms->last_object = NULL;
-    vms->call_stack = new_dict(vms, 4969);
-    vms->env = new_dict(vms, 4969);
-    vms->interned = new_dict(vms, 4969);
+    vms->call_stack = new_dict(vms, INITIAL_DICT_LEN);
+    vms->env = new_dict(vms, INITIAL_DICT_LEN);
+    vms->interned = new_dict(vms, INITIAL_DICT_LEN);
 
     uint64_t i;
     uint64_t n;
@@ -2200,7 +2216,7 @@ vm_state *start_vm() {
     }
 
     dict_add(vms->env, DLR_ENV_SYM(vms), vms->env);
-    dict_add(vms->env, DLR_DYNLIBS_SYM(vms), new_dict(vms, 4969));
+    dict_add(vms->env, DLR_DYNLIBS_SYM(vms), new_dict(vms, INITIAL_DICT_LEN));
 
     dict_add(vms->call_stack, LEN_SYM(vms), new_int(vms, 0));
 
@@ -2227,11 +2243,11 @@ vm_state *start_vm() {
 
     object_t *dynlibs = dict_get_null(vms, vms->env, DLR_DYNLIBS_SYM(vms));
 
-    object_t *dl_lib = new_dict(vms, 4969);
+    object_t *dl_lib = new_dict(vms, INITIAL_DICT_LEN);
     dict_add(dynlibs, new_string(vms, "libc.so", 7), dl_lib);
 
     dict_add(dl_lib, HANDLE_SYM(vms), new_int(vms, (uint64_t) libc_handle));
-    dict_add(dl_lib, FUNCS_SYM(vms), new_dict(vms, 4969));
+    dict_add(dl_lib, FUNCS_SYM(vms), new_dict(vms, INITIAL_DICT_LEN));
 
     return vms;
 }
@@ -2368,7 +2384,7 @@ object_t *eval_file(vm_state *vms, char *dir, char *file_path) {
     // '$dir' variables.
     vms->gc_is_on = 0;
     object_t *parsed = parse(vms, content, file_length);
-    object_t *child_env = new_dict(vms, 4969);
+    object_t *child_env = new_dict(vms, INITIAL_DICT_LEN);
     ADD_ON_CALL_STACK(vms, child_env);
 
     dict_add(child_env, DLR_PARENT_SYM(vms), vms->env);

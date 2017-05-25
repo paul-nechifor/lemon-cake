@@ -23,18 +23,13 @@ language.
 These are some of the things I plan to do, ordered by priority and bunched into
 groups.
 
-- Add `>`, `<` and all the other operators based on arithmetic operators in
-  `lc.lc`.
-
-- Add a `pair` function.
-
-- Add a `zip` function.
-
 - Call functions in comp in reverse order (last first).
 
 - I've used `>` for code instead of indentation or triple tick. Use triple tick.
 
 - Disassemble `lc` and see how many instructions are encodable by `lc`.
+
+- Implement tail call optimization.
 
 - Try to see if you can come up with an elf template. It would look like a list
   of bytes. What you would need to do is just add some bytes at position x and

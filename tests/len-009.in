@@ -1,0 +1,3 @@
+(len (dict))
+(len (dict 1 11))
+(len (dict 1 11 4 44))

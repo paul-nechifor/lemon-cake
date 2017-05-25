@@ -18,6 +18,12 @@
 
 # ## Builtin functions
 
+# ### min
+(= min (~ (reduce (~ (a b) (if (< a b) a b)) $args)))
+
+# ### max
+(= max (~ (reduce (~ (a b) (if (> a b) a b)) $args)))
+
 # ### identity
 (= identity (~ (x) x))
 
@@ -103,6 +109,23 @@
     ))
     :(x)
   ))
+)))
+
+# ### list-dict
+(= list-dict (~ (xs) (last
+  (= ret (dict))
+  (map xs (~ (x i) (set ret i x)))
+  ret
+)))
+
+# ### zip
+(= zip (~ (last
+  (= lists (map $args list-dict))
+  (= n-args (len lists))
+  (= min-len (apply min (map lists len)))
+  (map (range min-len) (~ (i) (map
+    lists (~ (d) (get d i))
+  )))
 )))
 
 # ## Util functions
