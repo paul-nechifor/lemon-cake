@@ -2,6 +2,15 @@
 
 import json
 
+operators = [
+    '=',
+    '~',
+    '*',
+    '/',
+    '+',
+    '-',
+]
+
 tests = [['''\
 ###############################################################################
 1 + 2 + 3
@@ -11,7 +20,7 @@ tests = [['''\
 ###############################################################################
 1 + 2 * 3
 ''', '''\
-(+ 1 (* 2 3)
+(+ 1 (* 2 3))
 '''], ['''\
 ###############################################################################
 1 + 2
@@ -28,13 +37,13 @@ a = ~ x
 ###############################################################################
 fn = x ~ x + 1
 ''', '''\
-(= fn (~ (x) (+ x 1)
+(= fn (~ (x) (+ x 1)))
 '''], ['''\
 ###############################################################################
 fn = x ~
   x + 1
 ''', '''\
-(= fn (~ (x) (+ x 1)
+(= fn (~ (x) (+ x 1)))
 '''], ['''\
 ###############################################################################
 fn = x ~
@@ -46,7 +55,12 @@ fn = x ~
 
     1
 ''', '''\
-(= fn (~ (x) (add x 1)
+(= fn (~ (x) (add x 1)))
+'''], ['''\
+###############################################################################
+a = f1 f2 f3 1 + 2 * 3 * 4 + 3 / 2 * 4
+''', '''\
+(= a (f1 (f2 (f3 (+ 1 (* 2 3 4) (* (/ 3 2)))))))
 ''']]
 
 
@@ -57,7 +71,15 @@ def parse(text):
     print '-' * 100
     tokens = tokenize(expr)
     show(tokens)
+    print '-' * 100
+    grouped = group_tokens(tokens)
+    show(grouped)
+    print '-' * 100
+    rep = repr_grouped(grouped)
+    print rep
+    print '-' * 100
     print '\n' * 4
+    return rep
 
 
 def show(x):
@@ -73,50 +95,70 @@ def process_indents(text):
     for line in lines:
         trimmed_line = line.lstrip()
         indent = (len(line) - len(trimmed_line)) / 2
-        expr = {
-            'type': 'unparsed-expression',
-            'expr': trimmed_line,
-            'blocks': [],
-        }
+        expr = ('unparsed', trimmed_line, [])
         indent_stack[indent] = expr
         if indent == 0:
             expressions.append(expr)
         else:
-            indent_stack[indent - 1]['blocks'].append(expr)
+            indent_stack[indent - 1][2].append(expr)
 
         prev_indent = indent
     if len(expressions) == 1:
         return expressions[0]
-    return {
-        'type': 'unparsed-expression',
-        'expr': 'last',
-        'blocks': expressions,
-    }
+    return ('unparsed', 'last', expressions)
 
 
 def tokenize(expr):
-    return tokenize_str(expr['expr']) + tokenize_blocks(expr['blocks'])
+    return tokenize_str(expr[1]) + tokenize_blocks(expr[2])
 
 
 def tokenize_str(s):
-    return [
-        {'type': 'token', 'str': e}
-        for e in s.split(' ')
-    ]
+    return [('token', e) for e in s.split(' ')]
 
 
 def tokenize_blocks(blocks):
     return [
-        {
-            'type': 'group',
-            'tokens': tokenize(b)
-        }
+        ('group', tokenize(b))
         for b in blocks
     ]
 
 
+def group_tokens(tokens):
+    if len(tokens) == 1:
+        return tokens[0]
+    for op in operators:
+        indices = get_indices(tokens, op)
+        if indices:
+            return ('list', [('token', op)] + get_list(tokens, indices))
+
+    return ('list', [x['token'] for x in tokens])
+
+
+def get_list(tokens, indices):
+    indices = [-1] + indices + [len(tokens)]
+    return [
+        group_tokens(tokens[indices[i - 1] + 1:indices[i]])
+        for i in range(1, len(indices))
+    ]
+
+
+def get_indices(tokens, op):
+    return [
+        i
+        for i, x in enumerate(tokens)
+        if x[0] == 'token' and x[1] == op
+    ]
+
+def repr_grouped(g):
+    if g[0] == 'list':
+        return '(%s)' % (' '.join(repr_grouped(x) for x in g[1]))
+    if g[0] == 'token':
+        return g[1]
+    raise Exception('Handle %s' % repr(g))
+
+
 def test():
-    for i, (in_text, out_text) in enumerate(tests):
+    for i, (in_text, out_text) in enumerate(tests[0:2]):
         if parse(in_text) != out_text:
             print '%i failed' % i
 
