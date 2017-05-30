@@ -149,6 +149,7 @@ def get_indices(tokens, op):
         if x[0] == 'token' and x[1] == op
     ]
 
+
 def repr_grouped(g):
     if g[0] == 'list':
         return '(%s)' % (' '.join(repr_grouped(x) for x in g[1]))
@@ -162,4 +163,78 @@ def test():
         if parse(in_text) != out_text:
             print '%i failed' % i
 
-test()
+
+# test()
+
+
+"""
+exp ::= term  | exp + term | exp - term
+term ::= factor | factor * term | factor / term
+factor ::= number | ( exp )
+"""
+
+class TokenList(object):
+
+    def __init__(self, toks):
+        self.toks = toks
+        self.i = 0
+        self.tok = self.toks[self.i]
+
+    def next(self):
+        self.i += 1
+        if self.i >= len(self.toks):
+            self.tok = None
+        else:
+            self.tok = self.toks[self.i]
+
+
+def exp(t):
+    ret = term(t)
+    while t.tok in ('+', '-'):
+        token = t.tok
+        t.next()
+        ret = [token, ret, term(t)]
+    return ret
+
+
+def factor(t):
+    if t.tok == '(':
+        t.next()
+        ret = exp(t)
+        t.next()
+    else:
+        ret = t.tok
+        t.next()
+    return ret
+
+
+def term(t):
+    ret = factor(t)
+    while t.tok in ('*', '/'):
+        token = t.tok
+        t.next()
+        ret = [token, ret, term(t)]
+    return ret
+
+
+def tokenise_str(s):
+    lst = list(s.replace(' ', ''))
+    tokens = []
+    for i in range(len(lst)):
+        if lst[i].isdigit() and i > 0 and  (tokens[-1].isdigit() or tokens[-1][-1] is '.'):
+            tokens[-1] += lst[i]
+        elif lst[i] is '.' and i > 0 and tokens[-1].isdigit():
+            tokens[-1] += lst[i]
+        else:
+            tokens.append(lst[i])
+    return tokens
+
+
+def create_ast(s):
+    print s
+    print exp(TokenList(tokenise_str(s)))
+
+
+if __name__ == '__main__':
+    create_ast('2 + 3 * 4')
+    create_ast('(2 + 3) * 4')

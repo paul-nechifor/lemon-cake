@@ -23,6 +23,8 @@ language.
 These are some of the things I plan to do, ordered by priority and bunched into
 groups.
 
+- I urgently need a `each` function. `map` can be implemented with `each`.
+
 - Call functions in comp in reverse order (last first).
 
 - I've used `>` for code instead of indentation or triple tick. Use triple tick.

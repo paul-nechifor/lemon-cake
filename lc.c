@@ -596,6 +596,7 @@ twoargfunc(add_func, +)
 twoargfunc(sub_func, -)
 twoargfunc(mul_func, *)
 twoargfunc(div_func, /)
+twoargfunc(mod_func, %)
 twoargfunc(binor_func, |)
 twoargfunc(binand_func, &)
 twoargfunc(shl_func, <<)
@@ -2076,6 +2077,7 @@ char *builtin_names[] = {
     "sub",
     "mul",
     "div",
+    "mod",
     "binor",
     "binand",
     "<<",
@@ -2125,6 +2127,7 @@ func_pointer_t *builtin_pointers[] = {
     sub_func,
     mul_func,
     div_func,
+    mod_func,
     binor_func,
     binand_func,
     shl_func,

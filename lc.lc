@@ -8,6 +8,7 @@
 (= - (~ (reduce sub $args)))
 (= * (~ (reduce mul $args)))
 (= / (~ (reduce div $args)))
+(= % (~ (reduce mod $args)))
 (= | (~ (reduce binor $args)))
 (= & (~ (reduce binand $args)))
 (= join (~ (reduce join-lists $args)))
@@ -110,6 +111,69 @@
     :(x)
   ))
 )))
+
+# ### chunk
+#
+# Groups `n` consecutive elements in a list.
+#
+# > (chunk 2 :(0 a 1 b 2 c))
+# > > ((0 a) (1 b) (2 c))
+(= chunk (~ (n xs) (last
+  (= ret :())
+  (= l1 ret)
+  (= l2 0)
+
+  (map xs (~ (x i)
+    (last
+      (set-head l1 i)
+      (set-tail l1 :())
+      (= l1 (tail l1))
+      (set-head l1 i)
+      (set-tail l1 :())
+      (= l1 (tail l1))
+      (set-head l1 i)
+      (set-tail l1 :())
+      (= l1 (tail l1))
+      (set-head l1 :A)
+      (set-tail l1 :())
+      (= l1 (tail l1))
+    )
+    # (if
+    #   (% i n)
+    #   (last
+    #     (set-head l1 x)
+    #     (set-tail l1 :())
+    #     (= l1 (tail l1))
+
+    #     # (= l2 (tail l2))
+    #     # (set-head l2 x)
+    #     # (set-tail l2 :())
+    #     1
+    #   )
+    #   (last
+    #     # (= l2 (list x))
+    #     # (set-head l1 l2)
+    #     # (set-tail l1 :())
+    #     # (= l1 (tail l1))
+    #     # (set-head l1 :(x x))
+    #     # (set-tail l1 :())
+    #     # (= l1 (tail l1))
+    #     1
+    #   )
+    # )
+  ))
+
+  (set-head l1 888)
+  (set-tail l1 :())
+
+  ret
+)))
+
+# ()
+# ((0))
+# ((0 a))
+# ((0 a) (1))
+# ((0 a) (1 b))
 
 # ### list-dict
 (= list-dict (~ (xs) (last
