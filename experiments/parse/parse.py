@@ -1,6 +1,35 @@
 #!/usr/bin/env python2
 
 import json
+from unittest import TestCase, main
+
+
+def cs(s):
+    """CoffeeScript like strings."""
+    lines = s.split('\n')
+    min_indent = len(lines[-1]) + 4
+    return '\n'.join(x[min(min_indent, len(x)):] for x in lines[1:-1])
+
+
+class TestCs(TestCase):
+
+    def test_cs01(self):
+        self.assertEqual('abc', cs('''
+            abc
+        '''))
+
+    def test_cs02(self):
+        self.assertEqual('abc\n\nc', cs('''
+            abc
+
+            c
+        '''))
+
+
+main()
+
+exit(0)
+
 
 operators = [
     '=',
