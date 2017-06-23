@@ -1,0 +1,306 @@
+<!doctype html><html><head><title>LemonCake</title><style>div{box-sizing:border-box}body{margin:0;background:linear-gradient(to right,#fff 0%,#fff 50%,#f4f4f4 50%,#f4f4f4 100%)}.sect{clear:both}.part{width:50%;padding-top:50px}.left{float:left}.right{float:right;background:#f4f4f4}pre{background:#f4f4f4;margin:0;padding:6px 10px}pre+pre{padding-top:0}.text{width:100%;max-width:600px;padding-right:10px;float:right;font-family:sans-serif}h1,h2,h3{margin:0}.code{padding-left:10px;font-family:monospace;white-space:pre}</style></head><body><div class="doc"><div class="sect"><div class="part left"><div class="text"><p>
+<h1>LemonCake</h1>
+<p>
+A programming language that combines the speed of Ruby, with the flexibility
+of x86-64 Assembly, and the consistency of Lisp.</div></div><div class="part right"><div class="code"></div></div></div><div class="sect"><div class="part left"><div class="text"><h2>Operators</h2></div></div><div class="part right"><div class="code">(= + (~ (reduce add $args)))
+(= - (~ (reduce sub $args)))
+(= * (~ (reduce mul $args)))
+(= / (~ (reduce div $args)))
+(= % (~ (reduce mod $args)))
+(= | (~ (reduce binor $args)))
+(= & (~ (reduce binand $args)))
+(= join (~ (reduce join-lists $args)))
+(= &lt; (~ (reduce lt $args)))
+(= &lt;= (~ (reduce lte $args)))
+(= &gt; (~ (reduce gt $args)))
+(= &gt;= (~ (reduce gte $args)))
+</div></div></div><div class="sect"><div class="part left"><div class="text"><h2>Builtin functions</h2></div></div><div class="part right"><div class="code"></div></div></div><div class="sect"><div class="part left"><div class="text"><h3>min</h3></div></div><div class="part right"><div class="code">(= min (~ (reduce (~ (a b) (if (&lt; a b) a b)) $args)))
+</div></div></div><div class="sect"><div class="part left"><div class="text"><h3>max</h3></div></div><div class="part right"><div class="code">(= max (~ (reduce (~ (a b) (if (&gt; a b) a b)) $args)))
+</div></div></div><div class="sect"><div class="part left"><div class="text"><h3>identity</h3></div></div><div class="part right"><div class="code">(= identity (~ (x) x))
+</div></div></div><div class="sect"><div class="part left"><div class="text"><h3>partial</h3>
+<p>
+Creates a partial function.
+<p>
+Example:
+<p>
+<pre>(= f (partial + 1 2))</pre>
+<pre>(f 4 1)</pre>
+<pre>&gt; 8</pre>
+<p>
+Which is the same as running:
+<p>
+<pre>(+ 1 2 4 1)</pre>
+<pre>8</pre></div></div><div class="part right"><div class="code">(= partial (~ (fn) (last
+  (= args (tail $args))
+  (~ (apply fn (join args $args)))
+)))
+</div></div></div><div class="sect"><div class="part left"><div class="text"><h3>tie</h3>
+<p>
+Joins strings using a separator.
+<p>
+Example:
+<p>
+<pre>(tie '_' :('a' 'b' 'c'))</pre>
+<pre>&gt;'a_b_c'</pre></div></div><div class="part right"><div class="code">(= tie (~ (str xs)
+  (apply cat (tail (apply join (map xs
+    (~ (x) (list str x))
+  ))))
+))
+</div></div></div><div class="sect"><div class="part left"><div class="text"><h3>repeat</h3>
+<p>
+Creates a list contaning `n` repetitions of a given value.
+<p>
+Example:
+<p>
+<pre>(repeat 'a' 3)</pre>
+<pre>&gt; ('a' 'a' 'a')</pre></div></div><div class="part right"><div class="code">(= repeat (~ (x n) (map (range n) (~ x))))
+</div></div></div><div class="sect"><div class="part left"><div class="text"><h3>at</h3>
+<p>
+Get the value from a list that's at zero-based index `i`.
+<p>
+Example:
+<p>
+<pre>(at :(1 2 3) 2)</pre>
+<pre>3</pre></div></div><div class="part right"><div class="code">(= at (~ (l i) (head ((apply comp (repeat tail i)) l))))
+</div></div></div><div class="sect"><div class="part left"><div class="text"><h3>comp</h3>
+<p>
+Generates a function that composes multiple functions that only accept one
+argument.
+<p>
+So given functions `f`, `g`, `h`, these two lines are equivalent:
+<p>
+<pre>(~ (x) (f (g (h x))))</pre>
+<pre>(comp h g f)</pre>
+<p>
+Note that the functions are applied in the order in which they are given.
+<p>
+TODO Fix the order.
+<p>
+Example:
+<p>
+<pre>(= plus1 (~ (x) (+ x 1)))</pre>
+<pre>(= double (~ (x) (list x x)))</pre>
+<pre>(= fn (comp plus1 double double))</pre>
+<pre>(fn 2)</pre>
+<pre>&gt; ((3 3) (3 3))</pre></div></div><div class="part right"><div class="code">(= comp (~ (eval
+  (list :~ :(x) (join
+    :(last)
+    (map $args (~ (fn)
+      (list := :x (list fn :x))
+    ))
+    :(x)
+  ))
+)))
+</div></div></div><div class="sect"><div class="part left"><div class="text"><h3>chunk</h3>
+<p>
+Groups `n` consecutive elements in a list.
+<p>
+<pre>(chunk 2 :(0 a 1 b 2 c))</pre>
+<pre>&gt; ((0 a) (1 b) (2 c))</pre></div></div><div class="part right"><div class="code">(= chunk (~ (n xs) (last
+  (= ret :())
+  (= l1 ret)
+  (= l2 0)
+
+  (map xs (~ (x i)
+    (last
+      (set-head l1 i)
+      (set-tail l1 :())
+      (= l1 (tail l1))
+      (set-head l1 i)
+      (set-tail l1 :())
+      (= l1 (tail l1))
+      (set-head l1 i)
+      (set-tail l1 :())
+      (= l1 (tail l1))
+      (set-head l1 :A)
+      (set-tail l1 :())
+      (= l1 (tail l1))
+    )
+    # (if
+    #   (% i n)
+    #   (last
+    #     (set-head l1 x)
+    #     (set-tail l1 :())
+    #     (= l1 (tail l1))
+
+    #     # (= l2 (tail l2))
+    #     # (set-head l2 x)
+    #     # (set-tail l2 :())
+    #     1
+    #   )
+    #   (last
+    #     # (= l2 (list x))
+    #     # (set-head l1 l2)
+    #     # (set-tail l1 :())
+    #     # (= l1 (tail l1))
+    #     # (set-head l1 :(x x))
+    #     # (set-tail l1 :())
+    #     # (= l1 (tail l1))
+    #     1
+    #   )
+    # )
+  ))
+
+  (set-head l1 888)
+  (set-tail l1 :())
+
+  ret
+)))
+</div></div></div><div class="sect"><div class="part left"><div class="text">()
+((0))
+((0 a))
+((0 a) (1))
+((0 a) (1 b))</div></div><div class="part right"><div class="code"></div></div></div><div class="sect"><div class="part left"><div class="text"><h3>list-dict</h3></div></div><div class="part right"><div class="code">(= list-dict (~ (xs) (last
+  (= ret (dict))
+  (map xs (~ (x i) (set ret i x)))
+  ret
+)))
+</div></div></div><div class="sect"><div class="part left"><div class="text"><h3>zip</h3></div></div><div class="part right"><div class="code">(= zip (~ (last
+  (= lists (map $args list-dict))
+  (= n-args (len lists))
+  (= min-len (apply min (map lists len)))
+  (map (range min-len) (~ (i) (map
+    lists (~ (d) (get d i))
+  )))
+)))
+</div></div></div><div class="sect"><div class="part left"><div class="text"><h2>Util functions</h2></div></div><div class="part right"><div class="code"></div></div></div><div class="sect"><div class="part left"><div class="text"><h3>doc-code</h3></div></div><div class="part right"><div class="code">(= doc-code (~ (input output) (last
+  (= encode (~ (d) (last
+    (apply cat (map
+      (split '' d)
+      (~ (x) (if (is x '&lt;') '&lt;' (is x '&gt;') '&gt;' x))
+    ))
+  )))
+
+  (= process-comment (~ (c) (last
+    (= surround (~ (tag chars)
+      (cat '&lt;' tag '&gt;' (encode (apply cat (tail (tail chars)))) '&lt;/' tag '&gt;')
+    ))
+    (= lines (split '\n' c))
+    (= lines (map lines (~ (line) (last
+      (= chars (split '' line))
+      (if
+        (is (len line) 0)
+        '&lt;p&gt;'
+
+        (is (at chars 0) '&gt;')
+        (surround 'pre' chars)
+
+        (is (at chars 0) '#')
+        (if
+          (is (at chars 1) '#')
+          (if
+            (is (at chars 2) '#')
+            (surround 'h3' (tail (tail chars)))
+            (surround 'h2' (tail chars))
+          )
+          (surround 'h1' chars)
+        )
+
+        (encode line)
+      )
+    ))))
+    (tie '\n' lines)
+  )))
+
+  (= split-parts (~ (str) (last
+    (= left (dict 0 ''))
+    (= right (dict))
+    (= n 0)
+    (= prev-is-left 1)
+    (= clean (~ (cs) (last
+      (= cs2 (tail cs))
+      (apply cat (if (len cs2) (tail cs2) cs2))
+    )))
+
+    (map (split '\n' str) (~ (l) (last
+      (= lsplit (split '' l))
+      (= is-left (is (at lsplit 0) '#'))
+      (if is-left
+        (if prev-is-left
+          (set left n (cat (get left n) '\n' (clean lsplit)))
+          (last
+            (= n (+ n 1))
+            (set left n (clean lsplit))
+          )
+        )
+        (if prev-is-left
+          (set right n l)
+          (set right n (cat (get right n) '\n' l))
+        )
+      )
+      (= prev-is-left is-left)
+    )))
+
+    (cat
+      '&lt;div class="doc"&gt;'
+      (apply cat (map (range (+ n 1)) (~ (i) (cat
+        '&lt;div class="sect"&gt;'
+          '&lt;div class="part left"&gt;&lt;div class="text"&gt;'
+            (process-comment (get left i))
+          '&lt;/div&gt;&lt;/div&gt;'
+          '&lt;div class="part right"&gt;&lt;div class="code"&gt;'
+            (encode (get right i))
+          '&lt;/div&gt;&lt;/div&gt;'
+        '&lt;/div&gt;'
+      ))))
+      '&lt;/div&gt;'
+    )
+  )))
+
+  (fs-write output (cat
+    '&lt;!doctype html&gt;'
+    '&lt;html&gt;'
+      '&lt;head&gt;'
+        '&lt;title&gt;LemonCake&lt;/title&gt;'
+        '&lt;style&gt;'
+          'div{box-sizing:border-box}'
+          'body{'
+            'margin:0;'
+            'background:linear-gradient('
+              'to right,#fff 0%,#fff 50%,#f4f4f4 50%,#f4f4f4 100%'
+            ')'
+          '}'
+          '.sect{clear:both}'
+          '.part{width:50%;padding-top:50px}'
+          '.left{float:left}'
+          '.right{float:right;background:#f4f4f4}'
+          'pre{background:#f4f4f4;margin:0;padding:6px 10px}'
+          'pre+pre{padding-top:0}'
+          '.text{'
+            'width:100%;'
+            'max-width:600px;'
+            'padding-right:10px;'
+            'float:right;'
+            'font-family:sans-serif'
+          '}'
+          'h1,h2,h3{margin:0}'
+          '.code{padding-left:10px;font-family:monospace;white-space:pre}'
+        '&lt;/style&gt;'
+      '&lt;/head&gt;'
+      '&lt;body&gt;'
+        (split-parts (fs-read input))
+      '&lt;/body&gt;'
+    '&lt;/html&gt;'
+  ))
+)))
+</div></div></div><div class="sect"><div class="part left"><div class="text"><h2>Assembler functions</h2></div></div><div class="part right"><div class="code">
+(= reg0 (dict
+  'al' 0
+  'cl' 1
+  'dl' 2
+  'bl' 3
+  'ah' 4
+  'ch' 5
+  'dh' 6
+  'bh' 7
+))
+
+(= asm-instr (dict
+  'add' (~ (a b) (if
+
+    (and (in a reg0) (in b reg0))
+    (list 0x00 (| 0xc0 (&lt;&lt; (get reg0 b) 3) (get reg0 a) ))
+
+  ))
+))
+</div></div></div></div></body></html>
