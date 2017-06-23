@@ -362,6 +362,8 @@ What I've used for inspiration or plan to use in the future:
 
 * [Let’s Build A Simple Interpreter][simple-interpreter]
 
+* [ELF Hello World Tutorial][elf-hello-world]
+
 * x86-64 instruction encoding:
 
   * [x86 Instruction Encoding Revealed][x86-encoding]
@@ -405,3 +407,4 @@ ISC
 [elf64]: http://refspecs.linuxfoundation.org/LSB_4.1.0/LSB-Core-AMD64/LSB-Core-AMD64/book1.html
 [elf64pdf]: https://refspecs.linuxfoundation.org/LSB_4.1.0/LSB-Core-AMD64/LSB-Core-AMD64.pdf
 [sysvabi]: http://refspecs.linux-foundation.org/elf/x86_64-abi-0.95.pdf
+[elf-hello-world]: http://www.cirosantilli.com/elf-hello-world/
