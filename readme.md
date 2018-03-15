@@ -20,6 +20,12 @@ language.
 
 ## Planning
 
+- Shouldn't macros be evaluated at parse time?
+
+Idea:
+    - Why not have tests right next to the code. Why separate code and tests?
+      The building code can eliminate the tests.
+
 These are some of the things I plan to do, ordered by priority and bunched into
 groups.
 
