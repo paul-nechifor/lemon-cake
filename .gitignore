@@ -1,4 +1,5 @@
 *.o
+*.perf
 a.out
 core
 doc.html

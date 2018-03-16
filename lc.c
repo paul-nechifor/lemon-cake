@@ -16,6 +16,8 @@
 #define SEEK_SET 0
 #define SEEK_END 2
 
+//#define PERF
+
 #define ENTRAP_SYM "$entrap"
 #define TRAP_SYM "$trap"
 #define INITIAL_DICT_LEN 881
@@ -51,12 +53,17 @@ extern size_t (*c_fwrite)(void *ptr, size_t size, size_t nmemb, FILE *stream);
 extern FILE **c_stderr;
 extern FILE **c_stdout;
 extern FILE **c_stdin;
+extern void (*c_gettimeofday)(void *arg1, void *arg2);
 
 extern void *dlopen(const char *filename, int flag);
 extern void *dlsym(void *handle, const char *symbol);
 
 extern uint64_t *prog_argc_ptr;
 extern char *libc_handle;
+
+#ifdef PERF
+FILE *perf_file;
+#endif
 
 enum {
     TYPE_INT = 1,
@@ -1764,7 +1771,27 @@ object_t *call_func(vm_state *vms, object_t *func, object_t *args_list) {
         vms, func->func_parent_env, child_env, func->func_args, args_list
     );
 
-    return eval(vms, child_env, func->func_body);
+#ifdef PERF
+    uint64_t time_struct[2];
+    c_gettimeofday(time_struct, NULL);
+    c_fprintf(
+        perf_file,
+        "call %d %d.%06d\n",
+        func, time_struct[0], time_struct[1]
+    );
+#endif
+
+    object_t *ret = eval(vms, child_env, func->func_body);
+
+#ifdef PERF
+    c_fprintf(
+        perf_file,
+        "endcall %d %d.%06d\n",
+        func, time_struct[0], time_struct[1]
+    );
+#endif
+
+    return ret;
 }
 
 object_t *eval_list(vm_state *vms, object_t *env, object_t *o) {
@@ -2477,6 +2504,10 @@ void eval_lines() {
     object_t *o;
     vm_state *vms = start_vm();
 
+#ifdef PERF
+    perf_file = c_fopen("lc.perf", "wb");
+#endif
+
     vms->gc_is_on = 0;
     parsed = parse(vms, INITIAL_CODE, c_strlen(INITIAL_CODE));
     vms->gc_is_on = 1;
@@ -2525,4 +2556,9 @@ eval_lines_cleanup:
 
     c_fflush(*c_stdout);
     c_fflush(*c_stderr);
+
+#ifdef PERF
+    c_fflush(perf_file);
+    c_fclose(perf_file);
+#endif
 }
