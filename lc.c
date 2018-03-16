@@ -18,7 +18,7 @@
 
 #define ENTRAP_SYM "$entrap"
 #define TRAP_SYM "$trap"
-#define INITIAL_DICT_LEN 4969
+#define INITIAL_DICT_LEN 881
 
 typedef unsigned long long int uint64_t;
 typedef signed long long int int64_t;
@@ -721,16 +721,71 @@ object_t *dict_func(vm_state *vms, object_t *env, object_t *args_list) {
     return dobj;
 }
 
+void grow_dict(object_t *d) {
+    // Create the new dict table.
+    uint64_t new_dict_n_size = next_prime_size(d->dict_n_size);
+    uint64_t n_table_bytes = sizeof(dict_pair) * new_dict_n_size;
+    struct dict_pair *new_table = c_malloc(n_table_bytes);
+    c_memset(new_table, 0, n_table_bytes);
+
+    // Copy old dict table to the new one.
+    dict_pair *old_table = d->dict_table;
+    dict_pair *old_pair;
+    dict_pair *new_pair;
+    dict_pair *next_pair;
+    uint64_t i;
+    uint64_t size = d->dict_n_size;
+    uint64_t hash;
+    uint64_t first_loop;
+
+    for (i = 0; i < size; i++) {
+        old_pair = &old_table[i];
+        for (first_loop = 1; ; first_loop = 0) {
+            if (old_pair->value) {
+                hash = hashcode_object(old_pair->key);
+                new_pair = &new_table[hash % new_dict_n_size];
+                for (;;) {
+                    if (!new_pair->value) {
+                        new_pair->key = old_pair->key;
+                        new_pair->value = old_pair->value;
+                        break;
+                    }
+                    if (!new_pair->next) {
+                        new_pair->next = c_malloc(sizeof(dict_pair));
+                        new_pair = new_pair->next;
+                        new_pair->key = old_pair->key;
+                        new_pair->value = old_pair->value;
+                        new_pair->next = NULL;
+                        break;
+                    }
+                    new_pair = new_pair->next;
+                }
+            }
+            next_pair = old_pair->next;
+            if (!first_loop) {
+                c_free(old_pair);
+            }
+            if (!next_pair) {
+                break;
+            }
+            old_pair = next_pair;
+        }
+    }
+
+    c_free(d->dict_table);
+    d->dict_table = new_table;
+}
+
 void dict_add(object_t *d, object_t *key, object_t *value) {
+    if (d->dict_n_filled + 1 >= d->dict_n_size) {
+        grow_dict(d);
+    }
     uint64_t hash = hashcode_object(key);
 
     dict_pair *pair = &d->dict_table[hash % d->dict_n_size];
 
     for (;;) {
         if (!pair->value) {
-            if (d->dict_n_filled + 1 >= d->dict_n_size) {
-                die("Fuck, need to grow it.");
-            }
             d->dict_n_filled++;
             pair->key = key;
             pair->value = value;
@@ -743,11 +798,7 @@ void dict_add(object_t *d, object_t *key, object_t *value) {
         }
 
         if (!pair->next) {
-            if (d->dict_n_filled + 1 >= d->dict_n_size) {
-                die("Fuck, need to grow it.");
-            }
             d->dict_n_filled++;
-
             pair->next = c_malloc(sizeof(dict_pair));
             pair = pair->next;
             pair->key = key;
