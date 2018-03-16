@@ -91,66 +91,7 @@ Example:
     :(x)
   ))
 )))
-</div></div></div><div class="sect"><div class="part left"><div class="text"><h3>chunk</h3>
-<p>
-Groups `n` consecutive elements in a list.
-<p>
-<pre>(chunk 2 :(0 a 1 b 2 c))</pre>
-<pre>&gt; ((0 a) (1 b) (2 c))</pre></div></div><div class="part right"><div class="code">(= chunk (~ (n xs) (last
-  (= ret :())
-  (= l1 ret)
-  (= l2 0)
-
-  (map xs (~ (x i)
-    (last
-      (set-head l1 i)
-      (set-tail l1 :())
-      (= l1 (tail l1))
-      (set-head l1 i)
-      (set-tail l1 :())
-      (= l1 (tail l1))
-      (set-head l1 i)
-      (set-tail l1 :())
-      (= l1 (tail l1))
-      (set-head l1 :A)
-      (set-tail l1 :())
-      (= l1 (tail l1))
-    )
-    # (if
-    #   (% i n)
-    #   (last
-    #     (set-head l1 x)
-    #     (set-tail l1 :())
-    #     (= l1 (tail l1))
-
-    #     # (= l2 (tail l2))
-    #     # (set-head l2 x)
-    #     # (set-tail l2 :())
-    #     1
-    #   )
-    #   (last
-    #     # (= l2 (list x))
-    #     # (set-head l1 l2)
-    #     # (set-tail l1 :())
-    #     # (= l1 (tail l1))
-    #     # (set-head l1 :(x x))
-    #     # (set-tail l1 :())
-    #     # (= l1 (tail l1))
-    #     1
-    #   )
-    # )
-  ))
-
-  (set-head l1 888)
-  (set-tail l1 :())
-
-  ret
-)))
-</div></div></div><div class="sect"><div class="part left"><div class="text">()
-((0))
-((0 a))
-((0 a) (1))
-((0 a) (1 b))</div></div><div class="part right"><div class="code"></div></div></div><div class="sect"><div class="part left"><div class="text"><h3>list-dict</h3></div></div><div class="part right"><div class="code">(= list-dict (~ (xs) (last
+</div></div></div><div class="sect"><div class="part left"><div class="text"><h3>list-dict</h3></div></div><div class="part right"><div class="code">(= list-dict (~ (xs) (last
   (= ret (dict))
   (map xs (~ (x i) (set ret i x)))
   ret
