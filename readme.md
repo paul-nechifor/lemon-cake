@@ -14,9 +14,15 @@ language.
 
     ./make
 
-## Run all the tests
+## Tests
+
+Run all the tests with:
 
     all=1 ./make
+
+Run tests whose filename matches a regex:
+
+    regex=hash ./make
 
 ## Planning
 

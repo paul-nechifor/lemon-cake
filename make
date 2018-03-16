@@ -49,7 +49,9 @@ sub_compile() {
 
 run_tests() {
     for test_file in tests/*.{lc,in}; do
-        run_test "$test_file"
+        if [[ ! "$regex" ]] || egrep "$regex" <<<"$test_file" &>/dev/null; then
+            run_test "$test_file"
+        fi
     done
 
     tests_done
