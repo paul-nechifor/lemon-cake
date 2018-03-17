@@ -1578,10 +1578,22 @@ object_t *assign_func(vm_state *vms, object_t *env, object_t *args_list) {
 
         list = list->tail;
 
+        ret = eval(vms, env, value);
+
+#ifdef PERF
+        if (ret->type == TYPE_FUNC && name->type == TYPE_SYMBOL) {
+            c_fprintf(
+                perf_file,
+                "funcname %d %s\n",
+                ret, name->symbol_pointer
+            );
+        }
+#endif
+
         dict_add(
             get_env_of_name(vms, env, name),
             name,
-            ret = eval(vms, env, value)
+            ret
         );
     }
     return ret ? ret : new_pair(vms);
@@ -1784,6 +1796,7 @@ object_t *call_func(vm_state *vms, object_t *func, object_t *args_list) {
     object_t *ret = eval(vms, child_env, func->func_body);
 
 #ifdef PERF
+    c_gettimeofday(time_struct, NULL);
     c_fprintf(
         perf_file,
         "endcall %d %d.%06d\n",
