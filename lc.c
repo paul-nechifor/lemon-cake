@@ -1226,11 +1226,31 @@ object_t *reduce_func(vm_state *vms, object_t *env, object_t *args_list) {
         tmp->tail = new_pair(vms);
         vms->gc_is_on = 1;
 
+#ifdef PERF
+        uint64_t time_struct[2];
+#endif
+
         // TODO: Handle all 4 callable types: BUILTIN_FUNC, CONSTRUCT, MACRO,
         // and FUNC.
         switch (fn->type) {
             case TYPE_BUILTIN_FUNC:
+#ifdef PERF
+                c_gettimeofday(time_struct, NULL);
+                c_fprintf(
+                    perf_file,
+                    "call %d %d.%06d\n",
+                    fn->builtin, time_struct[0], time_struct[1]
+                );
+#endif
                 memo = ((func_pointer_t *) fn->builtin)(vms, env, call_args);
+#ifdef PERF
+                c_gettimeofday(time_struct, NULL);
+                c_fprintf(
+                    perf_file,
+                    "endcall %d %d.%06d\n",
+                    fn->builtin, time_struct[0], time_struct[1]
+                );
+#endif
                 break;
             case TYPE_FUNC:
                 memo = call_func(vms, fn, call_args);
@@ -2519,6 +2539,17 @@ void eval_lines() {
 
 #ifdef PERF
     perf_file = c_fopen("lc.perf", "wb");
+
+    uint64_t i;
+    uint64_t n = sizeof(builtin_pointers) / sizeof(uint64_t);
+
+    for (i = 0; i < n; i++) {
+        c_fprintf(
+            perf_file,
+            "funcname %d %s\n",
+            builtin_pointers[i], builtin_names[i]
+        );
+    }
 #endif
 
     vms->gc_is_on = 0;
