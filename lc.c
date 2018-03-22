@@ -1553,6 +1553,53 @@ object_t *trap_func(vm_state *vms, object_t *env, object_t *args_list) {
     return args_list->head;
 }
 
+object_t *replace_func(vm_state *vms, object_t *env, object_t *args_list) {
+    object_t *input = args_list->head;
+    object_t *old = args_list->tail->head;
+    object_t *new = args_list->tail->tail->head;
+
+    char *input_str = input->string_pointer;
+    uint64_t old_len = old->string_length;
+    uint64_t n_found = 0;
+    char *match;
+
+    for (;;) {
+        match = c_strstr(input_str, old->string_pointer);
+        if (!match) {
+            break;
+        }
+        n_found++;
+        input_str = match + old_len;
+    }
+
+    uint64_t new_size = input->string_length
+        + n_found * (new->string_length- old_len);
+
+    char *buffer = c_malloc(sizeof(char) * new_size);
+    char *buffer_initial = buffer;
+    uint64_t increase;
+    uint64_t i;
+    input_str = input->string_pointer;
+
+    for (i = 0; i < n_found; i++) {
+        match = c_strstr(input_str, old->string_pointer);
+        increase = (uint64_t)(match - input_str);
+        c_memcpy(buffer, input_str, increase);
+        buffer += increase;
+        c_memcpy(buffer, new->string_pointer, new->string_length);
+        buffer += new->string_length;
+        input_str = match + old_len;
+    }
+
+    uint64_t left = (input->string_pointer + input->string_length) - input_str;
+
+    if (left > 0) {
+        c_memcpy(buffer, input_str, left);
+    }
+
+    return new_string(vms, buffer_initial, new_size);
+}
+
 object_t *get_env_of_name(vm_state *vms, object_t *env, object_t *name) {
     object_t *parent_sym = DLR_PARENT_SYM(vms);
 
@@ -2221,6 +2268,7 @@ char *builtin_names[] = {
     "lte",
     "gt",
     "gte",
+    "replace",
 };
 func_pointer_t *builtin_pointers[] = {
     dict_func,
@@ -2271,6 +2319,7 @@ func_pointer_t *builtin_pointers[] = {
     lte_func,
     gt_func,
     gte_func,
+    replace_func,
 };
 
 char *construct_names[] = {

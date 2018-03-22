@@ -133,12 +133,7 @@
 
 # ### doc-code
 (= doc-code (~ (input output) (last
-  (= encode (~ (d) (last
-    (apply cat (map
-      (split '' d)
-      (~ (x) (if (is x '<') '&lt;' (is x '>') '&gt;' x))
-    ))
-  )))
+  (= encode (~ (d) (replace (replace d '>' '&gt;') '<' '&lt;')))
 
   (= process-comment (~ (c) (last
     (= surround (~ (tag chars)
