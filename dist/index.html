@@ -14,22 +14,43 @@ of x86-64 Assembly, and the consistency of Lisp.</div></div><div class="part rig
 (= &lt;= (~ (reduce lte $args)))
 (= &gt; (~ (reduce gt $args)))
 (= &gt;= (~ (reduce gte $args)))
-</div></div></div><div class="sect"><div class="part left"><div class="text"><h2>Builtin functions</h2></div></div><div class="part right"><div class="code"></div></div></div><div class="sect"><div class="part left"><div class="text"><h3>min</h3></div></div><div class="part right"><div class="code">(= min (~ (reduce (~ (a b) (if (&lt; a b) a b)) $args)))
-</div></div></div><div class="sect"><div class="part left"><div class="text"><h3>max</h3></div></div><div class="part right"><div class="code">(= max (~ (reduce (~ (a b) (if (&gt; a b) a b)) $args)))
-</div></div></div><div class="sect"><div class="part left"><div class="text"><h3>identity</h3></div></div><div class="part right"><div class="code">(= identity (~ (x) x))
+</div></div></div><div class="sect"><div class="part left"><div class="text"><h2>Builtin functions</h2></div></div><div class="part right"><div class="code"></div></div></div><div class="sect"><div class="part left"><div class="text"><h3>min</h3>
+<p>
+Returns the smallest element.
+<p>
+Example:
+<p>
+<pre>&gt; (min 5 8 3)</pre>
+<pre>3</pre></div></div><div class="part right"><div class="code">(= min (~ (reduce (~ (a b) (if (&lt; a b) a b)) $args)))
+</div></div></div><div class="sect"><div class="part left"><div class="text"><h3>max</h3>
+<p>
+Returns the maximum element.
+<p>
+Example:
+<p>
+<pre>&gt; (max 5 8 3)</pre>
+<pre>8</pre></div></div><div class="part right"><div class="code">(= max (~ (reduce (~ (a b) (if (&gt; a b) a b)) $args)))
+</div></div></div><div class="sect"><div class="part left"><div class="text"><h3>identity</h3>
+<p>
+The identity function. It returns what it receives.
+<p>
+Example:
+<p>
+<pre>&gt; (identity 'something-here')</pre>
+<pre>'something-here'</pre></div></div><div class="part right"><div class="code">(= identity (~ (x) x))
 </div></div></div><div class="sect"><div class="part left"><div class="text"><h3>partial</h3>
 <p>
 Creates a partial function.
 <p>
 Example:
 <p>
-<pre>(= f (partial + 1 2))</pre>
-<pre>(f 4 1)</pre>
-<pre>&gt; 8</pre>
+<pre>&gt; (= f (partial + 1 2))</pre>
+<pre>&gt; (f 4 1)</pre>
+<pre>8</pre>
 <p>
 Which is the same as running:
 <p>
-<pre>(+ 1 2 4 1)</pre>
+<pre>&gt; (+ 1 2 4 1)</pre>
 <pre>8</pre></div></div><div class="part right"><div class="code">(= partial (~ (fn) (last
   (= args (tail $args))
   (~ (apply fn (join args $args)))
@@ -40,8 +61,8 @@ Joins strings using a separator.
 <p>
 Example:
 <p>
-<pre>(tie '_' :('a' 'b' 'c'))</pre>
-<pre>&gt;'a_b_c'</pre></div></div><div class="part right"><div class="code">(= tie (~ (str xs)
+<pre>&gt; (tie '_' :('a' 'b' 'c'))</pre>
+<pre>'a_b_c'</pre></div></div><div class="part right"><div class="code">(= tie (~ (str xs)
   (apply cat (tail (apply join (map xs
     (~ (x) (list str x))
   ))))
@@ -52,15 +73,15 @@ Creates a list contaning `n` repetitions of a given value.
 <p>
 Example:
 <p>
-<pre>(repeat 'a' 3)</pre>
-<pre>&gt; ('a' 'a' 'a')</pre></div></div><div class="part right"><div class="code">(= repeat (~ (x n) (map (range n) (~ x))))
+<pre>&gt; (repeat 'a' 3)</pre>
+<pre>('a' 'a' 'a')</pre></div></div><div class="part right"><div class="code">(= repeat (~ (x n) (map (range n) (~ x))))
 </div></div></div><div class="sect"><div class="part left"><div class="text"><h3>at</h3>
 <p>
 Get the value from a list that's at zero-based index `i`.
 <p>
 Example:
 <p>
-<pre>(at :(1 2 3) 2)</pre>
+<pre>&gt; (at :(1 2 3) 2)</pre>
 <pre>3</pre></div></div><div class="part right"><div class="code">(= at (~ (l i) (head ((apply comp (repeat tail i)) l))))
 </div></div></div><div class="sect"><div class="part left"><div class="text"><h3>comp</h3>
 <p>
@@ -78,11 +99,11 @@ TODO Fix the order.
 <p>
 Example:
 <p>
-<pre>(= plus1 (~ (x) (+ x 1)))</pre>
-<pre>(= double (~ (x) (list x x)))</pre>
-<pre>(= fn (comp plus1 double double))</pre>
-<pre>(fn 2)</pre>
-<pre>&gt; ((3 3) (3 3))</pre></div></div><div class="part right"><div class="code">(= comp (~ (eval
+<pre>&gt; (= plus1 (~ (x) (+ x 1)))</pre>
+<pre>&gt; (= double (~ (x) (list x x)))</pre>
+<pre>&gt; (= fn (comp plus1 double double))</pre>
+<pre>&gt; (fn 2)</pre>
+<pre>((3 3) (3 3))</pre></div></div><div class="part right"><div class="code">(= comp (~ (eval
   (list :~ :(x) (join
     :(last)
     (map $args (~ (fn)
@@ -96,7 +117,18 @@ Example:
   (map xs (~ (x i) (set ret i x)))
   ret
 )))
-</div></div></div><div class="sect"><div class="part left"><div class="text"><h3>zip</h3></div></div><div class="part right"><div class="code">(= zip (~ (last
+</div></div></div><div class="sect"><div class="part left"><div class="text"><h3>zip</h3>
+<p>
+Pairs elements of lists together.
+<p>
+Example:
+<p>
+<pre>&gt; (= names :('John' 'Bill' 'Alice'))</pre>
+<pre>('John' 'Bill' 'Alice')</pre>
+<pre>&gt; (= ages :(31 21 27))</pre>
+<pre>(31 21 27)</pre>
+<pre>&gt; (zip names ages)</pre>
+<pre>(('John' 31) ('Bill' 21) ('Alice' 27))</pre></div></div><div class="part right"><div class="code">(= zip (~ (last
   (= lists (map $args list-dict))
   (= n-args (len lists))
   (= min-len (apply min (map lists len)))

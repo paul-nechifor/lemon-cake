@@ -20,7 +20,7 @@
 
 #define ENTRAP_SYM "$entrap"
 #define TRAP_SYM "$trap"
-#define INITIAL_DICT_LEN 881
+#define INITIAL_DICT_LEN 5
 
 typedef unsigned long long int uint64_t;
 typedef signed long long int int64_t;
