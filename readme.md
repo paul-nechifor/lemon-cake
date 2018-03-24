@@ -35,7 +35,9 @@ Idea:
 These are some of the things I plan to do, ordered by priority and bunched into
 groups.
 
-- I urgently need a `each` function. `map` can be implemented with `each`.
+- Get rid of the entrap bullshit.
+
+- Implement map in terms of `each`.
 
 - Call functions in comp in reverse order (last first).
 

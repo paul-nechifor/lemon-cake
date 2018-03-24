@@ -1,0 +1,10 @@
+(= count 0)
+(each
+  (range 10)
+  (~ (x) (if
+    (is x 5)
+    :$stop
+    (= count (+ count 1))
+  ))
+)
+(repr count)

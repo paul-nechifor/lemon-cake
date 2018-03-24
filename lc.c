@@ -203,6 +203,7 @@ char *interned_symbols[] = {
     "$dir",
     "$file",
     "len",
+    "$stop",
 };
 
 #define FIRST_INTERNED_OBJ_PTR(vms) \
@@ -219,6 +220,7 @@ char *interned_symbols[] = {
 #define DLR_DIR_SYM(vms) (FIRST_INTERNED_OBJ_PTR(vms)[8])
 #define DLR_FILE_SYM(vms) (FIRST_INTERNED_OBJ_PTR(vms)[9])
 #define LEN_SYM(vms) (FIRST_INTERNED_OBJ_PTR(vms)[10])
+#define DLR_STOP_SYM(vms) (FIRST_INTERNED_OBJ_PTR(vms)[11])
 
 static void die(char *msg) {
     c_fprintf(*c_stderr, "%s\n", msg);
@@ -1355,6 +1357,42 @@ object_t *map_func(vm_state *vms, object_t *env, object_t *args_list) {
     return ret;
 }
 
+object_t *each_func(vm_state *vms, object_t *env, object_t *args_list) {
+    object_t *list = args_list->head;
+    object_t *fn = args_list->tail->head;
+
+    object_t *ret = new_pair(vms);
+    object_t *next = ret;
+    object_t *fn_args;
+    object_t *eval_ret;
+    uint64_t index = 0;
+
+    while (list->head) {
+        fn_args = new_pair(vms);
+        fn_args->head = list->head;
+        fn_args->tail = new_pair(vms);
+        fn_args->tail->head = new_int(vms, index);
+        fn_args->tail->tail = new_pair(vms);
+
+        eval_ret = eval_func_call(vms, fn, env, fn_args);
+
+        if (
+            eval_ret->type == TYPE_SYMBOL &&
+            !c_strcmp(
+                eval_ret->symbol_pointer,
+                DLR_STOP_SYM(vms)->symbol_pointer
+            )
+        ) {
+            return ret;
+        }
+
+        list = list->tail;
+        index++;
+    }
+
+    return ret;
+}
+
 object_t *range_func(vm_state *vms, object_t *env, object_t *args_list) {
     uint64_t start = 0;
     uint64_t stop;
@@ -2253,6 +2291,7 @@ char *builtin_names[] = {
     "apply",
     "join-lists",
     "map",
+    "each",
     "range",
     "split",
     "fs-read",
@@ -2304,6 +2343,7 @@ func_pointer_t *builtin_pointers[] = {
     apply_func,
     join_lists_func,
     map_func,
+    each_func,
     range_func,
     split_func,
     fs_read_func,

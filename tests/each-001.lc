@@ -1,0 +1,6 @@
+(= count 0)
+(each
+  :(a b c)
+  (~ (= count (+ count 1)))
+)
+(repr count)
