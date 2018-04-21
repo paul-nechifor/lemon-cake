@@ -240,9 +240,15 @@
           '<div class="part left"><div class="text">'
             (process-comment (get left i))
           '</div></div>'
-          '<div class="part right"><div class="code">'
-            (encode (get right i))
-          '</div></div>'
+          (if
+            (get right i)
+            (cat
+              '<div class="part right"><div class="code">'
+                (encode (get right i))
+              '</div></div>'
+            )
+            ''
+          )
         '</div>'
       ))))
       '</div>'
@@ -251,9 +257,12 @@
 
   (fs-write output (cat
     '<!doctype html>'
-    '<html>'
+    '<html lang="en">'
       '<head>'
+        '<meta charset="utf-8">'
+        '<meta http-equiv="x-ua-compatible" content="ie=edge">'
         '<title>LemonCake</title>'
+        '<meta name="viewport" content="width=device-width, initial-scale=1">'
         '<style>'
           'div{box-sizing:border-box}'
           'body{'
@@ -276,6 +285,15 @@
             'font-family:sans-serif'
           '}'
           'h1,h2,h3{margin:0}'
+          '@media(max-width:1240px){'
+            '.left,.right,.text{float:none}'
+            '.left,.right{width:100%}'
+            '.text{max-width:none;padding:0 20px 20px}'
+            '.right{padding-top:0}'
+            '.left{padding-top:30px}'
+            '.code{padding:20px;border:1px solid #ddd;border-width:2px 0;overflow-y:scroll}'
+            'body{background:#fff}'
+          '}'
           '.code{padding-left:10px;font-family:monospace;white-space:pre}'
         '</style>'
       '</head>'

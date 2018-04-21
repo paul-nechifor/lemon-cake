@@ -1,8 +1,8 @@
-<!doctype html><html><head><title>LemonCake</title><style>div{box-sizing:border-box}body{margin:0;background:linear-gradient(to right,#fff 0%,#fff 50%,#f4f4f4 50%,#f4f4f4 100%)}.sect{clear:both}.part{width:50%;padding-top:50px}.left{float:left}.right{float:right;background:#f4f4f4}pre{background:#f4f4f4;margin:0;padding:6px 10px}pre+pre{padding-top:0}.text{width:100%;max-width:600px;padding-right:10px;float:right;font-family:sans-serif}h1,h2,h3{margin:0}.code{padding-left:10px;font-family:monospace;white-space:pre}</style></head><body><div class="doc"><div class="sect"><div class="part left"><div class="text"><p>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta http-equiv="x-ua-compatible" content="ie=edge"><title>LemonCake</title><meta name="viewport" content="width=device-width, initial-scale=1"><style>div{box-sizing:border-box}body{margin:0;background:linear-gradient(to right,#fff 0%,#fff 50%,#f4f4f4 50%,#f4f4f4 100%)}.sect{clear:both}.part{width:50%;padding-top:50px}.left{float:left}.right{float:right;background:#f4f4f4}pre{background:#f4f4f4;margin:0;padding:6px 10px}pre+pre{padding-top:0}.text{width:100%;max-width:600px;padding-right:10px;float:right;font-family:sans-serif}h1,h2,h3{margin:0}@media(max-width:1240px){.left,.right,.text{float:none}.left,.right{width:100%}.text{max-width:none;padding:0 20px 20px}.right{padding-top:0}.left{padding-top:30px}.code{padding:20px;border:1px solid #ddd;border-width:2px 0;overflow-y:scroll}body{background:#fff}}.code{padding-left:10px;font-family:monospace;white-space:pre}</style></head><body><div class="doc"><div class="sect"><div class="part left"><div class="text"><p>
 <h1>LemonCake</h1>
 <p>
 A programming language that combines the speed of Ruby, with the flexibility
-of x86-64 Assembly, and the consistency of Lisp.</div></div><div class="part right"><div class="code"></div></div></div><div class="sect"><div class="part left"><div class="text"><h2>Operators</h2></div></div><div class="part right"><div class="code">(= + (~ (reduce add $args)))
+of x86-64 Assembly, and the consistency of Lisp.</div></div></div><div class="sect"><div class="part left"><div class="text"><h2>Operators</h2></div></div><div class="part right"><div class="code">(= + (~ (reduce add $args)))
 (= - (~ (reduce sub $args)))
 (= * (~ (reduce mul $args)))
 (= / (~ (reduce div $args)))
@@ -14,7 +14,7 @@ of x86-64 Assembly, and the consistency of Lisp.</div></div><div class="part rig
 (= &lt;= (~ (reduce lte $args)))
 (= &gt; (~ (reduce gt $args)))
 (= &gt;= (~ (reduce gte $args)))
-</div></div></div><div class="sect"><div class="part left"><div class="text"><h2>Builtin functions</h2></div></div><div class="part right"><div class="code"></div></div></div><div class="sect"><div class="part left"><div class="text"><h3>min</h3>
+</div></div></div><div class="sect"><div class="part left"><div class="text"><h2>Builtin functions</h2></div></div></div><div class="sect"><div class="part left"><div class="text"><h3>min</h3>
 <p>
 Returns the smallest element.
 <p>
@@ -136,7 +136,7 @@ Example:
     lists (~ (d) (get d i))
   )))
 )))
-</div></div></div><div class="sect"><div class="part left"><div class="text"><h2>Util functions</h2></div></div><div class="part right"><div class="code"></div></div></div><div class="sect"><div class="part left"><div class="text"><h3>doc-code</h3></div></div><div class="part right"><div class="code">(= doc-code (~ (input output) (last
+</div></div></div><div class="sect"><div class="part left"><div class="text"><h2>Util functions</h2></div></div></div><div class="sect"><div class="part left"><div class="text"><h3>doc-code</h3></div></div><div class="part right"><div class="code">(= doc-code (~ (input output) (last
   (= encode (~ (d) (replace (replace d '&gt;' '&gt;') '&lt;' '&lt;')))
 
   (= process-comment (~ (c) (last
@@ -212,9 +212,15 @@ Example:
           '&lt;div class="part left"&gt;&lt;div class="text"&gt;'
             (process-comment (get left i))
           '&lt;/div&gt;&lt;/div&gt;'
-          '&lt;div class="part right"&gt;&lt;div class="code"&gt;'
-            (encode (get right i))
-          '&lt;/div&gt;&lt;/div&gt;'
+          (if
+            (get right i)
+            (cat
+              '&lt;div class="part right"&gt;&lt;div class="code"&gt;'
+                (encode (get right i))
+              '&lt;/div&gt;&lt;/div&gt;'
+            )
+            ''
+          )
         '&lt;/div&gt;'
       ))))
       '&lt;/div&gt;'
@@ -223,9 +229,12 @@ Example:
 
   (fs-write output (cat
     '&lt;!doctype html&gt;'
-    '&lt;html&gt;'
+    '&lt;html lang="en"&gt;'
       '&lt;head&gt;'
+        '&lt;meta charset="utf-8"&gt;'
+        '&lt;meta http-equiv="x-ua-compatible" content="ie=edge"&gt;'
         '&lt;title&gt;LemonCake&lt;/title&gt;'
+        '&lt;meta name="viewport" content="width=device-width, initial-scale=1"&gt;'
         '&lt;style&gt;'
           'div{box-sizing:border-box}'
           'body{'
@@ -248,6 +257,15 @@ Example:
             'font-family:sans-serif'
           '}'
           'h1,h2,h3{margin:0}'
+          '@media(max-width:1240px){'
+            '.left,.right,.text{float:none}'
+            '.left,.right{width:100%}'
+            '.text{max-width:none;padding:0 20px 20px}'
+            '.right{padding-top:0}'
+            '.left{padding-top:30px}'
+            '.code{padding:20px;border:1px solid #ddd;border-width:2px 0;overflow-y:scroll}'
+            'body{background:#fff}'
+          '}'
           '.code{padding-left:10px;font-family:monospace;white-space:pre}'
         '&lt;/style&gt;'
       '&lt;/head&gt;'
