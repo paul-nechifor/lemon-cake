@@ -150,8 +150,14 @@ Example:
         (is (len line) 0)
         '&lt;p&gt;'
 
-        (is (at chars 0) '&gt;')
-        (surround 'pre' chars)
+        # If it starts with 4 spaces, sorround the line with a pre tag.
+        (and
+          (is (at chars 0) ' ')
+          (is (at chars 1) ' ')
+          (is (at chars 2) ' ')
+          (is (at chars 3) ' ')
+        )
+        (surround 'pre' (tail (tail chars)))
 
         (is (at chars 0) '#')
         (if

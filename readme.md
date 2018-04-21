@@ -37,11 +37,7 @@ groups.
 
 - Get rid of the entrap bullshit.
 
-- Implement map in terms of `each`.
-
 - Call functions in comp in reverse order (last first).
-
-- I've used `>` for code instead of indentation or triple tick. Use triple tick.
 
 - Disassemble `lc` and see how many instructions are encodable by `lc`.
 

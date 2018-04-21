@@ -25,8 +25,8 @@
 #
 # Example:
 #
-# > > (min 5 8 3)
-# > 3
+#     > (min 5 8 3)
+#     3
 (= min (~ (reduce (~ (a b) (if (< a b) a b)) $args)))
 
 # ### max
@@ -35,8 +35,8 @@
 #
 # Example:
 #
-# > > (max 5 8 3)
-# > 8
+#     > (max 5 8 3)
+#     8
 (= max (~ (reduce (~ (a b) (if (> a b) a b)) $args)))
 
 # ### identity
@@ -45,8 +45,8 @@
 #
 # Example:
 #
-# > > (identity 'something-here')
-# > 'something-here'
+#     > (identity 'something-here')
+#     'something-here'
 (= identity (~ (x) x))
 
 # ### partial
@@ -55,14 +55,14 @@
 #
 # Example:
 #
-# > > (= f (partial + 1 2))
-# > > (f 4 1)
-# > 8
+#     > (= f (partial + 1 2))
+#     > (f 4 1)
+#     8
 #
 # Which is the same as running:
 #
-# > > (+ 1 2 4 1)
-# > 8
+#     > (+ 1 2 4 1)
+#     8
 (= partial (~ (fn) (last
   (= args (tail $args))
   (~ (apply fn (join args $args)))
@@ -74,8 +74,8 @@
 #
 # Example:
 #
-# > > (tie '_' :('a' 'b' 'c'))
-# > 'a_b_c'
+#     > (tie '_' :('a' 'b' 'c'))
+#     'a_b_c'
 (= tie (~ (str xs)
   (apply cat (tail (apply join (map xs
     (~ (x) (list str x))
@@ -88,8 +88,8 @@
 #
 # Example:
 #
-# > > (repeat 'a' 3)
-# > ('a' 'a' 'a')
+#     > (repeat 'a' 3)
+#     ('a' 'a' 'a')
 (= repeat (~ (x n) (map (range n) (~ x))))
 
 # ### at
@@ -98,8 +98,8 @@
 #
 # Example:
 #
-# > > (at :(1 2 3) 2)
-# > 3
+#     > (at :(1 2 3) 2)
+#     3
 (= at (~ (l i) (head ((apply comp (repeat tail i)) l))))
 
 # ### comp
@@ -109,8 +109,8 @@
 #
 # So given functions `f`, `g`, `h`, these two lines are equivalent:
 #
-# > (~ (x) (f (g (h x))))
-# > (comp h g f)
+#     (~ (x) (f (g (h x))))
+#     (comp h g f)
 #
 # Note that the functions are applied in the order in which they are given.
 #
@@ -118,11 +118,11 @@
 #
 # Example:
 #
-# > > (= plus1 (~ (x) (+ x 1)))
-# > > (= double (~ (x) (list x x)))
-# > > (= fn (comp plus1 double double))
-# > > (fn 2)
-# > ((3 3) (3 3))
+#     > (= plus1 (~ (x) (+ x 1)))
+#     > (= double (~ (x) (list x x)))
+#     > (= fn (comp plus1 double double))
+#     > (fn 2)
+#     ((3 3) (3 3))
 (= comp (~ (eval
   (list :~ :(x) (join
     :(last)
@@ -146,12 +146,12 @@
 #
 # Example:
 #
-# > > (= names :('John' 'Bill' 'Alice'))
-# > ('John' 'Bill' 'Alice')
-# > > (= ages :(31 21 27))
-# > (31 21 27)
-# > > (zip names ages)
-# > (('John' 31) ('Bill' 21) ('Alice' 27))
+#     > (= names :('John' 'Bill' 'Alice'))
+#     ('John' 'Bill' 'Alice')
+#     > (= ages :(31 21 27))
+#     (31 21 27)
+#     > (zip names ages)
+#     (('John' 31) ('Bill' 21) ('Alice' 27))
 (= zip (~ (last
   (= lists (map $args list-dict))
   (= n-args (len lists))
@@ -178,8 +178,14 @@
         (is (len line) 0)
         '<p>'
 
-        (is (at chars 0) '>')
-        (surround 'pre' chars)
+        # If it starts with 4 spaces, sorround the line with a pre tag.
+        (and
+          (is (at chars 0) ' ')
+          (is (at chars 1) ' ')
+          (is (at chars 2) ' ')
+          (is (at chars 3) ' ')
+        )
+        (surround 'pre' (tail (tail chars)))
 
         (is (at chars 0) '#')
         (if
