@@ -26,16 +26,17 @@ Run tests whose filename matches a regex:
 
 ## Planning
 
-- Shouldn't macros be evaluated at parse time?
-
-Idea:
-    - Why not have tests right next to the code. Why separate code and tests?
-      The building code can eliminate the tests.
-
 These are some of the things I plan to do, ordered by priority and bunched into
 groups.
 
+- How about you curate this list of things to do?
+
 - Get rid of the entrap bullshit.
+
+- Shouldn't macros be evaluated at parse time?
+
+- Idea: Why not have tests right next to the code. Why separate code and tests?
+  The building code can eliminate the tests.
 
 - Call functions in comp in reverse order (last first).
 
@@ -48,7 +49,7 @@ groups.
   fix some fields based on the length of x. This will answer the question of how
   to handle sections.
 
-- Add an argument to `new\_object` to not run GC so that I don't have to set
+- Add an argument to `new_object` to not run GC so that I don't have to set
   `gc_is_on` all the time (setting that doesn't check it was on in the first
   place).
 
@@ -61,12 +62,12 @@ groups.
 
 - This is how assembly should look like:
 
-    (asm
-      '
-        mov rax, simbol1
-      '
-      (dict simbol1 12345)
-    )
+      (asm
+        '
+          mov rax, simbol1
+        '
+        (dict simbol1 12345)
+      )
 
 - It should assemble to machine code in memory that's executable.
 
@@ -84,10 +85,10 @@ groups.
 - This function generates a list of numbers representing each byte of the
   machine code with the offsets coming separately.
 
-    (assemble-bytes
-      'mov rax, simbol1'
-      (dict simbol1 12345)
-    )
+      (assemble-bytes
+        'mov rax, simbol1'
+        (dict simbol1 12345)
+      )
 
 - It will return:
 
@@ -144,25 +145,21 @@ groups.
 
 - The purpose of the code above is to
 
+      this function
+          (assemble-bytes 'mov rax, sim1', (dict sim1 1234))
+      returns
+          (:(0xa4 0x7b ...) :((4 2 0xfa4b) (2 4 232313) ...))
 
-    this function
-        (assemble-bytes 'mov rax, sim1', (dict sim1 1234))
-    returns
-        (:(0xa4 0x7b ...) :((4 2 0xfa4b) (2 4 232313) ...))
+          - first: the list of bytes for the whole code
+          - a list of 3-uples (0-based byte offset, n-bytes, start relative no.)
 
-        - first: the list of bytes for the whole code
-        - a list of 3-uples (0-based byte offset, n-bytes, start relative no.)
+          In the byte list those byte positions should be all zeros. The numbers
+          will have to be overriden over those places based on the relative
+          position of the start of the code segment.
 
-        In the byte list those byte positions should be all zeros. The numbers
-        will have to be overriden over those places based on the relative
-        position of the start of the code segment.
-
-
-    input
-        string of 
-    output
-
-
+      input
+          string of
+      output
 
 - Add support for `$1, $2, ...` args.
 
@@ -201,8 +198,6 @@ groups.
 - Rewrite the whole thing in Assembly (so it can self assemble in the future).
 
 - Write an assembler in LemonCake that can assemble the LemonCake source code.
-
-- JIT. Woop woop.
 
 - Change `new_object_t` to only malloc the size that's required for the object.
 - Per thread interpreter and GC? Communication via messages.
@@ -338,15 +333,6 @@ put (%sum 2,3,4)
   debugging.
 
 ```
-
-## LemonCake 2
-
-Basic types:
-
-    dict (can immitate list, set, string (list of one char symbols)...)
-    int
-    symbol
-    function
 
 ## Links
 
