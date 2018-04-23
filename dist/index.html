@@ -82,8 +82,8 @@ Get the value from a list that's at zero-based index `i`.
 Example:
 <p>
 <pre>&gt; (at :(1 2 3) 2)</pre>
-<pre>3</pre></div></div><div class="part right"><div class="code">(= at (~ (l i) (head ((apply comp (repeat tail i)) l))))
-</div></div></div><div class="sect"><div class="part left"><div class="text"><h3>comp</h3>
+<pre>3</pre>
+= at (~ (l i) (head ((apply comp (repeat tail i)) l))))</div></div></div><div class="sect"><div class="part left"><div class="text"><h3>comp</h3>
 <p>
 Generates a function that composes multiple functions that only accept one
 argument.
@@ -194,22 +194,11 @@ Tests:
         '&lt;p&gt;'
 
         # If it starts with 4 spaces, sorround the line with a pre tag.
-        (and
-          (is (at chars 0) ' ')
-          (is (at chars 1) ' ')
-          (is (at chars 2) ' ')
-          (is (at chars 3) ' ')
-        )
+        (startswith line '    ')
         (surround 'pre' (tail (tail chars)))
 
         # If it starts with 'file '
-        (and
-          (is (at chars 0) 'f')
-          (is (at chars 1) 'i')
-          (is (at chars 2) 'l')
-          (is (at chars 3) 'e')
-          (is (at chars 4) ' ')
-        )
+        (startswith line 'file ')
         (cat
           '&lt;div class="file"&gt;'
             '&lt;div class="name"&gt;'
@@ -218,23 +207,14 @@ Tests:
         )
 
         # If it starts with 'endfile'
-        (and
-          (is (at chars 0) 'e')
-          (is (at chars 1) 'n')
-          (is (at chars 2) 'd')
-          (is (at chars 3) 'f')
-          (is (at chars 4) 'i')
-          (is (at chars 5) 'l')
-          (is (at chars 6) 'e')
-        )
+        (startswith line 'endfile')
         '&lt;/div&gt;'
 
-
-        (is (at chars 0) '#')
+        (startswith line '#')
         (if
-          (is (at chars 1) '#')
+          (startswith line '##')
           (if
-            (is (at chars 2) '#')
+            (startswith line '###')
             (surround 'h3' (tail (tail chars)))
             (surround 'h2' (tail chars))
           )
@@ -368,4 +348,2533 @@ Tests:
 
   ))
 ))
-</div></div></div></div></body></html>
+</div></div></div><div class="sect"><div class="part left"><div class="text"><div class="file"><div class="name">add-001.in</div>
+<pre>(+ 1 2)</pre>
+</div>
+<p>
+<div class="file"><div class="name">add-001.out</div>
+<pre>3</pre>
+</div>
+<p>
+<div class="file"><div class="name">add-002.in</div>
+<pre>(+ 8 4)</pre>
+</div>
+<p>
+<div class="file"><div class="name">add-002.out</div>
+<pre>12</pre>
+</div>
+<p>
+<div class="file"><div class="name">add-003.in</div>
+<pre>(+ 1 1)</pre>
+<pre>(+ 2 3)</pre>
+<pre> ( + 44 11 ) #</pre>
+<pre></pre>
+</div>
+<p>
+<div class="file"><div class="name">add-003.out</div>
+<pre>2</pre>
+<pre>5</pre>
+<pre>55</pre>
+<pre>()</pre>
+</div>
+<p>
+<div class="file"><div class="name">add-004.in</div>
+<pre>(+ 1 2 3 4 5)</pre>
+<pre>(+ 3 3 3)</pre>
+</div>
+<p>
+<div class="file"><div class="name">add-004.out</div>
+<pre>15</pre>
+<pre>9</pre>
+</div>
+<p>
+<div class="file"><div class="name">add-005.in</div>
+<pre>(+ 2)</pre>
+<pre>(+ 1 1 1 (+ 1 1))</pre>
+</div>
+<p>
+<div class="file"><div class="name">add-005.out</div>
+<pre>2</pre>
+<pre>5</pre>
+</div>
+<p>
+<div class="file"><div class="name">add-006.in</div>
+<pre>(+ 1 -1)</pre>
+</div>
+<p>
+<div class="file"><div class="name">add-006.out</div>
+<pre>0</pre>
+</div>
+<p>
+<div class="file"><div class="name">add-007.in</div>
+<pre>(+ 100 -1000)</pre>
+</div>
+<p>
+<div class="file"><div class="name">add-007.out</div>
+<pre>-900</pre>
+</div>
+<p>
+<div class="file"><div class="name">add-single-byte-001.eout</div>
+<pre>:(0x00 0xc0)</pre>
+<pre>:(0x00 0xc8)</pre>
+<pre>:(0x00 0xd0)</pre>
+<pre>:(0x00 0xd8)</pre>
+<pre>:(0x00 0xe0)</pre>
+<pre>:(0x00 0xe8)</pre>
+<pre>:(0x00 0xf0)</pre>
+<pre>:(0x00 0xf8)</pre>
+<pre>:(0x00 0xc1)</pre>
+<pre>:(0x00 0xc9)</pre>
+<pre>:(0x00 0xd1)</pre>
+<pre>:(0x00 0xd9)</pre>
+<pre>:(0x00 0xe1)</pre>
+<pre>:(0x00 0xe9)</pre>
+<pre>:(0x00 0xf1)</pre>
+<pre>:(0x00 0xf9)</pre>
+<pre>:(0x00 0xc2)</pre>
+<pre>:(0x00 0xca)</pre>
+<pre>:(0x00 0xd2)</pre>
+<pre>:(0x00 0xda)</pre>
+<pre>:(0x00 0xe2)</pre>
+<pre>:(0x00 0xea)</pre>
+<pre>:(0x00 0xf2)</pre>
+<pre>:(0x00 0xfa)</pre>
+<pre>:(0x00 0xc3)</pre>
+<pre>:(0x00 0xcb)</pre>
+<pre>:(0x00 0xd3)</pre>
+<pre>:(0x00 0xdb)</pre>
+<pre>:(0x00 0xe3)</pre>
+<pre>:(0x00 0xeb)</pre>
+<pre>:(0x00 0xf3)</pre>
+<pre>:(0x00 0xfb)</pre>
+<pre>:(0x00 0xc4)</pre>
+<pre>:(0x00 0xcc)</pre>
+<pre>:(0x00 0xd4)</pre>
+<pre>:(0x00 0xdc)</pre>
+<pre>:(0x00 0xe4)</pre>
+<pre>:(0x00 0xec)</pre>
+<pre>:(0x00 0xf4)</pre>
+<pre>:(0x00 0xfc)</pre>
+<pre>:(0x00 0xc5)</pre>
+<pre>:(0x00 0xcd)</pre>
+<pre>:(0x00 0xd5)</pre>
+<pre>:(0x00 0xdd)</pre>
+<pre>:(0x00 0xe5)</pre>
+<pre>:(0x00 0xed)</pre>
+<pre>:(0x00 0xf5)</pre>
+<pre>:(0x00 0xfd)</pre>
+<pre>:(0x00 0xc6)</pre>
+<pre>:(0x00 0xce)</pre>
+<pre>:(0x00 0xd6)</pre>
+<pre>:(0x00 0xde)</pre>
+<pre>:(0x00 0xe6)</pre>
+<pre>:(0x00 0xee)</pre>
+<pre>:(0x00 0xf6)</pre>
+<pre>:(0x00 0xfe)</pre>
+<pre>:(0x00 0xc7)</pre>
+<pre>:(0x00 0xcf)</pre>
+<pre>:(0x00 0xd7)</pre>
+<pre>:(0x00 0xdf)</pre>
+<pre>:(0x00 0xe7)</pre>
+<pre>:(0x00 0xef)</pre>
+<pre>:(0x00 0xf7)</pre>
+<pre>:(0x00 0xff)</pre>
+</div>
+<p>
+<div class="file"><div class="name">add-single-byte-001.lc</div>
+<pre>(= endl (~ (ccall (dynsym 'libc.so' 'printf') '\n')))</pre>
+<pre>(= a (~ (last</pre>
+<pre>  (repr (</pre>
+<pre>    apply (get asm-instr 'add') $args</pre>
+<pre>  ))</pre>
+<pre>  (endl)</pre>
+<pre>)))</pre>
+<pre>(a 'al' 'al')</pre>
+<pre>(a 'al' 'cl')</pre>
+<pre>(a 'al' 'dl')</pre>
+<pre>(a 'al' 'bl')</pre>
+<pre>(a 'al' 'ah')</pre>
+<pre>(a 'al' 'ch')</pre>
+<pre>(a 'al' 'dh')</pre>
+<pre>(a 'al' 'bh')</pre>
+<pre>(a 'cl' 'al')</pre>
+<pre>(a 'cl' 'cl')</pre>
+<pre>(a 'cl' 'dl')</pre>
+<pre>(a 'cl' 'bl')</pre>
+<pre>(a 'cl' 'ah')</pre>
+<pre>(a 'cl' 'ch')</pre>
+<pre>(a 'cl' 'dh')</pre>
+<pre>(a 'cl' 'bh')</pre>
+<pre>(a 'dl' 'al')</pre>
+<pre>(a 'dl' 'cl')</pre>
+<pre>(a 'dl' 'dl')</pre>
+<pre>(a 'dl' 'bl')</pre>
+<pre>(a 'dl' 'ah')</pre>
+<pre>(a 'dl' 'ch')</pre>
+<pre>(a 'dl' 'dh')</pre>
+<pre>(a 'dl' 'bh')</pre>
+<pre>(a 'bl' 'al')</pre>
+<pre>(a 'bl' 'cl')</pre>
+<pre>(a 'bl' 'dl')</pre>
+<pre>(a 'bl' 'bl')</pre>
+<pre>(a 'bl' 'ah')</pre>
+<pre>(a 'bl' 'ch')</pre>
+<pre>(a 'bl' 'dh')</pre>
+<pre>(a 'bl' 'bh')</pre>
+<pre>(a 'ah' 'al')</pre>
+<pre>(a 'ah' 'cl')</pre>
+<pre>(a 'ah' 'dl')</pre>
+<pre>(a 'ah' 'bl')</pre>
+<pre>(a 'ah' 'ah')</pre>
+<pre>(a 'ah' 'ch')</pre>
+<pre>(a 'ah' 'dh')</pre>
+<pre>(a 'ah' 'bh')</pre>
+<pre>(a 'ch' 'al')</pre>
+<pre>(a 'ch' 'cl')</pre>
+<pre>(a 'ch' 'dl')</pre>
+<pre>(a 'ch' 'bl')</pre>
+<pre>(a 'ch' 'ah')</pre>
+<pre>(a 'ch' 'ch')</pre>
+<pre>(a 'ch' 'dh')</pre>
+<pre>(a 'ch' 'bh')</pre>
+<pre>(a 'dh' 'al')</pre>
+<pre>(a 'dh' 'cl')</pre>
+<pre>(a 'dh' 'dl')</pre>
+<pre>(a 'dh' 'bl')</pre>
+<pre>(a 'dh' 'ah')</pre>
+<pre>(a 'dh' 'ch')</pre>
+<pre>(a 'dh' 'dh')</pre>
+<pre>(a 'dh' 'bh')</pre>
+<pre>(a 'bh' 'al')</pre>
+<pre>(a 'bh' 'cl')</pre>
+<pre>(a 'bh' 'dl')</pre>
+<pre>(a 'bh' 'bl')</pre>
+<pre>(a 'bh' 'ah')</pre>
+<pre>(a 'bh' 'ch')</pre>
+<pre>(a 'bh' 'dh')</pre>
+<pre>(a 'bh' 'bh')</pre>
+</div>
+<p>
+<div class="file"><div class="name">and-001.in</div>
+<pre>(and 1)</pre>
+</div>
+<p>
+<div class="file"><div class="name">and-001.out</div>
+<pre>1</pre>
+</div>
+<p>
+<div class="file"><div class="name">and-002.in</div>
+<pre>(and 0 2)</pre>
+</div>
+<p>
+<div class="file"><div class="name">and-002.out</div>
+<pre>0</pre>
+</div>
+<p>
+<div class="file"><div class="name">and-003.in</div>
+<pre>(and 2 1)</pre>
+</div>
+<p>
+<div class="file"><div class="name">and-003.out</div>
+<pre>1</pre>
+</div>
+<p>
+<div class="file"><div class="name">and-004.in</div>
+<pre>(and 3 :(1) 'asdf' :ffff ())</pre>
+</div>
+<p>
+<div class="file"><div class="name">and-004.out</div>
+<pre>()</pre>
+</div>
+<p>
+<div class="file"><div class="name">append-001.in</div>
+<pre>(append (list) 1)</pre>
+</div>
+<p>
+<div class="file"><div class="name">append-001.out</div>
+<pre>(1)</pre>
+</div>
+<p>
+<div class="file"><div class="name">append-002.in</div>
+<pre>(append (list 3) 1)</pre>
+</div>
+<p>
+<div class="file"><div class="name">append-002.out</div>
+<pre>(3 1)</pre>
+</div>
+<p>
+<div class="file"><div class="name">append-003.in</div>
+<pre>(append (list 1 2) 3)</pre>
+</div>
+<p>
+<div class="file"><div class="name">append-003.out</div>
+<pre>(1 2 3)</pre>
+</div>
+<p>
+<div class="file"><div class="name">append-004.in</div>
+<pre>(append () ())</pre>
+</div>
+<p>
+<div class="file"><div class="name">append-004.out</div>
+<pre>(())</pre>
+</div>
+<p>
+<div class="file"><div class="name">apply-001.in</div>
+<pre>(apply add :(1 5))</pre>
+</div>
+<p>
+<div class="file"><div class="name">apply-001.out</div>
+<pre>6</pre>
+</div>
+<p>
+<div class="file"><div class="name">apply-002.in</div>
+<pre>(apply (~ (a b) (add a b)) :(1 2))</pre>
+</div>
+<p>
+<div class="file"><div class="name">apply-002.out</div>
+<pre>3</pre>
+</div>
+<p>
+<div class="file"><div class="name">assemble-001.lc</div>
+<pre>(= putchar-ptr (dynsym 'libc.so' 'putchar'))</pre>
+<pre></pre>
+<pre>(= f (assemble (byte-explode</pre>
+<pre></pre>
+<pre>  # mov rdi, 'A'</pre>
+<pre>  :(1 0xbf 0x41 0x00 0x00 0x00)</pre>
+<pre></pre>
+<pre>  # mov rax, address_of_putchar</pre>
+<pre>  :(1 0x48 0xb8)</pre>
+<pre>  (list 8 putchar-ptr)</pre>
+<pre></pre>
+<pre>  # call rax</pre>
+<pre>  :(1 0xff 0xd0)</pre>
+<pre></pre>
+<pre>  # mov rdi, '\n'</pre>
+<pre>  :(1 0xbf 0x0a 0x00 0x00 0x00)</pre>
+<pre></pre>
+<pre>  # mov rax, address_of_putchar</pre>
+<pre>  :(1 0x48 0xb8)</pre>
+<pre>  (list 8 putchar-ptr)</pre>
+<pre></pre>
+<pre>  # call rax</pre>
+<pre>  :(1 0xff 0xd0)</pre>
+<pre></pre>
+<pre>  # mov rdi, 'B'</pre>
+<pre>  :(1 0xbf 0x42 0x00 0x00 0x00)</pre>
+<pre></pre>
+<pre>  # mov rax, address_of_putchar</pre>
+<pre>  :(1 0x48 0xb8)</pre>
+<pre>  (list 8 putchar-ptr)</pre>
+<pre></pre>
+<pre>  # call rax</pre>
+<pre>  :(1 0xff 0xd0)</pre>
+<pre></pre>
+<pre>  # ret</pre>
+<pre>  :(1 0xc3)</pre>
+<pre></pre>
+<pre>)))</pre>
+<pre></pre>
+<pre>(ccall f)</pre>
+</div>
+<p>
+<div class="file"><div class="name">assemble-001.out</div>
+<pre>A</pre>
+<pre>B</pre>
+</div>
+<p>
+<div class="file"><div class="name">assemble-to-file-001.lc</div>
+<pre>(= prog-bytes (byte-explode</pre>
+<pre>  # elf64_ehdr</pre>
+<pre>  :(1 0x7f 0x45 0x4c 0x46 2 1 1 0) # e_ident</pre>
+<pre>  :(8 0)</pre>
+<pre>  :(2 2)        # e_type</pre>
+<pre>  :(2 0x3e)     # e_machine</pre>
+<pre>  :(4 1)        # e_version</pre>
+<pre>  :(8 0x4000b0) # e_entry</pre>
+<pre>  :(8 0x40)     # e_phoff</pre>
+<pre>  :(8 0xe0)     # e_shoff</pre>
+<pre>  :(4 0)        # e_flags</pre>
+<pre>  :(2 0x40)     # e_ehsize</pre>
+<pre>  :(2 0x38)     # e_phentsize</pre>
+<pre>  :(2 2)        # e_phnum</pre>
+<pre>  :(2 0x40)     # e_shentsize</pre>
+<pre>  :(2 4)        # e_shnum</pre>
+<pre>  :(2 3)        # e_shstrndx</pre>
+<pre></pre>
+<pre>  # elf64_phdr</pre>
+<pre>  :(4 1)           # p_type</pre>
+<pre>  :(4 5)           # p_flags</pre>
+<pre>  :(8 0)           # p_offset</pre>
+<pre>  :(8 0x400000)    # p_vaddr</pre>
+<pre>  :(8 0x400000)    # p_paddr</pre>
+<pre>  :(8 0xbc)        # p_filesz</pre>
+<pre>  :(8 0xbc)        # p_memsz</pre>
+<pre>  :(8 0x200000)    # p_align</pre>
+<pre></pre>
+<pre>  :(4 1)           # p_type</pre>
+<pre>  :(4 6)           # p_flags</pre>
+<pre>  :(8 0xbc)        # p_offset</pre>
+<pre>  :(8 0x6000bc)    # p_vaddr</pre>
+<pre>  :(8 0x6000bc)    # p_paddr</pre>
+<pre>  :(8 8)           # p_filesz</pre>
+<pre>  :(8 8)           # p_memsz</pre>
+<pre>  :(8 0x200000)    # p_align</pre>
+<pre></pre>
+<pre>  # .text</pre>
+<pre>  :(1 0xb8 0x3c 0x00 0x00 0x00) # mov rax 60</pre>
+<pre>  :(1 0xbf 0x2a 0x00 0x00 0x00) # mov rdi 42</pre>
+<pre>  :(1 0x0f 0x05) # syscall</pre>
+<pre></pre>
+<pre>  # .data</pre>
+<pre>  :(8 0x0102030405060708)</pre>
+<pre></pre>
+<pre>  # .shstrtab</pre>
+<pre>  :(1 0)</pre>
+<pre>  :(1 0x2e 0x73 0x68 0x73 0x74 0x72 0x74 0x61 0x62 0) # .shstrtab</pre>
+<pre>  :(1 0x2e 0x74 0x65 0x78 0x74 0) # .text</pre>
+<pre>  :(1 0x2e 0x64 0x61 0x74 0x61 0) # .data</pre>
+<pre>  :(1 0 0 0 0 0) # padding</pre>
+<pre></pre>
+<pre>  # null section</pre>
+<pre>  :(4 0) # sh_name</pre>
+<pre>  :(4 0) # sh_type</pre>
+<pre>  :(8 0) # sh_flags</pre>
+<pre>  :(8 0) # sh_addr</pre>
+<pre>  :(8 0) # sh_offset</pre>
+<pre>  :(8 0) # sh_size</pre>
+<pre>  :(4 0) # sh_link</pre>
+<pre>  :(4 0) # sh_info</pre>
+<pre>  :(8 0) # sh_addralign</pre>
+<pre>  :(8 0) # sh_entsize</pre>
+<pre></pre>
+<pre>  # .text section</pre>
+<pre>  :(4 0x0b) # sh_name</pre>
+<pre>  :(4 1) # sh_type</pre>
+<pre>  :(8 0x06) # sh_flags</pre>
+<pre>  :(8 0x4000b0) # sh_addr</pre>
+<pre>  :(8 0xb0) # sh_offset</pre>
+<pre>  :(8 0x0c) # sh_size</pre>
+<pre>  :(4 0) # sh_link</pre>
+<pre>  :(4 0) # sh_info</pre>
+<pre>  :(8 0x10) # sh_addralign</pre>
+<pre>  :(8 0) # sh_entsize</pre>
+<pre></pre>
+<pre>  # .data section</pre>
+<pre>  :(4 0x11) # sh_name</pre>
+<pre>  :(4 1) # sh_type</pre>
+<pre>  :(8 0x03) # sh_flags</pre>
+<pre>  :(8 0x6000bc) # sh_addr</pre>
+<pre>  :(8 0xbc) # sh_offset</pre>
+<pre>  :(8 0x08) # sh_size</pre>
+<pre>  :(4 0) # sh_link</pre>
+<pre>  :(4 0) # sh_info</pre>
+<pre>  :(8 4) # sh_addralign</pre>
+<pre>  :(8 0) # sh_entsize</pre>
+<pre></pre>
+<pre>  # .shstrtab section</pre>
+<pre>  :(4 0x01) # sh_name</pre>
+<pre>  :(4 3) # sh_type</pre>
+<pre>  :(8 0x00) # sh_flags</pre>
+<pre>  :(8 0) # sh_addr</pre>
+<pre>  :(8 0xc4) # sh_offset</pre>
+<pre>  :(8 0x17) # sh_size</pre>
+<pre>  :(4 0) # sh_link</pre>
+<pre>  :(4 0) # sh_info</pre>
+<pre>  :(8 1) # sh_addralign</pre>
+<pre>  :(8 0) # sh_entsize</pre>
+<pre>))</pre>
+<pre>(= prog (apply cat (map prog-bytes chr)))</pre>
+<pre>(fs-write 'tmp_test_dir/prg' prog)</pre>
+<pre>(ccall (dynsym 'libc.so' 'system') 'chmod +x tmp_test_dir/prg; ./tmp_test_dir/prg; echo $?')</pre>
+</div>
+<p>
+<div class="file"><div class="name">assemble-to-file-001.out</div>
+<pre>42</pre>
+</div>
+<p>
+<div class="file"><div class="name">assign-001.lc</div>
+<pre>(= a 1)</pre>
+<pre>(repr a)</pre>
+</div>
+<p>
+<div class="file"><div class="name">assign-001.out</div>
+<pre>1</pre>
+</div>
+<p>
+<div class="file"><div class="name">assign-002.lc</div>
+<pre>(= a 3)</pre>
+<pre>(= foo-bar 5)</pre>
+<pre>(repr (+ a foo-bar))</pre>
+</div>
+<p>
+<div class="file"><div class="name">assign-002.out</div>
+<pre>8</pre>
+</div>
+<p>
+<div class="file"><div class="name">assign-003.lc</div>
+<pre>(= X 505 A 4040 aabbaa 110000)</pre>
+<pre>(repr (+ aabbaa X A))</pre>
+</div>
+<p>
+<div class="file"><div class="name">assign-003.out</div>
+<pre>114545</pre>
+</div>
+<p>
+<div class="file"><div class="name">assign-004.in</div>
+<pre>(= a 2)</pre>
+<pre>(= b (+ a 1))</pre>
+<pre>(= c (+ b 100))</pre>
+<pre>c</pre>
+<pre>b</pre>
+<pre>a</pre>
+</div>
+<p>
+<div class="file"><div class="name">assign-004.out</div>
+<pre>2</pre>
+<pre>3</pre>
+<pre>103</pre>
+<pre>103</pre>
+<pre>3</pre>
+<pre>2</pre>
+</div>
+<p>
+<div class="file"><div class="name">assign-005.in</div>
+<pre>(= a 1)</pre>
+<pre>a</pre>
+<pre>(= a (+ 1 a))</pre>
+<pre>a</pre>
+<pre>(= a (+ a 1))</pre>
+<pre>a</pre>
+<pre>(= a 'asdf')</pre>
+</div>
+<p>
+<div class="file"><div class="name">assign-005.out</div>
+<pre>1</pre>
+<pre>1</pre>
+<pre>2</pre>
+<pre>2</pre>
+<pre>3</pre>
+<pre>3</pre>
+<pre>'asdf'</pre>
+</div>
+<p>
+<div class="file"><div class="name">at-001.in</div>
+<pre>(at :(1 2 3 4) 0)</pre>
+<pre>(at :(1 2 3 4) 1)</pre>
+<pre>(at :(1 2 3 4) 2)</pre>
+<pre>(at :(1 2 3 4) 3)</pre>
+</div>
+<p>
+<div class="file"><div class="name">at-001.out</div>
+<pre>1</pre>
+<pre>2</pre>
+<pre>3</pre>
+<pre>4</pre>
+</div>
+<p>
+<div class="file"><div class="name">binand-001.in</div>
+<pre>(& 12 6 13)</pre>
+<pre>(& 0xff00000000000000 0x0f0000ff000000ff)</pre>
+</div>
+<p>
+<div class="file"><div class="name">binand-001.out</div>
+<pre>4</pre>
+<pre>1080863910568919040</pre>
+</div>
+<p>
+<div class="file"><div class="name">binor-001.in</div>
+<pre>(| 1 2 4)</pre>
+<pre>(| 0xff000000 0x0f0000ff)</pre>
+<pre>(| 0xff00000000000000 0x0f0000ff000000ff)</pre>
+</div>
+<p>
+<div class="file"><div class="name">binor-001.out</div>
+<pre>7</pre>
+<pre>4278190335</pre>
+<pre>-72056498821267201</pre>
+</div>
+<p>
+<div class="file"><div class="name">byte-explode-001.in</div>
+<pre>(byte-explode)</pre>
+</div>
+<p>
+<div class="file"><div class="name">byte-explode-001.out</div>
+<pre>()</pre>
+</div>
+<p>
+<div class="file"><div class="name">byte-explode-002.in</div>
+<pre>(byte-explode :(1 1))</pre>
+</div>
+<p>
+<div class="file"><div class="name">byte-explode-002.out</div>
+<pre>(1)</pre>
+</div>
+<p>
+<div class="file"><div class="name">byte-explode-003.in</div>
+<pre>(byte-explode :(1 8) :(1 9))</pre>
+</div>
+<p>
+<div class="file"><div class="name">byte-explode-003.out</div>
+<pre>(8 9)</pre>
+</div>
+<p>
+<div class="file"><div class="name">byte-explode-004.in</div>
+<pre>(byte-explode :(2 0x1122))</pre>
+</div>
+<p>
+<div class="file"><div class="name">byte-explode-004.out</div>
+<pre>(34 17)</pre>
+</div>
+<p>
+<div class="file"><div class="name">byte-explode-005.in</div>
+<pre>(byte-explode :(4 0x55443322) :(1 4))</pre>
+</div>
+<p>
+<div class="file"><div class="name">byte-explode-005.out</div>
+<pre>(34 51 68 85 4)</pre>
+</div>
+<p>
+<div class="file"><div class="name">byte-explode-006.in</div>
+<pre>(byte-explode :(8 0xffeeddccccddaaff) :(1 5) :(8 0xffeeddbbccddaaff))</pre>
+</div>
+<p>
+<div class="file"><div class="name">byte-explode-006.out</div>
+<pre>(255 170 221 204 204 221 238 255 5 255 170 221 204 187 221 238 255)</pre>
+</div>
+<p>
+<div class="file"><div class="name">cat-001.in</div>
+<pre>(cat 'a' 'b')</pre>
+</div>
+<p>
+<div class="file"><div class="name">cat-001.out</div>
+<pre>'ab'</pre>
+</div>
+<p>
+<div class="file"><div class="name">cat-002.in</div>
+<pre>(cat 'aa' 'b')</pre>
+</div>
+<p>
+<div class="file"><div class="name">cat-002.out</div>
+<pre>'aab'</pre>
+</div>
+<p>
+<div class="file"><div class="name">cat-003.in</div>
+<pre>(cat '11' '2' '3333')</pre>
+</div>
+<p>
+<div class="file"><div class="name">cat-003.out</div>
+<pre>'1123333'</pre>
+</div>
+<p>
+<div class="file"><div class="name">ccall-001.lc</div>
+<pre>(ccall (dynsym 'libc.so' 'printf') 'asdf')</pre>
+</div>
+<p>
+<div class="file"><div class="name">ccall-001.out</div>
+<pre>asdf</pre>
+</div>
+<p>
+<div class="file"><div class="name">ccall-002.lc</div>
+<pre>(ccall (dynsym 'libc.so' 'printf') 'asdf')</pre>
+<pre></pre>
+<pre>(ccall (dynsym 'libc.so' 'printf') 'another')</pre>
+</div>
+<p>
+<div class="file"><div class="name">ccall-002.out</div>
+<pre>asdfanother</pre>
+</div>
+<p>
+<div class="file"><div class="name">ccall-003.lc</div>
+<pre>(= printf-func (dynsym 'libc.so' 'printf'))</pre>
+<pre>(= printf (~ (a b) (ccall printf-func a b)))</pre>
+<pre></pre>
+<pre>(printf 'hello%lld' 3)</pre>
+<pre>(printf 'hello%lld' 8)</pre>
+<pre>(printf 'hello %s end' 'str')</pre>
+</div>
+<p>
+<div class="file"><div class="name">ccall-003.out</div>
+<pre>hello3hello8hello str end</pre>
+</div>
+<p>
+<div class="file"><div class="name">ccall-004.lc</div>
+<pre>(ccall</pre>
+<pre>  (dynsym 'libc.so' 'printf')</pre>
+<pre>  'asdf %s %s %s %s %s'</pre>
+<pre>  'a' 'b' 'c' 'd' 'e'</pre>
+<pre>)</pre>
+</div>
+<p>
+<div class="file"><div class="name">ccall-004.out</div>
+<pre>asdf a b c d e</pre>
+</div>
+<p>
+<div class="file"><div class="name">ccall-005.lc</div>
+<pre>(= abs (~ (a) (ccall (dynsym 'libc.so' 'abs') a)))</pre>
+<pre></pre>
+<pre>(repr (abs 5))</pre>
+<pre>(repr ' ')</pre>
+<pre>(repr (abs -7))</pre>
+<pre>(repr ' ')</pre>
+<pre>(repr (abs -2147483647))</pre>
+</div>
+<p>
+<div class="file"><div class="name">ccall-005.out</div>
+<pre>5' '7' '2147483647</pre>
+</div>
+<p>
+<div class="file"><div class="name">change-env-001.lc</div>
+<pre># `$env` is the default variable representing the environment (a dict). Making</pre>
+<pre># this easier should be done in a macro.</pre>
+<pre></pre>
+<pre>(set $env (quote x) 4)</pre>
+<pre>(repr x)</pre>
+</div>
+<p>
+<div class="file"><div class="name">change-env-001.out</div>
+<pre>4</pre>
+</div>
+<p>
+<div class="file"><div class="name">change-env-002.lc</div>
+<pre>(set $env (quote x) 5)</pre>
+<pre>(set $env (quote y) 4)</pre>
+<pre>(set $env (quote z) (+ x y))</pre>
+<pre>(repr z)</pre>
+</div>
+<p>
+<div class="file"><div class="name">change-env-002.out</div>
+<pre>9</pre>
+</div>
+<p>
+<div class="file"><div class="name">chr-001.in</div>
+<pre>(chr 65)</pre>
+</div>
+<p>
+<div class="file"><div class="name">chr-001.out</div>
+<pre>'A'</pre>
+</div>
+<p>
+<div class="file"><div class="name">chr-002.in</div>
+<pre>(chr 39)</pre>
+</div>
+<p>
+<div class="file"><div class="name">chr-002.out</div>
+<pre>'\''</pre>
+</div>
+<p>
+<div class="file"><div class="name">comments-001.in</div>
+<pre>'b'#c</pre>
+</div>
+<p>
+<div class="file"><div class="name">comments-001.out</div>
+<pre>'b'</pre>
+</div>
+<p>
+<div class="file"><div class="name">comments-002.in</div>
+<pre> 'bc' #d</pre>
+</div>
+<p>
+<div class="file"><div class="name">comments-002.out</div>
+<pre>'bc'</pre>
+</div>
+<p>
+<div class="file"><div class="name">comments-003.in</div>
+<pre> 'bcd' #asdf</pre>
+<pre>8</pre>
+</div>
+<p>
+<div class="file"><div class="name">comments-003.out</div>
+<pre>'bcd'</pre>
+<pre>8</pre>
+</div>
+<p>
+<div class="file"><div class="name">comp-001.in</div>
+<pre>((comp (~ (a) (+ a 1)) (~ (a) (* a 3))) 2)</pre>
+</div>
+<p>
+<div class="file"><div class="name">comp-001.out</div>
+<pre>9</pre>
+</div>
+<p>
+<div class="file"><div class="name">dict-001.in</div>
+<pre>(dict)</pre>
+</div>
+<p>
+<div class="file"><div class="name">dict-001.out</div>
+<pre>(dict)</pre>
+</div>
+<p>
+<div class="file"><div class="name">dict-002.in</div>
+<pre>(dict (quote a) 1 (quote bb) 8 (quote ccc) 123)</pre>
+</div>
+<p>
+<div class="file"><div class="name">dict-002.out</div>
+<pre>(dict bb 8 ccc 123 a 1)</pre>
+</div>
+<p>
+<div class="file"><div class="name">div-001.in</div>
+<pre>(/ 10 2)</pre>
+</div>
+<p>
+<div class="file"><div class="name">div-001.out</div>
+<pre>5</pre>
+</div>
+<p>
+<div class="file"><div class="name">div-002.in</div>
+<pre>(/ 10 3)</pre>
+</div>
+<p>
+<div class="file"><div class="name">div-002.out</div>
+<pre>3</pre>
+</div>
+<p>
+<div class="file"><div class="name">dynsym-001.in</div>
+<pre>(- (dynsym 'libc.so' 'printf') (dynsym 'libc.so' 'printf'))</pre>
+</div>
+<p>
+<div class="file"><div class="name">dynsym-001.out</div>
+<pre>0</pre>
+</div>
+<p>
+<div class="file"><div class="name">each-001.lc</div>
+<pre>(= count 0)</pre>
+<pre>(each</pre>
+<pre>  :(a b c)</pre>
+<pre>  (~ (= count (+ count 1)))</pre>
+<pre>)</pre>
+<pre>(repr count)</pre>
+</div>
+<p>
+<div class="file"><div class="name">each-001.out</div>
+<pre>3</pre>
+</div>
+<p>
+<div class="file"><div class="name">each-002.lc</div>
+<pre>(= count 0)</pre>
+<pre>(each</pre>
+<pre>  (range 10)</pre>
+<pre>  (~ (x) (if</pre>
+<pre>    (is x 5)</pre>
+<pre>    :$stop</pre>
+<pre>    (= count (+ count 1))</pre>
+<pre>  ))</pre>
+<pre>)</pre>
+<pre>(repr count)</pre>
+</div>
+<p>
+<div class="file"><div class="name">each-002.out</div>
+<pre>5</pre>
+</div>
+<p>
+<div class="file"><div class="name">end-in-comment.lc</div>
+<pre>(repr 1)</pre>
+<pre># nothing</pre>
+<pre>(repr 2) # something</pre>
+<pre>(repr 44)</pre>
+<pre># end</pre>
+</div>
+<p>
+<div class="file"><div class="name">end-in-comment.out</div>
+<pre>1244</pre>
+</div>
+<p>
+<div class="file"><div class="name">escapes-001.in</div>
+<pre>(len 'a\'b')</pre>
+<pre>(len '\'b')</pre>
+<pre>(len 'a\'')</pre>
+<pre>(len '\'')</pre>
+</div>
+<p>
+<div class="file"><div class="name">escapes-001.out</div>
+<pre>3</pre>
+<pre>2</pre>
+<pre>2</pre>
+<pre>1</pre>
+</div>
+<p>
+<div class="file"><div class="name">escapes-002.in</div>
+<pre>(len 'a\\b')</pre>
+<pre>(len '\\b')</pre>
+<pre>(len 'a\\')</pre>
+<pre>(len '\\')</pre>
+</div>
+<p>
+<div class="file"><div class="name">escapes-002.out</div>
+<pre>3</pre>
+<pre>2</pre>
+<pre>2</pre>
+<pre>1</pre>
+</div>
+<p>
+<div class="file"><div class="name">escapes-003.in</div>
+<pre>(len '\n')</pre>
+<pre>(len 'a\n')</pre>
+<pre>(len '\nb')</pre>
+<pre>(len 'a\nb')</pre>
+</div>
+<p>
+<div class="file"><div class="name">escapes-003.out</div>
+<pre>1</pre>
+<pre>2</pre>
+<pre>2</pre>
+<pre>3</pre>
+</div>
+<p>
+<div class="file"><div class="name">escapes-004.in</div>
+<pre>'a\'b'</pre>
+<pre>'\'b'</pre>
+<pre>'a\''</pre>
+<pre>'\''</pre>
+<pre>'a\nb'</pre>
+<pre>'\nb'</pre>
+<pre>'a\n'</pre>
+<pre>'\n'</pre>
+<pre>'a\\b'</pre>
+<pre>'\\b'</pre>
+<pre>'a\\'</pre>
+<pre>'\\'</pre>
+</div>
+<p>
+<div class="file"><div class="name">escapes-004.out</div>
+<pre>'a\'b'</pre>
+<pre>'\'b'</pre>
+<pre>'a\''</pre>
+<pre>'\''</pre>
+<pre>'a\nb'</pre>
+<pre>'\nb'</pre>
+<pre>'a\n'</pre>
+<pre>'\n'</pre>
+<pre>'a\\b'</pre>
+<pre>'\\b'</pre>
+<pre>'a\\'</pre>
+<pre>'\\'</pre>
+</div>
+<p>
+<div class="file"><div class="name">eval-001.in</div>
+<pre>(eval 1)</pre>
+<pre>(eval 'a')</pre>
+<pre>(eval ())</pre>
+<pre>(eval (dict 1 2))</pre>
+<pre>(eval :(+ 1 2))</pre>
+<pre>(eval (list :+ 1 3))</pre>
+<pre>((eval :(~ (a b) (* a b))) 3 6)</pre>
+<pre>(eval :(= a 3))</pre>
+<pre>(eval :(- a 1))</pre>
+</div>
+<p>
+<div class="file"><div class="name">eval-001.out</div>
+<pre>1</pre>
+<pre>'a'</pre>
+<pre>()</pre>
+<pre>(dict 1 2)</pre>
+<pre>3</pre>
+<pre>4</pre>
+<pre>18</pre>
+<pre>3</pre>
+<pre>2</pre>
+</div>
+<p>
+<div class="file"><div class="name">fs-read-001.in</div>
+<pre>(fs-read 'tests/fs-read-001.in')</pre>
+</div>
+<p>
+<div class="file"><div class="name">fs-read-001.out</div>
+<pre>'(fs-read \'tests/fs-read-001.in\')\n'</pre>
+</div>
+<p>
+<div class="file"><div class="name">fs-write-001.lc</div>
+<pre>(fs-write 'tmp_test_dir/wot' 'I am a file. What are you?')</pre>
+<pre>(repr (fs-read 'tmp_test_dir/wot'))</pre>
+</div>
+<p>
+<div class="file"><div class="name">fs-write-001.lc_post</div>
+<pre>pwd</pre>
+<pre>cd ..</pre>
+<pre>rm -fr tmp_test_dir</pre>
+</div>
+<p>
+<div class="file"><div class="name">fs-write-001.lc_pre</div>
+<pre>mkdir tmp_test_dir</pre>
+<pre>cd tmp_test_dir</pre>
+</div>
+<p>
+<div class="file"><div class="name">fs-write-001.out</div>
+<pre>'I am a file. What are you?'</pre>
+</div>
+<p>
+<div class="file"><div class="name">func-001.lc</div>
+<pre>(= inc (~ (+ 1 (head $args))))</pre>
+<pre>(repr (inc 2))</pre>
+<pre>(repr (inc 5))</pre>
+<pre>(repr (inc 22))</pre>
+</div>
+<p>
+<div class="file"><div class="name">func-001.out</div>
+<pre>3623</pre>
+</div>
+<p>
+<div class="file"><div class="name">func-002.lc</div>
+<pre># Test that you can override values outside of the function.</pre>
+<pre>(= a 1)</pre>
+<pre>(= increase-a (~ (= a (+ a 1))))</pre>
+<pre>(repr a)</pre>
+<pre>(increase-a)</pre>
+<pre>(repr a)</pre>
+<pre>(increase-a)</pre>
+<pre>(repr a)</pre>
+</div>
+<p>
+<div class="file"><div class="name">func-002.out</div>
+<pre>123</pre>
+</div>
+<p>
+<div class="file"><div class="name">func-003.lc</div>
+<pre># Test that variables inside the function don't leak outside.</pre>
+<pre>(= f (~ (= a 100)))</pre>
+<pre>(repr a)</pre>
+<pre>(f)</pre>
+<pre>(repr a)</pre>
+</div>
+<p>
+<div class="file"><div class="name">func-003.out</div>
+<pre>()()</pre>
+</div>
+<p>
+<div class="file"><div class="name">func-004.lc</div>
+<pre># Test IIFE (immediately invoked function expression).</pre>
+<pre>(repr (</pre>
+<pre>  (~ (+ 2 (head $args)))</pre>
+<pre>  2</pre>
+<pre>))</pre>
+</div>
+<p>
+<div class="file"><div class="name">func-004.out</div>
+<pre>4</pre>
+</div>
+<p>
+<div class="file"><div class="name">func-005.lc</div>
+<pre># Function with named arguments.</pre>
+<pre>(= sum (~ (a b) (+ a b)))</pre>
+<pre>(repr (sum 1 4))</pre>
+<pre>(repr (sum 1 2 3))</pre>
+</div>
+<p>
+<div class="file"><div class="name">func-005.out</div>
+<pre>53</pre>
+</div>
+<p>
+<div class="file"><div class="name">func-006.lc</div>
+<pre># Nested functions.</pre>
+<pre></pre>
+<pre>(= funcs ((~ (last</pre>
+<pre>  (= a 1)</pre>
+<pre>  (</pre>
+<pre>    dict</pre>
+<pre>    'inc-a' (~ (= a (+ a 1)))</pre>
+<pre>    'get-a' (~ a)</pre>
+<pre>  )</pre>
+<pre>))))</pre>
+<pre></pre>
+<pre># 'a' isn't available here.</pre>
+<pre>(repr a)</pre>
+<pre></pre>
+<pre># Get 1.</pre>
+<pre>(repr ((get funcs 'get-a')))</pre>
+<pre></pre>
+<pre># Increase.</pre>
+<pre>((get funcs 'inc-a'))</pre>
+<pre></pre>
+<pre># Get 2.</pre>
+<pre>(repr ((get funcs 'get-a')))</pre>
+</div>
+<p>
+<div class="file"><div class="name">func-006.out</div>
+<pre>()12</pre>
+</div>
+<p>
+<div class="file"><div class="name">func-007.lc</div>
+<pre># Recursive function, yay!</pre>
+<pre></pre>
+<pre>(= fib (~ (n) (if</pre>
+<pre>  (is n 0) 0</pre>
+<pre>  (is n 1) 1</pre>
+<pre>  (+</pre>
+<pre>    (fib (- n 1))</pre>
+<pre>    (fib (- n 2))</pre>
+<pre>  )</pre>
+<pre>)))</pre>
+<pre></pre>
+<pre>(repr (fib 2))</pre>
+<pre>(repr (fib 3))</pre>
+<pre>(repr (fib 4))</pre>
+<pre>(repr (fib 5))</pre>
+<pre>(repr (fib 6))</pre>
+</div>
+<p>
+<div class="file"><div class="name">func-007.out</div>
+<pre>12358</pre>
+</div>
+<p>
+<div class="file"><div class="name">get-001.in</div>
+<pre>(get (set (dict) 'name' 'John') 'name')</pre>
+</div>
+<p>
+<div class="file"><div class="name">get-001.out</div>
+<pre>'John'</pre>
+</div>
+<p>
+<div class="file"><div class="name">get-002.in</div>
+<pre>(get (set (set (dict) (quote a) 1) 'a' 2) 'a')</pre>
+</div>
+<p>
+<div class="file"><div class="name">get-002.out</div>
+<pre>2</pre>
+</div>
+<p>
+<div class="file"><div class="name">hashcode-001.in</div>
+<pre>(hashcode 0)</pre>
+</div>
+<p>
+<div class="file"><div class="name">hashcode-001.out</div>
+<pre>0</pre>
+</div>
+<p>
+<div class="file"><div class="name">hashcode-002.in</div>
+<pre>(hashcode 1234)</pre>
+</div>
+<p>
+<div class="file"><div class="name">hashcode-002.out</div>
+<pre>1234</pre>
+</div>
+<p>
+<div class="file"><div class="name">hashcode-003.in</div>
+<pre>(hashcode 2395873184555)</pre>
+</div>
+<p>
+<div class="file"><div class="name">hashcode-003.out</div>
+<pre>2395873184555</pre>
+</div>
+<p>
+<div class="file"><div class="name">hashcode-004.in</div>
+<pre>(hashcode 'a')</pre>
+</div>
+<p>
+<div class="file"><div class="name">hashcode-004.out</div>
+<pre>177604</pre>
+</div>
+<p>
+<div class="file"><div class="name">hashcode-005.in</div>
+<pre>(hashcode 'base')</pre>
+</div>
+<p>
+<div class="file"><div class="name">hashcode-005.out</div>
+<pre>6382700272</pre>
+</div>
+<p>
+<div class="file"><div class="name">hashcode-006.in</div>
+<pre>(hashcode (quote base))</pre>
+</div>
+<p>
+<div class="file"><div class="name">hashcode-006.out</div>
+<pre>6382700272</pre>
+</div>
+<p>
+<div class="file"><div class="name">hashcode-007.in</div>
+<pre>(hashcode 'besa')</pre>
+</div>
+<p>
+<div class="file"><div class="name">hashcode-007.out</div>
+<pre>6382695920</pre>
+</div>
+<p>
+<div class="file"><div class="name">hashcode-008.in</div>
+<pre>(hashcode 'Paul Nechifor')</pre>
+</div>
+<p>
+<div class="file"><div class="name">hashcode-008.out</div>
+<pre>153306557046378463</pre>
+</div>
+<p>
+<div class="file"><div class="name">head-tail-001.in</div>
+<pre>(head (list 0 1 2))</pre>
+</div>
+<p>
+<div class="file"><div class="name">head-tail-001.out</div>
+<pre>0</pre>
+</div>
+<p>
+<div class="file"><div class="name">head-tail-002.in</div>
+<pre>(head (list 0 1 2))</pre>
+</div>
+<p>
+<div class="file"><div class="name">head-tail-002.out</div>
+<pre>0</pre>
+</div>
+<p>
+<div class="file"><div class="name">head-tail-003.in</div>
+<pre>(tail (list 0 1 2))</pre>
+</div>
+<p>
+<div class="file"><div class="name">head-tail-003.out</div>
+<pre>(1 2)</pre>
+</div>
+<p>
+<div class="file"><div class="name">head-tail-004.in</div>
+<pre>(head (tail (list 0 1 2)))</pre>
+</div>
+<p>
+<div class="file"><div class="name">head-tail-004.out</div>
+<pre>1</pre>
+</div>
+<p>
+<div class="file"><div class="name">head-tail-005.in</div>
+<pre>(tail (tail (list 0 1 2)))</pre>
+</div>
+<p>
+<div class="file"><div class="name">head-tail-005.out</div>
+<pre>(2)</pre>
+</div>
+<p>
+<div class="file"><div class="name">head-tail-006.in</div>
+<pre>(head (tail (tail (list 0 1 2))))</pre>
+</div>
+<p>
+<div class="file"><div class="name">head-tail-006.out</div>
+<pre>2</pre>
+</div>
+<p>
+<div class="file"><div class="name">head-tail-007.in</div>
+<pre>(tail (tail (tail (list 0 1 2))))</pre>
+</div>
+<p>
+<div class="file"><div class="name">head-tail-007.out</div>
+<pre>()</pre>
+</div>
+<p>
+<div class="file"><div class="name">identity-001.in</div>
+<pre>(identity 1234)</pre>
+<pre>(identity :asdf)</pre>
+<pre>(identity (~ (x) (+ 1 x)))</pre>
+</div>
+<p>
+<div class="file"><div class="name">identity-001.out</div>
+<pre>1234</pre>
+<pre>asdf</pre>
+<pre>(~ (x) (+ 1 x))</pre>
+</div>
+<p>
+<div class="file"><div class="name">if-001.in</div>
+<pre>(if) # Expecting ().</pre>
+</div>
+<p>
+<div class="file"><div class="name">if-001.out</div>
+<pre>()</pre>
+</div>
+<p>
+<div class="file"><div class="name">if-002.in</div>
+<pre>(if 0)</pre>
+</div>
+<p>
+<div class="file"><div class="name">if-002.out</div>
+<pre>0</pre>
+</div>
+<p>
+<div class="file"><div class="name">if-003.in</div>
+<pre>(if 'a')</pre>
+</div>
+<p>
+<div class="file"><div class="name">if-003.out</div>
+<pre>'a'</pre>
+</div>
+<p>
+<div class="file"><div class="name">if-004.in</div>
+<pre>(if 1 'așa')</pre>
+</div>
+<p>
+<div class="file"><div class="name">if-004.out</div>
+<pre>'așa'</pre>
+</div>
+<p>
+<div class="file"><div class="name">if-005.in</div>
+<pre>(if 0 100)</pre>
+</div>
+<p>
+<div class="file"><div class="name">if-005.out</div>
+<pre>()</pre>
+</div>
+<p>
+<div class="file"><div class="name">if-006.in</div>
+<pre>(= a '')</pre>
+<pre>(if a 'full' 'empty')</pre>
+</div>
+<p>
+<div class="file"><div class="name">if-006.out</div>
+<pre>''</pre>
+<pre>'empty'</pre>
+</div>
+<p>
+<div class="file"><div class="name">if-007.in</div>
+<pre>(if 0 0 '' '' () () (dict) (dict) 'none-of-the-above')</pre>
+</div>
+<p>
+<div class="file"><div class="name">if-007.out</div>
+<pre>'none-of-the-above'</pre>
+</div>
+<p>
+<div class="file"><div class="name">iife-001.in</div>
+<pre>((~ (a b) (+ a b)) 5 4)</pre>
+</div>
+<p>
+<div class="file"><div class="name">iife-001.out</div>
+<pre>9</pre>
+</div>
+<p>
+<div class="file"><div class="name">import-001-add.lcl</div>
+<pre>(~ (n) (+ n n))</pre>
+</div>
+<p>
+<div class="file"><div class="name">import-001.lc</div>
+<pre>(= double-it (import './import-001-add.lcl'))</pre>
+<pre>(repr (double-it 23))</pre>
+</div>
+<p>
+<div class="file"><div class="name">import-001.out</div>
+<pre>46</pre>
+</div>
+<p>
+<div class="file"><div class="name">import-002-level1.lcl</div>
+<pre>(import './import-002-level2.lcl')</pre>
+</div>
+<p>
+<div class="file"><div class="name">import-002-level2.lcl</div>
+<pre>(~ (n) (+ n n))</pre>
+</div>
+<p>
+<div class="file"><div class="name">import-002.lc</div>
+<pre>(= double-it (import './import-002-level1.lcl'))</pre>
+<pre>(repr (double-it 5))</pre>
+</div>
+<p>
+<div class="file"><div class="name">import-002.out</div>
+<pre>10</pre>
+</div>
+<p>
+<div class="file"><div class="name">in-001.in</div>
+<pre>(in 10 (dict 10 20))</pre>
+</div>
+<p>
+<div class="file"><div class="name">in-001.out</div>
+<pre>1</pre>
+</div>
+<p>
+<div class="file"><div class="name">in-002.in</div>
+<pre>(= d (dict 10 20 20 40 30 60))</pre>
+<pre>(in 20 d)</pre>
+<pre>(in 30 d)</pre>
+<pre>(in 10 d)</pre>
+<pre>(in 40 d)</pre>
+</div>
+<p>
+<div class="file"><div class="name">in-002.out</div>
+<pre>(dict 10 20 20 40 30 60)</pre>
+<pre>1</pre>
+<pre>1</pre>
+<pre>1</pre>
+<pre>0</pre>
+</div>
+<p>
+<div class="file"><div class="name">is-001.in</div>
+<pre>(is 4 4)</pre>
+</div>
+<p>
+<div class="file"><div class="name">is-001.out</div>
+<pre>1</pre>
+</div>
+<p>
+<div class="file"><div class="name">is-002.in</div>
+<pre>(is 4 3)</pre>
+</div>
+<p>
+<div class="file"><div class="name">is-002.out</div>
+<pre>0</pre>
+</div>
+<p>
+<div class="file"><div class="name">is-003.in</div>
+<pre>(is '4' 4)</pre>
+</div>
+<p>
+<div class="file"><div class="name">is-003.out</div>
+<pre>0</pre>
+</div>
+<p>
+<div class="file"><div class="name">is-004.in</div>
+<pre>(is 05 00005)</pre>
+</div>
+<p>
+<div class="file"><div class="name">is-004.out</div>
+<pre>1</pre>
+</div>
+<p>
+<div class="file"><div class="name">is-005.in</div>
+<pre>(is 'asdf' 'asdf')</pre>
+</div>
+<p>
+<div class="file"><div class="name">is-005.out</div>
+<pre>1</pre>
+</div>
+<p>
+<div class="file"><div class="name">is-006.in</div>
+<pre>(is 'asde' 'asdf')</pre>
+</div>
+<p>
+<div class="file"><div class="name">is-006.out</div>
+<pre>0</pre>
+</div>
+<p>
+<div class="file"><div class="name">is-007.in</div>
+<pre>(is 'asdf' 'asdfe')</pre>
+</div>
+<p>
+<div class="file"><div class="name">is-007.out</div>
+<pre>0</pre>
+</div>
+<p>
+<div class="file"><div class="name">join-001.in</div>
+<pre>(join :(1 2) :(3 4))</pre>
+</div>
+<p>
+<div class="file"><div class="name">join-001.out</div>
+<pre>(1 2 3 4)</pre>
+</div>
+<p>
+<div class="file"><div class="name">join-002.in</div>
+<pre>(join :('_' 'a') :('_' 'b') :('_' 'c'))</pre>
+</div>
+<p>
+<div class="file"><div class="name">join-002.out</div>
+<pre>('_' 'a' '_' 'b' '_' 'c')</pre>
+</div>
+<p>
+<div class="file"><div class="name">last-001.in</div>
+<pre>(last)</pre>
+</div>
+<p>
+<div class="file"><div class="name">last-001.out</div>
+<pre>()</pre>
+</div>
+<p>
+<div class="file"><div class="name">last-002.in</div>
+<pre>(last 1)</pre>
+</div>
+<p>
+<div class="file"><div class="name">last-002.out</div>
+<pre>1</pre>
+</div>
+<p>
+<div class="file"><div class="name">last-003.in</div>
+<pre>(last 'a' 'b' 'c')</pre>
+</div>
+<p>
+<div class="file"><div class="name">last-003.out</div>
+<pre>'c'</pre>
+</div>
+<p>
+<div class="file"><div class="name">last-004.in</div>
+<pre>(last (+ 1 2))</pre>
+</div>
+<p>
+<div class="file"><div class="name">last-004.out</div>
+<pre>3</pre>
+</div>
+<p>
+<div class="file"><div class="name">last-005.in</div>
+<pre>(last (+ 100 1 10) (+ 400 20 5))</pre>
+</div>
+<p>
+<div class="file"><div class="name">last-005.out</div>
+<pre>425</pre>
+</div>
+<p>
+<div class="file"><div class="name">len-001.in</div>
+<pre>(len 'a')</pre>
+</div>
+<p>
+<div class="file"><div class="name">len-001.out</div>
+<pre>1</pre>
+</div>
+<p>
+<div class="file"><div class="name">len-002.in</div>
+<pre>(len '1234')</pre>
+</div>
+<p>
+<div class="file"><div class="name">len-002.out</div>
+<pre>4</pre>
+</div>
+<p>
+<div class="file"><div class="name">len-003.in</div>
+<pre>(len '')</pre>
+</div>
+<p>
+<div class="file"><div class="name">len-003.out</div>
+<pre>0</pre>
+</div>
+<p>
+<div class="file"><div class="name">len-004.in</div>
+<pre>(len ())</pre>
+</div>
+<p>
+<div class="file"><div class="name">len-004.out</div>
+<pre>0</pre>
+</div>
+<p>
+<div class="file"><div class="name">len-005.in</div>
+<pre>(len (list 1))</pre>
+</div>
+<p>
+<div class="file"><div class="name">len-005.out</div>
+<pre>1</pre>
+</div>
+<p>
+<div class="file"><div class="name">len-006.in</div>
+<pre>(len (list 1 2))</pre>
+</div>
+<p>
+<div class="file"><div class="name">len-006.out</div>
+<pre>2</pre>
+</div>
+<p>
+<div class="file"><div class="name">len-007.in</div>
+<pre>(len (list 1 2 3))</pre>
+</div>
+<p>
+<div class="file"><div class="name">len-007.out</div>
+<pre>3</pre>
+</div>
+<p>
+<div class="file"><div class="name">len-008.in</div>
+<pre>(len (dict))</pre>
+</div>
+<p>
+<div class="file"><div class="name">len-008.out</div>
+<pre>0</pre>
+</div>
+<p>
+<div class="file"><div class="name">len-009.in</div>
+<pre>(len (dict))</pre>
+<pre>(len (dict 1 11))</pre>
+<pre>(len (dict 1 11 4 44))</pre>
+</div>
+<p>
+<div class="file"><div class="name">len-009.out</div>
+<pre>0</pre>
+<pre>1</pre>
+<pre>2</pre>
+</div>
+<p>
+<div class="file"><div class="name">lists-001.in</div>
+<pre>()</pre>
+</div>
+<p>
+<div class="file"><div class="name">lists-001.out</div>
+<pre>()</pre>
+</div>
+<p>
+<div class="file"><div class="name">lists-002.in</div>
+<pre>  () # asdf</pre>
+</div>
+<p>
+<div class="file"><div class="name">lists-002.out</div>
+<pre>()</pre>
+</div>
+<p>
+<div class="file"><div class="name">lists-003.in</div>
+<pre>(list )</pre>
+</div>
+<p>
+<div class="file"><div class="name">lists-003.out</div>
+<pre>()</pre>
+</div>
+<p>
+<div class="file"><div class="name">lists-004.in</div>
+<pre>(list 1)</pre>
+</div>
+<p>
+<div class="file"><div class="name">lists-004.out</div>
+<pre>(1)</pre>
+</div>
+<p>
+<div class="file"><div class="name">lists-005.in</div>
+<pre>(list 1 )</pre>
+</div>
+<p>
+<div class="file"><div class="name">lists-005.out</div>
+<pre>(1)</pre>
+</div>
+<p>
+<div class="file"><div class="name">lists-006.in</div>
+<pre>( list 22 )</pre>
+</div>
+<p>
+<div class="file"><div class="name">lists-006.out</div>
+<pre>(22)</pre>
+</div>
+<p>
+<div class="file"><div class="name">lists-007.in</div>
+<pre>  ( list 22 ) </pre>
+</div>
+<p>
+<div class="file"><div class="name">lists-007.out</div>
+<pre>(22)</pre>
+</div>
+<p>
+<div class="file"><div class="name">lists-008.in</div>
+<pre>(list 1 2 3)</pre>
+</div>
+<p>
+<div class="file"><div class="name">lists-008.out</div>
+<pre>(1 2 3)</pre>
+</div>
+<p>
+<div class="file"><div class="name">lists-009.in</div>
+<pre>(list 1 'asdf' 3)</pre>
+</div>
+<p>
+<div class="file"><div class="name">lists-009.out</div>
+<pre>(1 'asdf' 3)</pre>
+</div>
+<p>
+<div class="file"><div class="name">lists-010.in</div>
+<pre>(list 1 (list 22 33) 3)</pre>
+</div>
+<p>
+<div class="file"><div class="name">lists-010.out</div>
+<pre>(1 (22 33) 3)</pre>
+</div>
+<p>
+<div class="file"><div class="name">lists-011.in</div>
+<pre>(list (list 1 'df' (list 'asf') () (list 'bb' ) ) 123)</pre>
+</div>
+<p>
+<div class="file"><div class="name">lists-011.out</div>
+<pre>((1 'df' ('asf') () ('bb')) 123)</pre>
+</div>
+<p>
+<div class="file"><div class="name">lists-012.in</div>
+<pre>(list 1 2 (quote aaa))</pre>
+</div>
+<p>
+<div class="file"><div class="name">lists-012.out</div>
+<pre>(1 2 aaa)</pre>
+</div>
+<p>
+<div class="file"><div class="name">lists-013.in</div>
+<pre>(list 1 (+ 1 2 3) 'asdf')</pre>
+</div>
+<p>
+<div class="file"><div class="name">lists-013.out</div>
+<pre>(1 6 'asdf')</pre>
+</div>
+<p>
+<div class="file"><div class="name">macros-001.lc</div>
+<pre>(set $env :two (macro :(+ 1 1)))</pre>
+<pre>(repr (two))</pre>
+</div>
+<p>
+<div class="file"><div class="name">macros-001.out</div>
+<pre>2</pre>
+</div>
+<p>
+<div class="file"><div class="name">macros-002.lc</div>
+<pre>(set $env :x 20)</pre>
+<pre>(set $env :y 300)</pre>
+<pre>(set $env :foo (macro :(+ x 1 y)))</pre>
+<pre>(repr (foo))</pre>
+</div>
+<p>
+<div class="file"><div class="name">macros-002.out</div>
+<pre>321</pre>
+</div>
+<p>
+<div class="file"><div class="name">macros-003.lc</div>
+<pre>(=</pre>
+<pre>  =~</pre>
+<pre>  (macro</pre>
+<pre>    (name args function)</pre>
+<pre>    (list</pre>
+<pre>      :=</pre>
+<pre>      name</pre>
+<pre>      (list</pre>
+<pre>        :~</pre>
+<pre>        args</pre>
+<pre>        function</pre>
+<pre>      )</pre>
+<pre>    )</pre>
+<pre>  )</pre>
+<pre>)</pre>
+<pre></pre>
+<pre>(=~ sum (a b) (+ a b))</pre>
+<pre></pre>
+<pre>(repr (sum 1 2))</pre>
+</div>
+<p>
+<div class="file"><div class="name">macros-003.out</div>
+<pre>3</pre>
+</div>
+<p>
+<div class="file"><div class="name">macros-004.lc</div>
+<pre>(= add-with (macro (base) (list</pre>
+<pre>  :~</pre>
+<pre>  :(n)</pre>
+<pre>  (list :+ :n base)</pre>
+<pre>)))</pre>
+<pre></pre>
+<pre>(= adder-5 (add-with 5))</pre>
+<pre>(repr (adder-5 10))</pre>
+<pre>(repr (adder-5 100))</pre>
+<pre></pre>
+<pre>(= adder-123 (add-with 123))</pre>
+<pre>(repr (adder-123 1000))</pre>
+<pre>(repr (adder-123 1))</pre>
+</div>
+<p>
+<div class="file"><div class="name">macros-004.out</div>
+<pre>151051123124</pre>
+</div>
+<p>
+<div class="file"><div class="name">map-001.in</div>
+<pre>(map :(1 2 3) (~ (a) (+ a 1)))</pre>
+</div>
+<p>
+<div class="file"><div class="name">map-001.out</div>
+<pre>(2 3 4)</pre>
+</div>
+<p>
+<div class="file"><div class="name">map-002.in</div>
+<pre>(map :(5 6 7 8) (~ (n i) (+ n i)))</pre>
+</div>
+<p>
+<div class="file"><div class="name">map-002.out</div>
+<pre>(5 7 9 11)</pre>
+</div>
+<p>
+<div class="file"><div class="name">minus-001.in</div>
+<pre>(- 1 1)</pre>
+<pre>(- 100 10)</pre>
+<pre>(- 5000 -6000)</pre>
+<pre>(- -5000 6000)</pre>
+<pre>(- -10000 -20020)</pre>
+<pre>(- 123 99999)</pre>
+</div>
+<p>
+<div class="file"><div class="name">minus-001.out</div>
+<pre>0</pre>
+<pre>90</pre>
+<pre>11000</pre>
+<pre>-11000</pre>
+<pre>10020</pre>
+<pre>-99876</pre>
+</div>
+<p>
+<div class="file"><div class="name">mixed-types-001.in</div>
+<pre>321</pre>
+<pre>'str'</pre>
+<pre>123</pre>
+</div>
+<p>
+<div class="file"><div class="name">mixed-types-001.out</div>
+<pre>321</pre>
+<pre>'str'</pre>
+<pre>123</pre>
+</div>
+<p>
+<div class="file"><div class="name">mixed-types-002.in</div>
+<pre>'asdf'</pre>
+<pre>43215</pre>
+</div>
+<p>
+<div class="file"><div class="name">mixed-types-002.out</div>
+<pre>'asdf'</pre>
+<pre>43215</pre>
+</div>
+<p>
+<div class="file"><div class="name">mul-001.in</div>
+<pre>(* 4 3)</pre>
+</div>
+<p>
+<div class="file"><div class="name">mul-001.out</div>
+<pre>12</pre>
+</div>
+<p>
+<div class="file"><div class="name">mul-002.in</div>
+<pre>(* 2 2 4 100)</pre>
+</div>
+<p>
+<div class="file"><div class="name">mul-002.out</div>
+<pre>1600</pre>
+</div>
+<p>
+<div class="file"><div class="name">multiple-statements-001.lc</div>
+<pre>(repr 1)</pre>
+<pre>(repr 2)</pre>
+</div>
+<p>
+<div class="file"><div class="name">multiple-statements-001.out</div>
+<pre>12</pre>
+</div>
+<p>
+<div class="file"><div class="name">multiple-statements-002.lc</div>
+<pre>1</pre>
+<pre>(repr 123)</pre>
+</div>
+<p>
+<div class="file"><div class="name">multiple-statements-002.out</div>
+<pre>123</pre>
+</div>
+<p>
+<div class="file"><div class="name">multiple-statements-003.lc</div>
+<pre>(repr 'asdf')</pre>
+<pre>(repr 1)</pre>
+<pre>(repr (+ 1 2 3))</pre>
+</div>
+<p>
+<div class="file"><div class="name">multiple-statements-003.out</div>
+<pre>'asdf'16</pre>
+</div>
+<p>
+<div class="file"><div class="name">multiple-statements-004.lc</div>
+<pre>()</pre>
+<pre>1234</pre>
+<pre>(repr 1)</pre>
+<pre>()</pre>
+<pre>(repr '</pre>
+<pre>')</pre>
+<pre>8</pre>
+<pre>(repr 8888)</pre>
+</div>
+<p>
+<div class="file"><div class="name">multiple-statements-004.out</div>
+<pre>1'\n'8888</pre>
+</div>
+<p>
+<div class="file"><div class="name">nested-calls-001.in</div>
+<pre>(+ 1 2 (+ 3))</pre>
+</div>
+<p>
+<div class="file"><div class="name">nested-calls-001.out</div>
+<pre>6</pre>
+</div>
+<p>
+<div class="file"><div class="name">nested-calls-002.in</div>
+<pre>(+ 1 2 (+ 3 4))</pre>
+</div>
+<p>
+<div class="file"><div class="name">nested-calls-002.out</div>
+<pre>10</pre>
+</div>
+<p>
+<div class="file"><div class="name">nested-calls-003.in</div>
+<pre>(+ 1 1 (+ 1 (+ 1 (+ 1 1) 1 (+ 1 1))))</pre>
+</div>
+<p>
+<div class="file"><div class="name">nested-calls-003.out</div>
+<pre>9</pre>
+</div>
+<p>
+<div class="file"><div class="name">null-001.in</div>
+<pre></pre>
+</div>
+<p>
+<div class="file"><div class="name">null-001.out</div>
+<pre>()</pre>
+</div>
+<p>
+<div class="file"><div class="name">null-002.in</div>
+<pre># Just a comment.</pre>
+</div>
+<p>
+<div class="file"><div class="name">null-002.out</div>
+<pre>()</pre>
+</div>
+<p>
+<div class="file"><div class="name">null-003.in</div>
+<pre>    # Indented comment.</pre>
+</div>
+<p>
+<div class="file"><div class="name">null-003.out</div>
+<pre>()</pre>
+</div>
+<p>
+<div class="file"><div class="name">numbers-001.in</div>
+<pre>4</pre>
+</div>
+<p>
+<div class="file"><div class="name">numbers-001.out</div>
+<pre>4</pre>
+</div>
+<p>
+<div class="file"><div class="name">numbers-002.in</div>
+<pre>1234</pre>
+<pre>5</pre>
+</div>
+<p>
+<div class="file"><div class="name">numbers-002.out</div>
+<pre>1234</pre>
+<pre>5</pre>
+</div>
+<p>
+<div class="file"><div class="name">numbers-003.in</div>
+<pre>-123</pre>
+<pre>44</pre>
+<pre>-124</pre>
+<pre>-1</pre>
+<pre>-111111111111111111</pre>
+<pre>1234789012347890</pre>
+</div>
+<p>
+<div class="file"><div class="name">numbers-003.out</div>
+<pre>-123</pre>
+<pre>44</pre>
+<pre>-124</pre>
+<pre>-1</pre>
+<pre>-111111111111111111</pre>
+<pre>1234789012347890</pre>
+</div>
+<p>
+<div class="file"><div class="name">operators-001.in</div>
+<pre>(&lt; 1 2)</pre>
+<pre>(&lt; 1 -1)</pre>
+<pre>(&lt; 1 2 0)</pre>
+<pre>(&lt; 1 2 9)</pre>
+<pre>(&lt;= 1 2)</pre>
+<pre>(&lt;= 1 1)</pre>
+<pre>(&lt;= 1 1 0)</pre>
+<pre>(&gt; 2 1)</pre>
+<pre>(&gt; -1 1)</pre>
+<pre>(&gt; 2 1 3)</pre>
+<pre>(&gt; 2 1 -4)</pre>
+<pre>(&gt;= 2 1)</pre>
+<pre>(&gt;= 5 5)</pre>
+<pre>(&gt;= 1 2)</pre>
+</div>
+<p>
+<div class="file"><div class="name">operators-001.out</div>
+<pre>1</pre>
+<pre>0</pre>
+<pre>0</pre>
+<pre>1</pre>
+<pre>1</pre>
+<pre>1</pre>
+<pre>0</pre>
+<pre>1</pre>
+<pre>0</pre>
+<pre>0</pre>
+<pre>1</pre>
+<pre>1</pre>
+<pre>1</pre>
+<pre>0</pre>
+</div>
+<p>
+<div class="file"><div class="name">or-001.in</div>
+<pre>(or 1)</pre>
+</div>
+<p>
+<div class="file"><div class="name">or-001.out</div>
+<pre>1</pre>
+</div>
+<p>
+<div class="file"><div class="name">or-002.in</div>
+<pre>(or 0)</pre>
+</div>
+<p>
+<div class="file"><div class="name">or-002.out</div>
+<pre>0</pre>
+</div>
+<p>
+<div class="file"><div class="name">or-003.in</div>
+<pre>(or :())</pre>
+</div>
+<p>
+<div class="file"><div class="name">or-003.out</div>
+<pre>()</pre>
+</div>
+<p>
+<div class="file"><div class="name">or-004.in</div>
+<pre>(or 0 1)</pre>
+</div>
+<p>
+<div class="file"><div class="name">or-004.out</div>
+<pre>1</pre>
+</div>
+<p>
+<div class="file"><div class="name">or-005.in</div>
+<pre>(or 1 0)</pre>
+</div>
+<p>
+<div class="file"><div class="name">or-005.out</div>
+<pre>1</pre>
+</div>
+<p>
+<div class="file"><div class="name">or-006.in</div>
+<pre>(or 0 :() 0 0 :())</pre>
+</div>
+<p>
+<div class="file"><div class="name">or-006.out</div>
+<pre>()</pre>
+</div>
+<p>
+<div class="file"><div class="name">pair-001.in</div>
+<pre>(pair 1 :(2 3))</pre>
+<pre>(pair 1 :())</pre>
+<pre>(pair :(1) :(1))</pre>
+</div>
+<p>
+<div class="file"><div class="name">pair-001.out</div>
+<pre>(1 2 3)</pre>
+<pre>(1)</pre>
+<pre>((1) 1)</pre>
+</div>
+<p>
+<div class="file"><div class="name">partial-001.lc</div>
+<pre>(= inc (partial add 1))</pre>
+<pre>(repr (inc 1))</pre>
+<pre>(repr (inc 6))</pre>
+</div>
+<p>
+<div class="file"><div class="name">partial-001.out</div>
+<pre>27</pre>
+</div>
+<p>
+<div class="file"><div class="name">quote-001.in</div>
+<pre>(quote x)</pre>
+</div>
+<p>
+<div class="file"><div class="name">quote-001.out</div>
+<pre>x</pre>
+</div>
+<p>
+<div class="file"><div class="name">quote-002.in</div>
+<pre>(quote (a b))</pre>
+</div>
+<p>
+<div class="file"><div class="name">quote-002.out</div>
+<pre>(a b)</pre>
+</div>
+<p>
+<div class="file"><div class="name">range-001.in</div>
+<pre>(range 5)</pre>
+</div>
+<p>
+<div class="file"><div class="name">range-001.out</div>
+<pre>(0 1 2 3 4)</pre>
+</div>
+<p>
+<div class="file"><div class="name">range-002.in</div>
+<pre>(range 10 15)</pre>
+</div>
+<p>
+<div class="file"><div class="name">range-002.out</div>
+<pre>(10 11 12 13 14)</pre>
+</div>
+<p>
+<div class="file"><div class="name">range-003.in</div>
+<pre>(range 10 5 -1)</pre>
+</div>
+<p>
+<div class="file"><div class="name">range-003.out</div>
+<pre>(10 9 8 7 6)</pre>
+</div>
+<p>
+<div class="file"><div class="name">range-004.in</div>
+<pre>(map (range 5) (~ (a) (* a a)))</pre>
+</div>
+<p>
+<div class="file"><div class="name">range-004.out</div>
+<pre>(0 1 4 9 16)</pre>
+</div>
+<p>
+<div class="file"><div class="name">reduce-001.in</div>
+<pre>(reduce add :(1 2))</pre>
+</div>
+<p>
+<div class="file"><div class="name">reduce-001.out</div>
+<pre>3</pre>
+</div>
+<p>
+<div class="file"><div class="name">reduce-002.in</div>
+<pre>(reduce add :(1 2 3))</pre>
+</div>
+<p>
+<div class="file"><div class="name">reduce-002.out</div>
+<pre>6</pre>
+</div>
+<p>
+<div class="file"><div class="name">reduce-003.in</div>
+<pre>(reduce add :(6) 500)</pre>
+</div>
+<p>
+<div class="file"><div class="name">reduce-003.out</div>
+<pre>506</pre>
+</div>
+<p>
+<div class="file"><div class="name">reduce-004.in</div>
+<pre>(reduce add :(1 2 1 2 1 2 1 2) 10000)</pre>
+</div>
+<p>
+<div class="file"><div class="name">reduce-004.out</div>
+<pre>10012</pre>
+</div>
+<p>
+<div class="file"><div class="name">repeat-001.in</div>
+<pre>(repeat 9 0)</pre>
+<pre>(repeat 1 1)</pre>
+<pre>(repeat 1 2)</pre>
+<pre>(repeat 'a' 3)</pre>
+</div>
+<p>
+<div class="file"><div class="name">repeat-001.out</div>
+<pre>()</pre>
+<pre>(1)</pre>
+<pre>(1 1)</pre>
+<pre>('a' 'a' 'a')</pre>
+</div>
+<p>
+<div class="file"><div class="name">replace-001.in</div>
+<pre>(replace 'aaxa' 'a' '-')</pre>
+</div>
+<p>
+<div class="file"><div class="name">replace-001.out</div>
+<pre>'--x-'</pre>
+</div>
+<p>
+<div class="file"><div class="name">replace-002.in</div>
+<pre>(replace 'aaXaaXaaa' 'aa' '[]')</pre>
+</div>
+<p>
+<div class="file"><div class="name">replace-002.out</div>
+<pre>'[]X[]X[]a'</pre>
+</div>
+<p>
+<div class="file"><div class="name">replace-003.in</div>
+<pre>(replace 'dog eat dog here' 'dog' 'kitty')</pre>
+</div>
+<p>
+<div class="file"><div class="name">replace-003.out</div>
+<pre>'kitty eat kitty here'</pre>
+</div>
+<p>
+<div class="file"><div class="name">repr-001.in</div>
+<pre>(repr 'one')</pre>
+</div>
+<p>
+<div class="file"><div class="name">repr-001.out</div>
+<pre>'one'()</pre>
+</div>
+<p>
+<div class="file"><div class="name">repr-str.lc</div>
+<pre>(repr 'str1')</pre>
+</div>
+<p>
+<div class="file"><div class="name">repr-str.out</div>
+<pre>'str1'</pre>
+</div>
+<p>
+<div class="file"><div class="name">repr_str.out</div>
+<pre>'str1'</pre>
+</div>
+<p>
+<div class="file"><div class="name">set-001.in</div>
+<pre>(set (dict) 'name' 'John')</pre>
+</div>
+<p>
+<div class="file"><div class="name">set-001.out</div>
+<pre>(dict 'name' 'John')</pre>
+</div>
+<p>
+<div class="file"><div class="name">set-002.in</div>
+<pre>(set (set (dict) 'name' 'John') 1 2)</pre>
+</div>
+<p>
+<div class="file"><div class="name">set-002.out</div>
+<pre>(dict 1 2 'name' 'John')</pre>
+</div>
+<p>
+<div class="file"><div class="name">set-head.in</div>
+<pre>(= l :(1 2 3))</pre>
+<pre>(set-head l 5)</pre>
+<pre>l</pre>
+<pre>(set-head (tail l) 6)</pre>
+<pre>l</pre>
+</div>
+<p>
+<div class="file"><div class="name">set-head.out</div>
+<pre>(1 2 3)</pre>
+<pre>5</pre>
+<pre>(5 2 3)</pre>
+<pre>6</pre>
+<pre>(5 6 3)</pre>
+</div>
+<p>
+<div class="file"><div class="name">set-tail.in</div>
+<pre>(= l :(1 2 3))</pre>
+<pre>(set-tail l ())</pre>
+<pre>l</pre>
+<pre>(set-tail l :(7))</pre>
+<pre>l</pre>
+<pre>(set-tail (tail l) :(8))</pre>
+<pre>l</pre>
+</div>
+<p>
+<div class="file"><div class="name">set-tail.out</div>
+<pre>(1 2 3)</pre>
+<pre>()</pre>
+<pre>(1)</pre>
+<pre>(7)</pre>
+<pre>(1 7)</pre>
+<pre>(8)</pre>
+<pre>(1 7 8)</pre>
+</div>
+<p>
+<div class="file"><div class="name">shl-001.in</div>
+<pre>(&lt;&lt; 1 1)</pre>
+<pre>(&lt;&lt; 1 2)</pre>
+<pre>(&lt;&lt; 1 3)</pre>
+<pre>(&lt;&lt; 0xf000000000000000 1)</pre>
+<pre>(&lt;&lt; 1 63)</pre>
+</div>
+<p>
+<div class="file"><div class="name">shl-001.out</div>
+<pre>2</pre>
+<pre>4</pre>
+<pre>8</pre>
+<pre>-2305843009213693952</pre>
+<pre>-9223372036854775808</pre>
+</div>
+<p>
+<div class="file"><div class="name">shr-001.out</div>
+<pre>1</pre>
+<pre>2</pre>
+<pre>16</pre>
+<pre>1</pre>
+</div>
+<p>
+<div class="file"><div class="name">shr-002.out</div>
+<pre>(&gt;&gt; 2 1)</pre>
+<pre>(&gt;&gt; 16 2)</pre>
+<pre>(&gt;&gt; 0xf000000000000000 60)</pre>
+<pre>(&gt;&gt; 0x8000000000000000 63)</pre>
+</div>
+<p>
+<div class="file"><div class="name">split-001.in</div>
+<pre>(split ' ' 'a b c')</pre>
+</div>
+<p>
+<div class="file"><div class="name">split-001.out</div>
+<pre>('a' 'b' 'c')</pre>
+</div>
+<p>
+<div class="file"><div class="name">split-002.in</div>
+<pre>(split 'aa' 'aaJJJaaaMMMMM')</pre>
+</div>
+<p>
+<div class="file"><div class="name">split-002.out</div>
+<pre>('' 'JJJ' 'aMMMMM')</pre>
+</div>
+<p>
+<div class="file"><div class="name">split-003.in</div>
+<pre>(split 'aa' 'aaJJJaaaMMMMMaa')</pre>
+</div>
+<p>
+<div class="file"><div class="name">split-003.out</div>
+<pre>('' 'JJJ' 'aMMMMM' '')</pre>
+</div>
+<p>
+<div class="file"><div class="name">split-004.in</div>
+<pre>(split '' 'abcdef')</pre>
+</div>
+<p>
+<div class="file"><div class="name">split-004.out</div>
+<pre>('a' 'b' 'c' 'd' 'e' 'f')</pre>
+</div>
+<p>
+<div class="file"><div class="name">stitch-001.in</div>
+<pre>(stitch)</pre>
+</div>
+<p>
+<div class="file"><div class="name">stitch-001.out</div>
+<pre>()</pre>
+</div>
+<p>
+<div class="file"><div class="name">stitch-002.in</div>
+<pre>(stitch ())</pre>
+</div>
+<p>
+<div class="file"><div class="name">stitch-002.out</div>
+<pre>()</pre>
+</div>
+<p>
+<div class="file"><div class="name">stitch-003.in</div>
+<pre>(stitch () () ())</pre>
+</div>
+<p>
+<div class="file"><div class="name">stitch-003.out</div>
+<pre>()</pre>
+</div>
+<p>
+<div class="file"><div class="name">stitch-004.in</div>
+<pre>(stitch :(1 2))</pre>
+</div>
+<p>
+<div class="file"><div class="name">stitch-004.out</div>
+<pre>(1 2)</pre>
+</div>
+<p>
+<div class="file"><div class="name">stitch-005.in</div>
+<pre>(stitch :(5 2) :(88 123))</pre>
+</div>
+<p>
+<div class="file"><div class="name">stitch-005.out</div>
+<pre>(5 2 88 123)</pre>
+</div>
+<p>
+<div class="file"><div class="name">stitch-006.in</div>
+<pre>(stitch :(1 2 3) :(5 55 555) :(-1 -2 -3))</pre>
+</div>
+<p>
+<div class="file"><div class="name">stitch-006.out</div>
+<pre>(1 2 3 5 55 555 -1 -2 -3)</pre>
+</div>
+<p>
+<div class="file"><div class="name">string-001.in</div>
+<pre>'asdf'</pre>
+</div>
+<p>
+<div class="file"><div class="name">string-001.out</div>
+<pre>'asdf'</pre>
+</div>
+<p>
+<div class="file"><div class="name">string-002.in</div>
+<pre>'aa  bb  '</pre>
+</div>
+<p>
+<div class="file"><div class="name">string-002.out</div>
+<pre>'aa  bb  '</pre>
+</div>
+<p>
+<div class="file"><div class="name">string-003.lc</div>
+<pre>(repr '</pre>
+<pre>  a</pre>
+<pre>  ccc</pre>
+<pre>  b</pre>
+<pre>')</pre>
+</div>
+<p>
+<div class="file"><div class="name">string-003.out</div>
+<pre>'\n  a\n  ccc\n  b\n'</pre>
+</div>
+<p>
+<div class="file"><div class="name">switch-001.in</div>
+<pre>(switch 1 1 :one)</pre>
+</div>
+<p>
+<div class="file"><div class="name">switch-001.out</div>
+<pre>one</pre>
+</div>
+<p>
+<div class="file"><div class="name">switch-002.in</div>
+<pre>(switch 2 1 :one)</pre>
+</div>
+<p>
+<div class="file"><div class="name">switch-002.out</div>
+<pre>()</pre>
+</div>
+<p>
+<div class="file"><div class="name">switch-003.in</div>
+<pre>(switch 2 1 :one :other)</pre>
+</div>
+<p>
+<div class="file"><div class="name">switch-003.out</div>
+<pre>other</pre>
+</div>
+<p>
+<div class="file"><div class="name">switch-004.in</div>
+<pre>(switch 2 1 :one 2 :two)</pre>
+</div>
+<p>
+<div class="file"><div class="name">switch-004.out</div>
+<pre>two</pre>
+</div>
+<p>
+<div class="file"><div class="name">symbols-001.in</div>
+<pre>(quote asdf)</pre>
+</div>
+<p>
+<div class="file"><div class="name">symbols-001.out</div>
+<pre>asdf</pre>
+</div>
+<p>
+<div class="file"><div class="name">symbols-002.in</div>
+<pre>(quote &lt;=&gt;)</pre>
+</div>
+<p>
+<div class="file"><div class="name">symbols-002.out</div>
+<pre>&lt;=&gt;</pre>
+</div>
+<p>
+<div class="file"><div class="name">symbols-003.in</div>
+<pre>(list (quote asdf))</pre>
+</div>
+<p>
+<div class="file"><div class="name">symbols-003.out</div>
+<pre>(asdf)</pre>
+</div>
+<p>
+<div class="file"><div class="name">symbols-004.in</div>
+<pre>(list (quote asdf) 1 (quote ab))</pre>
+</div>
+<p>
+<div class="file"><div class="name">symbols-004.out</div>
+<pre>(asdf 1 ab)</pre>
+</div>
+<p>
+<div class="file"><div class="name">symbols-005.in</div>
+<pre>(list (quote a) (quote s) (quote d) (quote f) 'x' (list 1 (quote ab)))</pre>
+</div>
+<p>
+<div class="file"><div class="name">symbols-005.out</div>
+<pre>(a s d f 'x' (1 ab))</pre>
+</div>
+<p>
+<div class="file"><div class="name">symbols-006.in</div>
+<pre>(list (quote xx) 'yy')</pre>
+</div>
+<p>
+<div class="file"><div class="name">symbols-006.out</div>
+<pre>(xx 'yy')</pre>
+</div>
+<p>
+<div class="file"><div class="name">symbols-007.in</div>
+<pre>(list (quote a) (quote b))</pre>
+<pre>(list (quote a) (quote b))</pre>
+<pre>(list (quote a) (quote b))</pre>
+</div>
+<p>
+<div class="file"><div class="name">symbols-007.out</div>
+<pre>(a b)</pre>
+<pre>(a b)</pre>
+<pre>(a b)</pre>
+</div>
+<p>
+<div class="file"><div class="name">symbols-008.in</div>
+<pre>(list (quote aa) (quote bb) (quote cc))</pre>
+<pre>  (list (quote a) (quote c))</pre>
+<pre>( list (quote a) (quote b) (quote c) ) # Nothing here</pre>
+<pre>(list (quote cc) (quote dd))</pre>
+</div>
+<p>
+<div class="file"><div class="name">symbols-008.out</div>
+<pre>(aa bb cc)</pre>
+<pre>(a c)</pre>
+<pre>(a b c)</pre>
+<pre>(cc dd)</pre>
+</div>
+<p>
+<div class="file"><div class="name">system-001.lc</div>
+<pre>(ccall (dynsym 'libc.so' 'system') 'echo hello world')</pre>
+</div>
+<p>
+<div class="file"><div class="name">system-001.out</div>
+<pre>hello world</pre>
+</div>
+<p>
+<div class="file"><div class="name">trap-001.in</div>
+<pre>($trap 4)</pre>
+<pre>($trap (+ 1 2))</pre>
+<pre>($trap ($entrap 5))</pre>
+<pre>($trap (+ 1 2 ($entrap 'a')))</pre>
+<pre>($trap (if 1 ($entrap 'b')))</pre>
+<pre>($trap (if 0 ($entrap 'b') (+ 4 4)))</pre>
+<pre>($trap (+ 1 2 ($entrap (+ 8 8))))</pre>
+</div>
+<p>
+<div class="file"><div class="name">trap-001.out</div>
+<pre>4</pre>
+<pre>3</pre>
+<pre>5</pre>
+<pre>'a'</pre>
+<pre>'b'</pre>
+<pre>8</pre>
+<pre>16</pre>
+</div>
+<p>
+<div class="file"><div class="name">trap-002.lc</div>
+<pre>(= f (~ (a b) ($trap (last</pre>
+<pre>  (= ret 0)</pre>
+<pre>  (map (range a b) (~ (a) (if (- a 10)</pre>
+<pre>    (= ret (+ ret a))</pre>
+<pre>    ($entrap (list 'will not go above 10' ret a))</pre>
+<pre>  )))</pre>
+<pre>  ret</pre>
+<pre>))))</pre>
+<pre></pre>
+<pre>(repr (f 2 20))</pre>
+<pre>(repr (f 2 5))</pre>
+</div>
+<p>
+<div class="file"><div class="name">trap-002.out</div>
+<pre>('will not go above 10' 44 10)9</pre>
+</div>
+<p>
+<div class="file"><div class="name">unicode-001.in</div>
+<pre>(= ă 'litera ă mică')</pre>
+<pre>ă</pre>
+</div>
+<p>
+<div class="file"><div class="name">unicode-001.out</div>
+<pre>'litera ă mică'</pre>
+<pre>'litera ă mică'</pre>
+</div>
+<p>
+<div class="file"><div class="name">whitespace-001.in</div>
+<pre>  1234 </pre>
+</div>
+<p>
+<div class="file"><div class="name">whitespace-001.out</div>
+<pre>1234</pre>
+</div>
+<p>
+<div class="file"><div class="name">whitespace-002.in</div>
+<pre>     'a' </pre>
+</div>
+<p>
+<div class="file"><div class="name">whitespace-002.out</div>
+<pre>'a'</pre>
+</div>
+<p>
+<div class="file"><div class="name">whitespace-003.in</div>
+<pre>  12</pre>
+<pre>   12345  </pre>
+<pre>       55    </pre>
+</div>
+<p>
+<div class="file"><div class="name">whitespace-003.out</div>
+<pre>12</pre>
+<pre>12345</pre>
+<pre>55</pre>
+</div>
+<p>
+<div class="file"><div class="name">zip-001.in</div>
+<pre>(zip :(1 2) :(a b))</pre>
+<pre>(zip :(1 2) :(a b) :(A B))</pre>
+<pre>(zip :(1 2 c) :(a b) :(A B))</pre>
+<pre>(zip :(1 2 c) :(a b c) :(A B))</pre>
+<pre>(zip :(1 2 c) :(a b c) :(A B c))</pre>
+</div>
+<p>
+<div class="file"><div class="name">zip-001.out</div>
+<pre>((1 a) (2 b))</pre>
+<pre>((1 a A) (2 b B))</pre>
+<pre>((1 a A) (2 b B))</pre>
+<pre>((1 a A) (2 b B))</pre>
+<pre>((1 a A) (2 b B) (c c c))</pre>
+</div></div></div></div></div></body></html>
