@@ -183,26 +183,24 @@ Tests:
   (= encode (~ (d) (replace (replace d '&gt;' '&gt;') '&lt;' '&lt;')))
 
   (= process-comment (~ (c) (last
-    (= surround (~ (tag chars)
-      (cat '&lt;' tag '&gt;' (encode (apply cat (tail (tail chars)))) '&lt;/' tag '&gt;')
+    (= surround (~ (tag line)
+      (cat '&lt;' tag '&gt;' (encode (substr line 2)) '&lt;/' tag '&gt;')
     ))
-    (= lines (split '\n' c))
-    (= lines (map lines (~ (line) (last
-      (= chars (split '' line))
+    (= process-comment-line (~ (line) (last
       (if
         (is (len line) 0)
         '&lt;p&gt;'
 
         # If it starts with 4 spaces, sorround the line with a pre tag.
         (startswith line '    ')
-        (surround 'pre' (tail (tail chars)))
+        (surround 'pre' (substr line 2))
 
         # If it starts with 'file '
         (startswith line 'file ')
         (cat
           '&lt;div class="file"&gt;'
             '&lt;div class="name"&gt;'
-              (apply cat (tail (tail (tail (tail (tail chars))))))
+              (substr line 5)
             '&lt;/div&gt;'
         )
 
@@ -215,16 +213,16 @@ Tests:
           (startswith line '##')
           (if
             (startswith line '###')
-            (surround 'h3' (tail (tail chars)))
-            (surround 'h2' (tail chars))
+            (surround 'h3' (substr line 2))
+            (surround 'h2' (substr line 1))
           )
-          (surround 'h1' chars)
+          (surround 'h1' line)
         )
 
         (encode line)
       )
-    ))))
-    (tie '\n' lines)
+    )))
+    (tie '\n' (map (split '\n' c) process-comment-line))
   )))
 
   (= split-parts (~ (str) (last

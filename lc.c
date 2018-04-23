@@ -1677,6 +1677,17 @@ object_t *at_func(vm_state *vms, object_t *env, object_t *args_list) {
     return next->head;
 }
 
+object_t *substr_func(vm_state *vms, object_t *env, object_t *args_list) {
+    object_t *str = args_list->head;
+    uint64_t start = args_list->tail->head->int_value;
+    // TODO: Also support a number of characters to keep.
+    return new_string(
+        vms,
+        str->string_pointer + start,
+        str->string_length - start
+    );
+}
+
 object_t *get_env_of_name(vm_state *vms, object_t *env, object_t *name) {
     object_t *parent_sym = DLR_PARENT_SYM(vms);
 
@@ -2349,6 +2360,7 @@ char *builtin_names[] = {
     "replace",
     "startswith",
     "at",
+    "substr"
 };
 func_pointer_t *builtin_pointers[] = {
     dict_func,
@@ -2402,7 +2414,8 @@ func_pointer_t *builtin_pointers[] = {
     gte_func,
     replace_func,
     startswith_func,
-    at_func
+    at_func,
+    substr_func
 };
 
 char *construct_names[] = {
