@@ -152,6 +152,49 @@
 #     (31 21 27)
 #     > (zip names ages)
 #     (('John' 31) ('Bill' 21) ('Alice' 27))
+#
+# Tests:
+#
+# file zip-001.in
+#     (zip :(1 2) :(a b))
+# endfile
+#
+# file zip-001.out
+#     ((1 a) (2 b))
+# endfile
+#
+# file zip-002.in
+#     (zip :(1 2) :(a b) :(A B))
+# endfile
+#
+# file zip-002.out
+#     ((1 a A) (2 b B))
+# endfile
+#
+# file zip-003.in
+#     (zip :(1 2 c) :(a b) :(A B))
+# endfile
+#
+# file zip-003.out
+#     ((1 a A) (2 b B))
+# endfile
+#
+# file zip-004.in
+#     (zip :(1 2 c) :(a b c) :(A B))
+# endfile
+#
+# file zip-004.out
+#     ((1 a A) (2 b B))
+# endfile
+#
+# file zip-005.in
+#     (zip :(1 2 c) :(a b c) :(A B c))
+# endfile
+#
+# file zip-005.out
+#     ((1 a A) (2 b B) (c c c))
+# endfile
+
 (= zip (~ (last
   (= lists (map $args list-dict))
   (= n-args (len lists))
@@ -186,6 +229,34 @@
           (is (at chars 3) ' ')
         )
         (surround 'pre' (tail (tail chars)))
+
+        # If it starts with 'file '
+        (and
+          (is (at chars 0) 'f')
+          (is (at chars 1) 'i')
+          (is (at chars 2) 'l')
+          (is (at chars 3) 'e')
+          (is (at chars 4) ' ')
+        )
+        (cat
+          '<div class="file">'
+            '<div class="name">'
+              (apply cat (tail (tail (tail (tail (tail chars))))))
+            '</div>'
+        )
+
+        # If it starts with 'endfile'
+        (and
+          (is (at chars 0) 'e')
+          (is (at chars 1) 'n')
+          (is (at chars 2) 'd')
+          (is (at chars 3) 'f')
+          (is (at chars 4) 'i')
+          (is (at chars 5) 'l')
+          (is (at chars 6) 'e')
+        )
+        '</div>'
+
 
         (is (at chars 0) '#')
         (if
@@ -295,6 +366,8 @@
             'body{background:#fff}'
           '}'
           '.code{padding-left:10px;font-family:monospace;white-space:pre}'
+          '.file{border:1px solid #ddd}'
+          '.name{background:#eee;padding:2px 10px;font-family:monospace;color:#777}'
         '</style>'
       '</head>'
       '<body>'
