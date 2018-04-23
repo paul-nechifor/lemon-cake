@@ -1638,6 +1638,45 @@ object_t *replace_func(vm_state *vms, object_t *env, object_t *args_list) {
     return new_string(vms, buffer_initial, new_size);
 }
 
+object_t *startswith_func(vm_state *vms, object_t *env, object_t *args_list) {
+    object_t *str = args_list->head;
+    object_t *start = args_list->tail->head;
+
+    uint64_t ret = 1;
+
+    if (start->string_length > str->string_length) {
+        ret = 0;
+        goto return_value;
+    }
+
+    uint64_t i;
+    uint64_t n = start->string_length;
+
+    for (i = 0; i < n; i++) {
+        if (start->string_pointer[i] != str->string_pointer[i]) {
+            ret = 0;
+            goto return_value;
+        }
+    }
+
+return_value:
+    return new_int(vms, ret);
+}
+
+object_t *at_func(vm_state *vms, object_t *env, object_t *args_list) {
+    object_t *next = args_list->head;
+    uint64_t i = args_list->tail->head->int_value;
+
+    for (; i > 0; i--) {
+        next = next->tail;
+        if (!next->head) {
+            return new_pair(vms);
+        }
+    }
+
+    return next->head;
+}
+
 object_t *get_env_of_name(vm_state *vms, object_t *env, object_t *name) {
     object_t *parent_sym = DLR_PARENT_SYM(vms);
 
@@ -2308,6 +2347,8 @@ char *builtin_names[] = {
     "gt",
     "gte",
     "replace",
+    "startswith",
+    "at",
 };
 func_pointer_t *builtin_pointers[] = {
     dict_func,
@@ -2360,6 +2401,8 @@ func_pointer_t *builtin_pointers[] = {
     gt_func,
     gte_func,
     replace_func,
+    startswith_func,
+    at_func
 };
 
 char *construct_names[] = {

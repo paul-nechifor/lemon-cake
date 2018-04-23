@@ -100,7 +100,7 @@
 #
 #     > (at :(1 2 3) 2)
 #     3
-(= at (~ (l i) (head ((apply comp (repeat tail i)) l))))
+#(= at (~ (l i) (head ((apply comp (repeat tail i)) l))))
 
 # ### comp
 #
@@ -222,22 +222,11 @@
         '<p>'
 
         # If it starts with 4 spaces, sorround the line with a pre tag.
-        (and
-          (is (at chars 0) ' ')
-          (is (at chars 1) ' ')
-          (is (at chars 2) ' ')
-          (is (at chars 3) ' ')
-        )
+        (startswith line '    ')
         (surround 'pre' (tail (tail chars)))
 
         # If it starts with 'file '
-        (and
-          (is (at chars 0) 'f')
-          (is (at chars 1) 'i')
-          (is (at chars 2) 'l')
-          (is (at chars 3) 'e')
-          (is (at chars 4) ' ')
-        )
+        (startswith line 'file ')
         (cat
           '<div class="file">'
             '<div class="name">'
@@ -246,23 +235,14 @@
         )
 
         # If it starts with 'endfile'
-        (and
-          (is (at chars 0) 'e')
-          (is (at chars 1) 'n')
-          (is (at chars 2) 'd')
-          (is (at chars 3) 'f')
-          (is (at chars 4) 'i')
-          (is (at chars 5) 'l')
-          (is (at chars 6) 'e')
-        )
+        (startswith line 'endfile')
         '</div>'
 
-
-        (is (at chars 0) '#')
+        (startswith line '#')
         (if
-          (is (at chars 1) '#')
+          (startswith line '##')
           (if
-            (is (at chars 2) '#')
+            (startswith line '###')
             (surround 'h3' (tail (tail chars)))
             (surround 'h2' (tail chars))
           )
