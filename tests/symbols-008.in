@@ -1,4 +1,0 @@
-(list (quote aa) (quote bb) (quote cc))
-  (list (quote a) (quote c))
-( list (quote a) (quote b) (quote c) ) # Nothing here
-(list (quote cc) (quote dd))

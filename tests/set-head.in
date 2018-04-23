@@ -1,5 +1,0 @@
-(= l :(1 2 3))
-(set-head l 5)
-l
-(set-head (tail l) 6)
-l

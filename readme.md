@@ -35,9 +35,6 @@ groups.
 
 - Shouldn't macros be evaluated at parse time?
 
-- Idea: Why not have tests right next to the code. Why separate code and tests?
-  The building code can eliminate the tests.
-
 - Call functions in comp in reverse order (last first).
 
 - Disassemble `lc` and see how many instructions are encodable by `lc`.

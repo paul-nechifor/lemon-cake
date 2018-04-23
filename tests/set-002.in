@@ -1,1 +1,0 @@
-(set (set (dict) 'name' 'John') 1 2)

@@ -1,7 +1,0 @@
-(= abs (~ (a) (ccall (dynsym 'libc.so' 'abs') a)))
-
-(repr (abs 5))
-(repr ' ')
-(repr (abs -7))
-(repr ' ')
-(repr (abs -2147483647))

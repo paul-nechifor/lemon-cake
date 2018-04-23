@@ -398,3 +398,2534 @@
 
   ))
 ))
+
+# file add-001.in
+#     (+ 1 2)
+# endfile
+#
+# file add-001.out
+#     3
+# endfile
+#
+# file add-002.in
+#     (+ 8 4)
+# endfile
+#
+# file add-002.out
+#     12
+# endfile
+#
+# file add-003.in
+#     (+ 1 1)
+#     (+ 2 3)
+#      ( + 44 11 ) #
+#     
+# endfile
+#
+# file add-003.out
+#     2
+#     5
+#     55
+#     ()
+# endfile
+#
+# file add-004.in
+#     (+ 1 2 3 4 5)
+#     (+ 3 3 3)
+# endfile
+#
+# file add-004.out
+#     15
+#     9
+# endfile
+#
+# file add-005.in
+#     (+ 2)
+#     (+ 1 1 1 (+ 1 1))
+# endfile
+#
+# file add-005.out
+#     2
+#     5
+# endfile
+#
+# file add-006.in
+#     (+ 1 -1)
+# endfile
+#
+# file add-006.out
+#     0
+# endfile
+#
+# file add-007.in
+#     (+ 100 -1000)
+# endfile
+#
+# file add-007.out
+#     -900
+# endfile
+#
+# file add-single-byte-001.eout
+#     :(0x00 0xc0)
+#     :(0x00 0xc8)
+#     :(0x00 0xd0)
+#     :(0x00 0xd8)
+#     :(0x00 0xe0)
+#     :(0x00 0xe8)
+#     :(0x00 0xf0)
+#     :(0x00 0xf8)
+#     :(0x00 0xc1)
+#     :(0x00 0xc9)
+#     :(0x00 0xd1)
+#     :(0x00 0xd9)
+#     :(0x00 0xe1)
+#     :(0x00 0xe9)
+#     :(0x00 0xf1)
+#     :(0x00 0xf9)
+#     :(0x00 0xc2)
+#     :(0x00 0xca)
+#     :(0x00 0xd2)
+#     :(0x00 0xda)
+#     :(0x00 0xe2)
+#     :(0x00 0xea)
+#     :(0x00 0xf2)
+#     :(0x00 0xfa)
+#     :(0x00 0xc3)
+#     :(0x00 0xcb)
+#     :(0x00 0xd3)
+#     :(0x00 0xdb)
+#     :(0x00 0xe3)
+#     :(0x00 0xeb)
+#     :(0x00 0xf3)
+#     :(0x00 0xfb)
+#     :(0x00 0xc4)
+#     :(0x00 0xcc)
+#     :(0x00 0xd4)
+#     :(0x00 0xdc)
+#     :(0x00 0xe4)
+#     :(0x00 0xec)
+#     :(0x00 0xf4)
+#     :(0x00 0xfc)
+#     :(0x00 0xc5)
+#     :(0x00 0xcd)
+#     :(0x00 0xd5)
+#     :(0x00 0xdd)
+#     :(0x00 0xe5)
+#     :(0x00 0xed)
+#     :(0x00 0xf5)
+#     :(0x00 0xfd)
+#     :(0x00 0xc6)
+#     :(0x00 0xce)
+#     :(0x00 0xd6)
+#     :(0x00 0xde)
+#     :(0x00 0xe6)
+#     :(0x00 0xee)
+#     :(0x00 0xf6)
+#     :(0x00 0xfe)
+#     :(0x00 0xc7)
+#     :(0x00 0xcf)
+#     :(0x00 0xd7)
+#     :(0x00 0xdf)
+#     :(0x00 0xe7)
+#     :(0x00 0xef)
+#     :(0x00 0xf7)
+#     :(0x00 0xff)
+# endfile
+#
+# file add-single-byte-001.lc
+#     (= endl (~ (ccall (dynsym 'libc.so' 'printf') '\n')))
+#     (= a (~ (last
+#       (repr (
+#         apply (get asm-instr 'add') $args
+#       ))
+#       (endl)
+#     )))
+#     (a 'al' 'al')
+#     (a 'al' 'cl')
+#     (a 'al' 'dl')
+#     (a 'al' 'bl')
+#     (a 'al' 'ah')
+#     (a 'al' 'ch')
+#     (a 'al' 'dh')
+#     (a 'al' 'bh')
+#     (a 'cl' 'al')
+#     (a 'cl' 'cl')
+#     (a 'cl' 'dl')
+#     (a 'cl' 'bl')
+#     (a 'cl' 'ah')
+#     (a 'cl' 'ch')
+#     (a 'cl' 'dh')
+#     (a 'cl' 'bh')
+#     (a 'dl' 'al')
+#     (a 'dl' 'cl')
+#     (a 'dl' 'dl')
+#     (a 'dl' 'bl')
+#     (a 'dl' 'ah')
+#     (a 'dl' 'ch')
+#     (a 'dl' 'dh')
+#     (a 'dl' 'bh')
+#     (a 'bl' 'al')
+#     (a 'bl' 'cl')
+#     (a 'bl' 'dl')
+#     (a 'bl' 'bl')
+#     (a 'bl' 'ah')
+#     (a 'bl' 'ch')
+#     (a 'bl' 'dh')
+#     (a 'bl' 'bh')
+#     (a 'ah' 'al')
+#     (a 'ah' 'cl')
+#     (a 'ah' 'dl')
+#     (a 'ah' 'bl')
+#     (a 'ah' 'ah')
+#     (a 'ah' 'ch')
+#     (a 'ah' 'dh')
+#     (a 'ah' 'bh')
+#     (a 'ch' 'al')
+#     (a 'ch' 'cl')
+#     (a 'ch' 'dl')
+#     (a 'ch' 'bl')
+#     (a 'ch' 'ah')
+#     (a 'ch' 'ch')
+#     (a 'ch' 'dh')
+#     (a 'ch' 'bh')
+#     (a 'dh' 'al')
+#     (a 'dh' 'cl')
+#     (a 'dh' 'dl')
+#     (a 'dh' 'bl')
+#     (a 'dh' 'ah')
+#     (a 'dh' 'ch')
+#     (a 'dh' 'dh')
+#     (a 'dh' 'bh')
+#     (a 'bh' 'al')
+#     (a 'bh' 'cl')
+#     (a 'bh' 'dl')
+#     (a 'bh' 'bl')
+#     (a 'bh' 'ah')
+#     (a 'bh' 'ch')
+#     (a 'bh' 'dh')
+#     (a 'bh' 'bh')
+# endfile
+#
+# file and-001.in
+#     (and 1)
+# endfile
+#
+# file and-001.out
+#     1
+# endfile
+#
+# file and-002.in
+#     (and 0 2)
+# endfile
+#
+# file and-002.out
+#     0
+# endfile
+#
+# file and-003.in
+#     (and 2 1)
+# endfile
+#
+# file and-003.out
+#     1
+# endfile
+#
+# file and-004.in
+#     (and 3 :(1) 'asdf' :ffff ())
+# endfile
+#
+# file and-004.out
+#     ()
+# endfile
+#
+# file append-001.in
+#     (append (list) 1)
+# endfile
+#
+# file append-001.out
+#     (1)
+# endfile
+#
+# file append-002.in
+#     (append (list 3) 1)
+# endfile
+#
+# file append-002.out
+#     (3 1)
+# endfile
+#
+# file append-003.in
+#     (append (list 1 2) 3)
+# endfile
+#
+# file append-003.out
+#     (1 2 3)
+# endfile
+#
+# file append-004.in
+#     (append () ())
+# endfile
+#
+# file append-004.out
+#     (())
+# endfile
+#
+# file apply-001.in
+#     (apply add :(1 5))
+# endfile
+#
+# file apply-001.out
+#     6
+# endfile
+#
+# file apply-002.in
+#     (apply (~ (a b) (add a b)) :(1 2))
+# endfile
+#
+# file apply-002.out
+#     3
+# endfile
+#
+# file assemble-001.lc
+#     (= putchar-ptr (dynsym 'libc.so' 'putchar'))
+#     
+#     (= f (assemble (byte-explode
+#     
+#       # mov rdi, 'A'
+#       :(1 0xbf 0x41 0x00 0x00 0x00)
+#     
+#       # mov rax, address_of_putchar
+#       :(1 0x48 0xb8)
+#       (list 8 putchar-ptr)
+#     
+#       # call rax
+#       :(1 0xff 0xd0)
+#     
+#       # mov rdi, '\n'
+#       :(1 0xbf 0x0a 0x00 0x00 0x00)
+#     
+#       # mov rax, address_of_putchar
+#       :(1 0x48 0xb8)
+#       (list 8 putchar-ptr)
+#     
+#       # call rax
+#       :(1 0xff 0xd0)
+#     
+#       # mov rdi, 'B'
+#       :(1 0xbf 0x42 0x00 0x00 0x00)
+#     
+#       # mov rax, address_of_putchar
+#       :(1 0x48 0xb8)
+#       (list 8 putchar-ptr)
+#     
+#       # call rax
+#       :(1 0xff 0xd0)
+#     
+#       # ret
+#       :(1 0xc3)
+#     
+#     )))
+#     
+#     (ccall f)
+# endfile
+#
+# file assemble-001.out
+#     A
+#     B
+# endfile
+#
+# file assemble-to-file-001.lc
+#     (= prog-bytes (byte-explode
+#       # elf64_ehdr
+#       :(1 0x7f 0x45 0x4c 0x46 2 1 1 0) # e_ident
+#       :(8 0)
+#       :(2 2)        # e_type
+#       :(2 0x3e)     # e_machine
+#       :(4 1)        # e_version
+#       :(8 0x4000b0) # e_entry
+#       :(8 0x40)     # e_phoff
+#       :(8 0xe0)     # e_shoff
+#       :(4 0)        # e_flags
+#       :(2 0x40)     # e_ehsize
+#       :(2 0x38)     # e_phentsize
+#       :(2 2)        # e_phnum
+#       :(2 0x40)     # e_shentsize
+#       :(2 4)        # e_shnum
+#       :(2 3)        # e_shstrndx
+#     
+#       # elf64_phdr
+#       :(4 1)           # p_type
+#       :(4 5)           # p_flags
+#       :(8 0)           # p_offset
+#       :(8 0x400000)    # p_vaddr
+#       :(8 0x400000)    # p_paddr
+#       :(8 0xbc)        # p_filesz
+#       :(8 0xbc)        # p_memsz
+#       :(8 0x200000)    # p_align
+#     
+#       :(4 1)           # p_type
+#       :(4 6)           # p_flags
+#       :(8 0xbc)        # p_offset
+#       :(8 0x6000bc)    # p_vaddr
+#       :(8 0x6000bc)    # p_paddr
+#       :(8 8)           # p_filesz
+#       :(8 8)           # p_memsz
+#       :(8 0x200000)    # p_align
+#     
+#       # .text
+#       :(1 0xb8 0x3c 0x00 0x00 0x00) # mov rax 60
+#       :(1 0xbf 0x2a 0x00 0x00 0x00) # mov rdi 42
+#       :(1 0x0f 0x05) # syscall
+#     
+#       # .data
+#       :(8 0x0102030405060708)
+#     
+#       # .shstrtab
+#       :(1 0)
+#       :(1 0x2e 0x73 0x68 0x73 0x74 0x72 0x74 0x61 0x62 0) # .shstrtab
+#       :(1 0x2e 0x74 0x65 0x78 0x74 0) # .text
+#       :(1 0x2e 0x64 0x61 0x74 0x61 0) # .data
+#       :(1 0 0 0 0 0) # padding
+#     
+#       # null section
+#       :(4 0) # sh_name
+#       :(4 0) # sh_type
+#       :(8 0) # sh_flags
+#       :(8 0) # sh_addr
+#       :(8 0) # sh_offset
+#       :(8 0) # sh_size
+#       :(4 0) # sh_link
+#       :(4 0) # sh_info
+#       :(8 0) # sh_addralign
+#       :(8 0) # sh_entsize
+#     
+#       # .text section
+#       :(4 0x0b) # sh_name
+#       :(4 1) # sh_type
+#       :(8 0x06) # sh_flags
+#       :(8 0x4000b0) # sh_addr
+#       :(8 0xb0) # sh_offset
+#       :(8 0x0c) # sh_size
+#       :(4 0) # sh_link
+#       :(4 0) # sh_info
+#       :(8 0x10) # sh_addralign
+#       :(8 0) # sh_entsize
+#     
+#       # .data section
+#       :(4 0x11) # sh_name
+#       :(4 1) # sh_type
+#       :(8 0x03) # sh_flags
+#       :(8 0x6000bc) # sh_addr
+#       :(8 0xbc) # sh_offset
+#       :(8 0x08) # sh_size
+#       :(4 0) # sh_link
+#       :(4 0) # sh_info
+#       :(8 4) # sh_addralign
+#       :(8 0) # sh_entsize
+#     
+#       # .shstrtab section
+#       :(4 0x01) # sh_name
+#       :(4 3) # sh_type
+#       :(8 0x00) # sh_flags
+#       :(8 0) # sh_addr
+#       :(8 0xc4) # sh_offset
+#       :(8 0x17) # sh_size
+#       :(4 0) # sh_link
+#       :(4 0) # sh_info
+#       :(8 1) # sh_addralign
+#       :(8 0) # sh_entsize
+#     ))
+#     (= prog (apply cat (map prog-bytes chr)))
+#     (fs-write 'tmp_test_dir/prg' prog)
+#     (ccall (dynsym 'libc.so' 'system') 'chmod +x tmp_test_dir/prg; ./tmp_test_dir/prg; echo $?')
+# endfile
+#
+# file assemble-to-file-001.out
+#     42
+# endfile
+#
+# file assign-001.lc
+#     (= a 1)
+#     (repr a)
+# endfile
+#
+# file assign-001.out
+#     1
+# endfile
+#
+# file assign-002.lc
+#     (= a 3)
+#     (= foo-bar 5)
+#     (repr (+ a foo-bar))
+# endfile
+#
+# file assign-002.out
+#     8
+# endfile
+#
+# file assign-003.lc
+#     (= X 505 A 4040 aabbaa 110000)
+#     (repr (+ aabbaa X A))
+# endfile
+#
+# file assign-003.out
+#     114545
+# endfile
+#
+# file assign-004.in
+#     (= a 2)
+#     (= b (+ a 1))
+#     (= c (+ b 100))
+#     c
+#     b
+#     a
+# endfile
+#
+# file assign-004.out
+#     2
+#     3
+#     103
+#     103
+#     3
+#     2
+# endfile
+#
+# file assign-005.in
+#     (= a 1)
+#     a
+#     (= a (+ 1 a))
+#     a
+#     (= a (+ a 1))
+#     a
+#     (= a 'asdf')
+# endfile
+#
+# file assign-005.out
+#     1
+#     1
+#     2
+#     2
+#     3
+#     3
+#     'asdf'
+# endfile
+#
+# file at-001.in
+#     (at :(1 2 3 4) 0)
+#     (at :(1 2 3 4) 1)
+#     (at :(1 2 3 4) 2)
+#     (at :(1 2 3 4) 3)
+# endfile
+#
+# file at-001.out
+#     1
+#     2
+#     3
+#     4
+# endfile
+#
+# file binand-001.in
+#     (& 12 6 13)
+#     (& 0xff00000000000000 0x0f0000ff000000ff)
+# endfile
+#
+# file binand-001.out
+#     4
+#     1080863910568919040
+# endfile
+#
+# file binor-001.in
+#     (| 1 2 4)
+#     (| 0xff000000 0x0f0000ff)
+#     (| 0xff00000000000000 0x0f0000ff000000ff)
+# endfile
+#
+# file binor-001.out
+#     7
+#     4278190335
+#     -72056498821267201
+# endfile
+#
+# file byte-explode-001.in
+#     (byte-explode)
+# endfile
+#
+# file byte-explode-001.out
+#     ()
+# endfile
+#
+# file byte-explode-002.in
+#     (byte-explode :(1 1))
+# endfile
+#
+# file byte-explode-002.out
+#     (1)
+# endfile
+#
+# file byte-explode-003.in
+#     (byte-explode :(1 8) :(1 9))
+# endfile
+#
+# file byte-explode-003.out
+#     (8 9)
+# endfile
+#
+# file byte-explode-004.in
+#     (byte-explode :(2 0x1122))
+# endfile
+#
+# file byte-explode-004.out
+#     (34 17)
+# endfile
+#
+# file byte-explode-005.in
+#     (byte-explode :(4 0x55443322) :(1 4))
+# endfile
+#
+# file byte-explode-005.out
+#     (34 51 68 85 4)
+# endfile
+#
+# file byte-explode-006.in
+#     (byte-explode :(8 0xffeeddccccddaaff) :(1 5) :(8 0xffeeddbbccddaaff))
+# endfile
+#
+# file byte-explode-006.out
+#     (255 170 221 204 204 221 238 255 5 255 170 221 204 187 221 238 255)
+# endfile
+#
+# file cat-001.in
+#     (cat 'a' 'b')
+# endfile
+#
+# file cat-001.out
+#     'ab'
+# endfile
+#
+# file cat-002.in
+#     (cat 'aa' 'b')
+# endfile
+#
+# file cat-002.out
+#     'aab'
+# endfile
+#
+# file cat-003.in
+#     (cat '11' '2' '3333')
+# endfile
+#
+# file cat-003.out
+#     '1123333'
+# endfile
+#
+# file ccall-001.lc
+#     (ccall (dynsym 'libc.so' 'printf') 'asdf')
+# endfile
+#
+# file ccall-001.out
+#     asdf
+# endfile
+#
+# file ccall-002.lc
+#     (ccall (dynsym 'libc.so' 'printf') 'asdf')
+#     
+#     (ccall (dynsym 'libc.so' 'printf') 'another')
+# endfile
+#
+# file ccall-002.out
+#     asdfanother
+# endfile
+#
+# file ccall-003.lc
+#     (= printf-func (dynsym 'libc.so' 'printf'))
+#     (= printf (~ (a b) (ccall printf-func a b)))
+#     
+#     (printf 'hello%lld' 3)
+#     (printf 'hello%lld' 8)
+#     (printf 'hello %s end' 'str')
+# endfile
+#
+# file ccall-003.out
+#     hello3hello8hello str end
+# endfile
+#
+# file ccall-004.lc
+#     (ccall
+#       (dynsym 'libc.so' 'printf')
+#       'asdf %s %s %s %s %s'
+#       'a' 'b' 'c' 'd' 'e'
+#     )
+# endfile
+#
+# file ccall-004.out
+#     asdf a b c d e
+# endfile
+#
+# file ccall-005.lc
+#     (= abs (~ (a) (ccall (dynsym 'libc.so' 'abs') a)))
+#     
+#     (repr (abs 5))
+#     (repr ' ')
+#     (repr (abs -7))
+#     (repr ' ')
+#     (repr (abs -2147483647))
+# endfile
+#
+# file ccall-005.out
+#     5' '7' '2147483647
+# endfile
+#
+# file change-env-001.lc
+#     # `$env` is the default variable representing the environment (a dict). Making
+#     # this easier should be done in a macro.
+#     
+#     (set $env (quote x) 4)
+#     (repr x)
+# endfile
+#
+# file change-env-001.out
+#     4
+# endfile
+#
+# file change-env-002.lc
+#     (set $env (quote x) 5)
+#     (set $env (quote y) 4)
+#     (set $env (quote z) (+ x y))
+#     (repr z)
+# endfile
+#
+# file change-env-002.out
+#     9
+# endfile
+#
+# file chr-001.in
+#     (chr 65)
+# endfile
+#
+# file chr-001.out
+#     'A'
+# endfile
+#
+# file chr-002.in
+#     (chr 39)
+# endfile
+#
+# file chr-002.out
+#     '\''
+# endfile
+#
+# file comments-001.in
+#     'b'#c
+# endfile
+#
+# file comments-001.out
+#     'b'
+# endfile
+#
+# file comments-002.in
+#      'bc' #d
+# endfile
+#
+# file comments-002.out
+#     'bc'
+# endfile
+#
+# file comments-003.in
+#      'bcd' #asdf
+#     8
+# endfile
+#
+# file comments-003.out
+#     'bcd'
+#     8
+# endfile
+#
+# file comp-001.in
+#     ((comp (~ (a) (+ a 1)) (~ (a) (* a 3))) 2)
+# endfile
+#
+# file comp-001.out
+#     9
+# endfile
+#
+# file dict-001.in
+#     (dict)
+# endfile
+#
+# file dict-001.out
+#     (dict)
+# endfile
+#
+# file dict-002.in
+#     (dict (quote a) 1 (quote bb) 8 (quote ccc) 123)
+# endfile
+#
+# file dict-002.out
+#     (dict bb 8 ccc 123 a 1)
+# endfile
+#
+# file div-001.in
+#     (/ 10 2)
+# endfile
+#
+# file div-001.out
+#     5
+# endfile
+#
+# file div-002.in
+#     (/ 10 3)
+# endfile
+#
+# file div-002.out
+#     3
+# endfile
+#
+# file dynsym-001.in
+#     (- (dynsym 'libc.so' 'printf') (dynsym 'libc.so' 'printf'))
+# endfile
+#
+# file dynsym-001.out
+#     0
+# endfile
+#
+# file each-001.lc
+#     (= count 0)
+#     (each
+#       :(a b c)
+#       (~ (= count (+ count 1)))
+#     )
+#     (repr count)
+# endfile
+#
+# file each-001.out
+#     3
+# endfile
+#
+# file each-002.lc
+#     (= count 0)
+#     (each
+#       (range 10)
+#       (~ (x) (if
+#         (is x 5)
+#         :$stop
+#         (= count (+ count 1))
+#       ))
+#     )
+#     (repr count)
+# endfile
+#
+# file each-002.out
+#     5
+# endfile
+#
+# file end-in-comment.lc
+#     (repr 1)
+#     # nothing
+#     (repr 2) # something
+#     (repr 44)
+#     # end
+# endfile
+#
+# file end-in-comment.out
+#     1244
+# endfile
+#
+# file escapes-001.in
+#     (len 'a\'b')
+#     (len '\'b')
+#     (len 'a\'')
+#     (len '\'')
+# endfile
+#
+# file escapes-001.out
+#     3
+#     2
+#     2
+#     1
+# endfile
+#
+# file escapes-002.in
+#     (len 'a\\b')
+#     (len '\\b')
+#     (len 'a\\')
+#     (len '\\')
+# endfile
+#
+# file escapes-002.out
+#     3
+#     2
+#     2
+#     1
+# endfile
+#
+# file escapes-003.in
+#     (len '\n')
+#     (len 'a\n')
+#     (len '\nb')
+#     (len 'a\nb')
+# endfile
+#
+# file escapes-003.out
+#     1
+#     2
+#     2
+#     3
+# endfile
+#
+# file escapes-004.in
+#     'a\'b'
+#     '\'b'
+#     'a\''
+#     '\''
+#     'a\nb'
+#     '\nb'
+#     'a\n'
+#     '\n'
+#     'a\\b'
+#     '\\b'
+#     'a\\'
+#     '\\'
+# endfile
+#
+# file escapes-004.out
+#     'a\'b'
+#     '\'b'
+#     'a\''
+#     '\''
+#     'a\nb'
+#     '\nb'
+#     'a\n'
+#     '\n'
+#     'a\\b'
+#     '\\b'
+#     'a\\'
+#     '\\'
+# endfile
+#
+# file eval-001.in
+#     (eval 1)
+#     (eval 'a')
+#     (eval ())
+#     (eval (dict 1 2))
+#     (eval :(+ 1 2))
+#     (eval (list :+ 1 3))
+#     ((eval :(~ (a b) (* a b))) 3 6)
+#     (eval :(= a 3))
+#     (eval :(- a 1))
+# endfile
+#
+# file eval-001.out
+#     1
+#     'a'
+#     ()
+#     (dict 1 2)
+#     3
+#     4
+#     18
+#     3
+#     2
+# endfile
+#
+# file fs-read-001.in
+#     (fs-read 'tests/fs-read-001.in')
+# endfile
+#
+# file fs-read-001.out
+#     '(fs-read \'tests/fs-read-001.in\')\n'
+# endfile
+#
+# file fs-write-001.lc
+#     (fs-write 'tmp_test_dir/wot' 'I am a file. What are you?')
+#     (repr (fs-read 'tmp_test_dir/wot'))
+# endfile
+#
+# file fs-write-001.lc_post
+#     pwd
+#     cd ..
+#     rm -fr tmp_test_dir
+# endfile
+#
+# file fs-write-001.lc_pre
+#     mkdir tmp_test_dir
+#     cd tmp_test_dir
+# endfile
+#
+# file fs-write-001.out
+#     'I am a file. What are you?'
+# endfile
+#
+# file func-001.lc
+#     (= inc (~ (+ 1 (head $args))))
+#     (repr (inc 2))
+#     (repr (inc 5))
+#     (repr (inc 22))
+# endfile
+#
+# file func-001.out
+#     3623
+# endfile
+#
+# file func-002.lc
+#     # Test that you can override values outside of the function.
+#     (= a 1)
+#     (= increase-a (~ (= a (+ a 1))))
+#     (repr a)
+#     (increase-a)
+#     (repr a)
+#     (increase-a)
+#     (repr a)
+# endfile
+#
+# file func-002.out
+#     123
+# endfile
+#
+# file func-003.lc
+#     # Test that variables inside the function don't leak outside.
+#     (= f (~ (= a 100)))
+#     (repr a)
+#     (f)
+#     (repr a)
+# endfile
+#
+# file func-003.out
+#     ()()
+# endfile
+#
+# file func-004.lc
+#     # Test IIFE (immediately invoked function expression).
+#     (repr (
+#       (~ (+ 2 (head $args)))
+#       2
+#     ))
+# endfile
+#
+# file func-004.out
+#     4
+# endfile
+#
+# file func-005.lc
+#     # Function with named arguments.
+#     (= sum (~ (a b) (+ a b)))
+#     (repr (sum 1 4))
+#     (repr (sum 1 2 3))
+# endfile
+#
+# file func-005.out
+#     53
+# endfile
+#
+# file func-006.lc
+#     # Nested functions.
+#     
+#     (= funcs ((~ (last
+#       (= a 1)
+#       (
+#         dict
+#         'inc-a' (~ (= a (+ a 1)))
+#         'get-a' (~ a)
+#       )
+#     ))))
+#     
+#     # 'a' isn't available here.
+#     (repr a)
+#     
+#     # Get 1.
+#     (repr ((get funcs 'get-a')))
+#     
+#     # Increase.
+#     ((get funcs 'inc-a'))
+#     
+#     # Get 2.
+#     (repr ((get funcs 'get-a')))
+# endfile
+#
+# file func-006.out
+#     ()12
+# endfile
+#
+# file func-007.lc
+#     # Recursive function, yay!
+#     
+#     (= fib (~ (n) (if
+#       (is n 0) 0
+#       (is n 1) 1
+#       (+
+#         (fib (- n 1))
+#         (fib (- n 2))
+#       )
+#     )))
+#     
+#     (repr (fib 2))
+#     (repr (fib 3))
+#     (repr (fib 4))
+#     (repr (fib 5))
+#     (repr (fib 6))
+# endfile
+#
+# file func-007.out
+#     12358
+# endfile
+#
+# file get-001.in
+#     (get (set (dict) 'name' 'John') 'name')
+# endfile
+#
+# file get-001.out
+#     'John'
+# endfile
+#
+# file get-002.in
+#     (get (set (set (dict) (quote a) 1) 'a' 2) 'a')
+# endfile
+#
+# file get-002.out
+#     2
+# endfile
+#
+# file hashcode-001.in
+#     (hashcode 0)
+# endfile
+#
+# file hashcode-001.out
+#     0
+# endfile
+#
+# file hashcode-002.in
+#     (hashcode 1234)
+# endfile
+#
+# file hashcode-002.out
+#     1234
+# endfile
+#
+# file hashcode-003.in
+#     (hashcode 2395873184555)
+# endfile
+#
+# file hashcode-003.out
+#     2395873184555
+# endfile
+#
+# file hashcode-004.in
+#     (hashcode 'a')
+# endfile
+#
+# file hashcode-004.out
+#     177604
+# endfile
+#
+# file hashcode-005.in
+#     (hashcode 'base')
+# endfile
+#
+# file hashcode-005.out
+#     6382700272
+# endfile
+#
+# file hashcode-006.in
+#     (hashcode (quote base))
+# endfile
+#
+# file hashcode-006.out
+#     6382700272
+# endfile
+#
+# file hashcode-007.in
+#     (hashcode 'besa')
+# endfile
+#
+# file hashcode-007.out
+#     6382695920
+# endfile
+#
+# file hashcode-008.in
+#     (hashcode 'Paul Nechifor')
+# endfile
+#
+# file hashcode-008.out
+#     153306557046378463
+# endfile
+#
+# file head-tail-001.in
+#     (head (list 0 1 2))
+# endfile
+#
+# file head-tail-001.out
+#     0
+# endfile
+#
+# file head-tail-002.in
+#     (head (list 0 1 2))
+# endfile
+#
+# file head-tail-002.out
+#     0
+# endfile
+#
+# file head-tail-003.in
+#     (tail (list 0 1 2))
+# endfile
+#
+# file head-tail-003.out
+#     (1 2)
+# endfile
+#
+# file head-tail-004.in
+#     (head (tail (list 0 1 2)))
+# endfile
+#
+# file head-tail-004.out
+#     1
+# endfile
+#
+# file head-tail-005.in
+#     (tail (tail (list 0 1 2)))
+# endfile
+#
+# file head-tail-005.out
+#     (2)
+# endfile
+#
+# file head-tail-006.in
+#     (head (tail (tail (list 0 1 2))))
+# endfile
+#
+# file head-tail-006.out
+#     2
+# endfile
+#
+# file head-tail-007.in
+#     (tail (tail (tail (list 0 1 2))))
+# endfile
+#
+# file head-tail-007.out
+#     ()
+# endfile
+#
+# file identity-001.in
+#     (identity 1234)
+#     (identity :asdf)
+#     (identity (~ (x) (+ 1 x)))
+# endfile
+#
+# file identity-001.out
+#     1234
+#     asdf
+#     (~ (x) (+ 1 x))
+# endfile
+#
+# file if-001.in
+#     (if) # Expecting ().
+# endfile
+#
+# file if-001.out
+#     ()
+# endfile
+#
+# file if-002.in
+#     (if 0)
+# endfile
+#
+# file if-002.out
+#     0
+# endfile
+#
+# file if-003.in
+#     (if 'a')
+# endfile
+#
+# file if-003.out
+#     'a'
+# endfile
+#
+# file if-004.in
+#     (if 1 'așa')
+# endfile
+#
+# file if-004.out
+#     'așa'
+# endfile
+#
+# file if-005.in
+#     (if 0 100)
+# endfile
+#
+# file if-005.out
+#     ()
+# endfile
+#
+# file if-006.in
+#     (= a '')
+#     (if a 'full' 'empty')
+# endfile
+#
+# file if-006.out
+#     ''
+#     'empty'
+# endfile
+#
+# file if-007.in
+#     (if 0 0 '' '' () () (dict) (dict) 'none-of-the-above')
+# endfile
+#
+# file if-007.out
+#     'none-of-the-above'
+# endfile
+#
+# file iife-001.in
+#     ((~ (a b) (+ a b)) 5 4)
+# endfile
+#
+# file iife-001.out
+#     9
+# endfile
+#
+# file import-001-add.lcl
+#     (~ (n) (+ n n))
+# endfile
+#
+# file import-001.lc
+#     (= double-it (import './import-001-add.lcl'))
+#     (repr (double-it 23))
+# endfile
+#
+# file import-001.out
+#     46
+# endfile
+#
+# file import-002-level1.lcl
+#     (import './import-002-level2.lcl')
+# endfile
+#
+# file import-002-level2.lcl
+#     (~ (n) (+ n n))
+# endfile
+#
+# file import-002.lc
+#     (= double-it (import './import-002-level1.lcl'))
+#     (repr (double-it 5))
+# endfile
+#
+# file import-002.out
+#     10
+# endfile
+#
+# file in-001.in
+#     (in 10 (dict 10 20))
+# endfile
+#
+# file in-001.out
+#     1
+# endfile
+#
+# file in-002.in
+#     (= d (dict 10 20 20 40 30 60))
+#     (in 20 d)
+#     (in 30 d)
+#     (in 10 d)
+#     (in 40 d)
+# endfile
+#
+# file in-002.out
+#     (dict 10 20 20 40 30 60)
+#     1
+#     1
+#     1
+#     0
+# endfile
+#
+# file is-001.in
+#     (is 4 4)
+# endfile
+#
+# file is-001.out
+#     1
+# endfile
+#
+# file is-002.in
+#     (is 4 3)
+# endfile
+#
+# file is-002.out
+#     0
+# endfile
+#
+# file is-003.in
+#     (is '4' 4)
+# endfile
+#
+# file is-003.out
+#     0
+# endfile
+#
+# file is-004.in
+#     (is 05 00005)
+# endfile
+#
+# file is-004.out
+#     1
+# endfile
+#
+# file is-005.in
+#     (is 'asdf' 'asdf')
+# endfile
+#
+# file is-005.out
+#     1
+# endfile
+#
+# file is-006.in
+#     (is 'asde' 'asdf')
+# endfile
+#
+# file is-006.out
+#     0
+# endfile
+#
+# file is-007.in
+#     (is 'asdf' 'asdfe')
+# endfile
+#
+# file is-007.out
+#     0
+# endfile
+#
+# file join-001.in
+#     (join :(1 2) :(3 4))
+# endfile
+#
+# file join-001.out
+#     (1 2 3 4)
+# endfile
+#
+# file join-002.in
+#     (join :('_' 'a') :('_' 'b') :('_' 'c'))
+# endfile
+#
+# file join-002.out
+#     ('_' 'a' '_' 'b' '_' 'c')
+# endfile
+#
+# file last-001.in
+#     (last)
+# endfile
+#
+# file last-001.out
+#     ()
+# endfile
+#
+# file last-002.in
+#     (last 1)
+# endfile
+#
+# file last-002.out
+#     1
+# endfile
+#
+# file last-003.in
+#     (last 'a' 'b' 'c')
+# endfile
+#
+# file last-003.out
+#     'c'
+# endfile
+#
+# file last-004.in
+#     (last (+ 1 2))
+# endfile
+#
+# file last-004.out
+#     3
+# endfile
+#
+# file last-005.in
+#     (last (+ 100 1 10) (+ 400 20 5))
+# endfile
+#
+# file last-005.out
+#     425
+# endfile
+#
+# file len-001.in
+#     (len 'a')
+# endfile
+#
+# file len-001.out
+#     1
+# endfile
+#
+# file len-002.in
+#     (len '1234')
+# endfile
+#
+# file len-002.out
+#     4
+# endfile
+#
+# file len-003.in
+#     (len '')
+# endfile
+#
+# file len-003.out
+#     0
+# endfile
+#
+# file len-004.in
+#     (len ())
+# endfile
+#
+# file len-004.out
+#     0
+# endfile
+#
+# file len-005.in
+#     (len (list 1))
+# endfile
+#
+# file len-005.out
+#     1
+# endfile
+#
+# file len-006.in
+#     (len (list 1 2))
+# endfile
+#
+# file len-006.out
+#     2
+# endfile
+#
+# file len-007.in
+#     (len (list 1 2 3))
+# endfile
+#
+# file len-007.out
+#     3
+# endfile
+#
+# file len-008.in
+#     (len (dict))
+# endfile
+#
+# file len-008.out
+#     0
+# endfile
+#
+# file len-009.in
+#     (len (dict))
+#     (len (dict 1 11))
+#     (len (dict 1 11 4 44))
+# endfile
+#
+# file len-009.out
+#     0
+#     1
+#     2
+# endfile
+#
+# file lists-001.in
+#     ()
+# endfile
+#
+# file lists-001.out
+#     ()
+# endfile
+#
+# file lists-002.in
+#       () # asdf
+# endfile
+#
+# file lists-002.out
+#     ()
+# endfile
+#
+# file lists-003.in
+#     (list )
+# endfile
+#
+# file lists-003.out
+#     ()
+# endfile
+#
+# file lists-004.in
+#     (list 1)
+# endfile
+#
+# file lists-004.out
+#     (1)
+# endfile
+#
+# file lists-005.in
+#     (list 1 )
+# endfile
+#
+# file lists-005.out
+#     (1)
+# endfile
+#
+# file lists-006.in
+#     ( list 22 )
+# endfile
+#
+# file lists-006.out
+#     (22)
+# endfile
+#
+# file lists-007.in
+#       ( list 22 ) 
+# endfile
+#
+# file lists-007.out
+#     (22)
+# endfile
+#
+# file lists-008.in
+#     (list 1 2 3)
+# endfile
+#
+# file lists-008.out
+#     (1 2 3)
+# endfile
+#
+# file lists-009.in
+#     (list 1 'asdf' 3)
+# endfile
+#
+# file lists-009.out
+#     (1 'asdf' 3)
+# endfile
+#
+# file lists-010.in
+#     (list 1 (list 22 33) 3)
+# endfile
+#
+# file lists-010.out
+#     (1 (22 33) 3)
+# endfile
+#
+# file lists-011.in
+#     (list (list 1 'df' (list 'asf') () (list 'bb' ) ) 123)
+# endfile
+#
+# file lists-011.out
+#     ((1 'df' ('asf') () ('bb')) 123)
+# endfile
+#
+# file lists-012.in
+#     (list 1 2 (quote aaa))
+# endfile
+#
+# file lists-012.out
+#     (1 2 aaa)
+# endfile
+#
+# file lists-013.in
+#     (list 1 (+ 1 2 3) 'asdf')
+# endfile
+#
+# file lists-013.out
+#     (1 6 'asdf')
+# endfile
+#
+# file macros-001.lc
+#     (set $env :two (macro :(+ 1 1)))
+#     (repr (two))
+# endfile
+#
+# file macros-001.out
+#     2
+# endfile
+#
+# file macros-002.lc
+#     (set $env :x 20)
+#     (set $env :y 300)
+#     (set $env :foo (macro :(+ x 1 y)))
+#     (repr (foo))
+# endfile
+#
+# file macros-002.out
+#     321
+# endfile
+#
+# file macros-003.lc
+#     (=
+#       =~
+#       (macro
+#         (name args function)
+#         (list
+#           :=
+#           name
+#           (list
+#             :~
+#             args
+#             function
+#           )
+#         )
+#       )
+#     )
+#     
+#     (=~ sum (a b) (+ a b))
+#     
+#     (repr (sum 1 2))
+# endfile
+#
+# file macros-003.out
+#     3
+# endfile
+#
+# file macros-004.lc
+#     (= add-with (macro (base) (list
+#       :~
+#       :(n)
+#       (list :+ :n base)
+#     )))
+#     
+#     (= adder-5 (add-with 5))
+#     (repr (adder-5 10))
+#     (repr (adder-5 100))
+#     
+#     (= adder-123 (add-with 123))
+#     (repr (adder-123 1000))
+#     (repr (adder-123 1))
+# endfile
+#
+# file macros-004.out
+#     151051123124
+# endfile
+#
+# file map-001.in
+#     (map :(1 2 3) (~ (a) (+ a 1)))
+# endfile
+#
+# file map-001.out
+#     (2 3 4)
+# endfile
+#
+# file map-002.in
+#     (map :(5 6 7 8) (~ (n i) (+ n i)))
+# endfile
+#
+# file map-002.out
+#     (5 7 9 11)
+# endfile
+#
+# file minus-001.in
+#     (- 1 1)
+#     (- 100 10)
+#     (- 5000 -6000)
+#     (- -5000 6000)
+#     (- -10000 -20020)
+#     (- 123 99999)
+# endfile
+#
+# file minus-001.out
+#     0
+#     90
+#     11000
+#     -11000
+#     10020
+#     -99876
+# endfile
+#
+# file mixed-types-001.in
+#     321
+#     'str'
+#     123
+# endfile
+#
+# file mixed-types-001.out
+#     321
+#     'str'
+#     123
+# endfile
+#
+# file mixed-types-002.in
+#     'asdf'
+#     43215
+# endfile
+#
+# file mixed-types-002.out
+#     'asdf'
+#     43215
+# endfile
+#
+# file mul-001.in
+#     (* 4 3)
+# endfile
+#
+# file mul-001.out
+#     12
+# endfile
+#
+# file mul-002.in
+#     (* 2 2 4 100)
+# endfile
+#
+# file mul-002.out
+#     1600
+# endfile
+#
+# file multiple-statements-001.lc
+#     (repr 1)
+#     (repr 2)
+# endfile
+#
+# file multiple-statements-001.out
+#     12
+# endfile
+#
+# file multiple-statements-002.lc
+#     1
+#     (repr 123)
+# endfile
+#
+# file multiple-statements-002.out
+#     123
+# endfile
+#
+# file multiple-statements-003.lc
+#     (repr 'asdf')
+#     (repr 1)
+#     (repr (+ 1 2 3))
+# endfile
+#
+# file multiple-statements-003.out
+#     'asdf'16
+# endfile
+#
+# file multiple-statements-004.lc
+#     ()
+#     1234
+#     (repr 1)
+#     ()
+#     (repr '
+#     ')
+#     8
+#     (repr 8888)
+# endfile
+#
+# file multiple-statements-004.out
+#     1'\n'8888
+# endfile
+#
+# file nested-calls-001.in
+#     (+ 1 2 (+ 3))
+# endfile
+#
+# file nested-calls-001.out
+#     6
+# endfile
+#
+# file nested-calls-002.in
+#     (+ 1 2 (+ 3 4))
+# endfile
+#
+# file nested-calls-002.out
+#     10
+# endfile
+#
+# file nested-calls-003.in
+#     (+ 1 1 (+ 1 (+ 1 (+ 1 1) 1 (+ 1 1))))
+# endfile
+#
+# file nested-calls-003.out
+#     9
+# endfile
+#
+# file null-001.in
+#     
+# endfile
+#
+# file null-001.out
+#     ()
+# endfile
+#
+# file null-002.in
+#     # Just a comment.
+# endfile
+#
+# file null-002.out
+#     ()
+# endfile
+#
+# file null-003.in
+#         # Indented comment.
+# endfile
+#
+# file null-003.out
+#     ()
+# endfile
+#
+# file numbers-001.in
+#     4
+# endfile
+#
+# file numbers-001.out
+#     4
+# endfile
+#
+# file numbers-002.in
+#     1234
+#     5
+# endfile
+#
+# file numbers-002.out
+#     1234
+#     5
+# endfile
+#
+# file numbers-003.in
+#     -123
+#     44
+#     -124
+#     -1
+#     -111111111111111111
+#     1234789012347890
+# endfile
+#
+# file numbers-003.out
+#     -123
+#     44
+#     -124
+#     -1
+#     -111111111111111111
+#     1234789012347890
+# endfile
+#
+# file operators-001.in
+#     (< 1 2)
+#     (< 1 -1)
+#     (< 1 2 0)
+#     (< 1 2 9)
+#     (<= 1 2)
+#     (<= 1 1)
+#     (<= 1 1 0)
+#     (> 2 1)
+#     (> -1 1)
+#     (> 2 1 3)
+#     (> 2 1 -4)
+#     (>= 2 1)
+#     (>= 5 5)
+#     (>= 1 2)
+# endfile
+#
+# file operators-001.out
+#     1
+#     0
+#     0
+#     1
+#     1
+#     1
+#     0
+#     1
+#     0
+#     0
+#     1
+#     1
+#     1
+#     0
+# endfile
+#
+# file or-001.in
+#     (or 1)
+# endfile
+#
+# file or-001.out
+#     1
+# endfile
+#
+# file or-002.in
+#     (or 0)
+# endfile
+#
+# file or-002.out
+#     0
+# endfile
+#
+# file or-003.in
+#     (or :())
+# endfile
+#
+# file or-003.out
+#     ()
+# endfile
+#
+# file or-004.in
+#     (or 0 1)
+# endfile
+#
+# file or-004.out
+#     1
+# endfile
+#
+# file or-005.in
+#     (or 1 0)
+# endfile
+#
+# file or-005.out
+#     1
+# endfile
+#
+# file or-006.in
+#     (or 0 :() 0 0 :())
+# endfile
+#
+# file or-006.out
+#     ()
+# endfile
+#
+# file pair-001.in
+#     (pair 1 :(2 3))
+#     (pair 1 :())
+#     (pair :(1) :(1))
+# endfile
+#
+# file pair-001.out
+#     (1 2 3)
+#     (1)
+#     ((1) 1)
+# endfile
+#
+# file partial-001.lc
+#     (= inc (partial add 1))
+#     (repr (inc 1))
+#     (repr (inc 6))
+# endfile
+#
+# file partial-001.out
+#     27
+# endfile
+#
+# file quote-001.in
+#     (quote x)
+# endfile
+#
+# file quote-001.out
+#     x
+# endfile
+#
+# file quote-002.in
+#     (quote (a b))
+# endfile
+#
+# file quote-002.out
+#     (a b)
+# endfile
+#
+# file range-001.in
+#     (range 5)
+# endfile
+#
+# file range-001.out
+#     (0 1 2 3 4)
+# endfile
+#
+# file range-002.in
+#     (range 10 15)
+# endfile
+#
+# file range-002.out
+#     (10 11 12 13 14)
+# endfile
+#
+# file range-003.in
+#     (range 10 5 -1)
+# endfile
+#
+# file range-003.out
+#     (10 9 8 7 6)
+# endfile
+#
+# file range-004.in
+#     (map (range 5) (~ (a) (* a a)))
+# endfile
+#
+# file range-004.out
+#     (0 1 4 9 16)
+# endfile
+#
+# file reduce-001.in
+#     (reduce add :(1 2))
+# endfile
+#
+# file reduce-001.out
+#     3
+# endfile
+#
+# file reduce-002.in
+#     (reduce add :(1 2 3))
+# endfile
+#
+# file reduce-002.out
+#     6
+# endfile
+#
+# file reduce-003.in
+#     (reduce add :(6) 500)
+# endfile
+#
+# file reduce-003.out
+#     506
+# endfile
+#
+# file reduce-004.in
+#     (reduce add :(1 2 1 2 1 2 1 2) 10000)
+# endfile
+#
+# file reduce-004.out
+#     10012
+# endfile
+#
+# file repeat-001.in
+#     (repeat 9 0)
+#     (repeat 1 1)
+#     (repeat 1 2)
+#     (repeat 'a' 3)
+# endfile
+#
+# file repeat-001.out
+#     ()
+#     (1)
+#     (1 1)
+#     ('a' 'a' 'a')
+# endfile
+#
+# file replace-001.in
+#     (replace 'aaxa' 'a' '-')
+# endfile
+#
+# file replace-001.out
+#     '--x-'
+# endfile
+#
+# file replace-002.in
+#     (replace 'aaXaaXaaa' 'aa' '[]')
+# endfile
+#
+# file replace-002.out
+#     '[]X[]X[]a'
+# endfile
+#
+# file replace-003.in
+#     (replace 'dog eat dog here' 'dog' 'kitty')
+# endfile
+#
+# file replace-003.out
+#     'kitty eat kitty here'
+# endfile
+#
+# file repr-001.in
+#     (repr 'one')
+# endfile
+#
+# file repr-001.out
+#     'one'()
+# endfile
+#
+# file repr-str.lc
+#     (repr 'str1')
+# endfile
+#
+# file repr-str.out
+#     'str1'
+# endfile
+#
+# file repr_str.out
+#     'str1'
+# endfile
+#
+# file set-001.in
+#     (set (dict) 'name' 'John')
+# endfile
+#
+# file set-001.out
+#     (dict 'name' 'John')
+# endfile
+#
+# file set-002.in
+#     (set (set (dict) 'name' 'John') 1 2)
+# endfile
+#
+# file set-002.out
+#     (dict 1 2 'name' 'John')
+# endfile
+#
+# file set-head.in
+#     (= l :(1 2 3))
+#     (set-head l 5)
+#     l
+#     (set-head (tail l) 6)
+#     l
+# endfile
+#
+# file set-head.out
+#     (1 2 3)
+#     5
+#     (5 2 3)
+#     6
+#     (5 6 3)
+# endfile
+#
+# file set-tail.in
+#     (= l :(1 2 3))
+#     (set-tail l ())
+#     l
+#     (set-tail l :(7))
+#     l
+#     (set-tail (tail l) :(8))
+#     l
+# endfile
+#
+# file set-tail.out
+#     (1 2 3)
+#     ()
+#     (1)
+#     (7)
+#     (1 7)
+#     (8)
+#     (1 7 8)
+# endfile
+#
+# file shl-001.in
+#     (<< 1 1)
+#     (<< 1 2)
+#     (<< 1 3)
+#     (<< 0xf000000000000000 1)
+#     (<< 1 63)
+# endfile
+#
+# file shl-001.out
+#     2
+#     4
+#     8
+#     -2305843009213693952
+#     -9223372036854775808
+# endfile
+#
+# file shr-001.out
+#     1
+#     2
+#     16
+#     1
+# endfile
+#
+# file shr-002.out
+#     (>> 2 1)
+#     (>> 16 2)
+#     (>> 0xf000000000000000 60)
+#     (>> 0x8000000000000000 63)
+# endfile
+#
+# file split-001.in
+#     (split ' ' 'a b c')
+# endfile
+#
+# file split-001.out
+#     ('a' 'b' 'c')
+# endfile
+#
+# file split-002.in
+#     (split 'aa' 'aaJJJaaaMMMMM')
+# endfile
+#
+# file split-002.out
+#     ('' 'JJJ' 'aMMMMM')
+# endfile
+#
+# file split-003.in
+#     (split 'aa' 'aaJJJaaaMMMMMaa')
+# endfile
+#
+# file split-003.out
+#     ('' 'JJJ' 'aMMMMM' '')
+# endfile
+#
+# file split-004.in
+#     (split '' 'abcdef')
+# endfile
+#
+# file split-004.out
+#     ('a' 'b' 'c' 'd' 'e' 'f')
+# endfile
+#
+# file stitch-001.in
+#     (stitch)
+# endfile
+#
+# file stitch-001.out
+#     ()
+# endfile
+#
+# file stitch-002.in
+#     (stitch ())
+# endfile
+#
+# file stitch-002.out
+#     ()
+# endfile
+#
+# file stitch-003.in
+#     (stitch () () ())
+# endfile
+#
+# file stitch-003.out
+#     ()
+# endfile
+#
+# file stitch-004.in
+#     (stitch :(1 2))
+# endfile
+#
+# file stitch-004.out
+#     (1 2)
+# endfile
+#
+# file stitch-005.in
+#     (stitch :(5 2) :(88 123))
+# endfile
+#
+# file stitch-005.out
+#     (5 2 88 123)
+# endfile
+#
+# file stitch-006.in
+#     (stitch :(1 2 3) :(5 55 555) :(-1 -2 -3))
+# endfile
+#
+# file stitch-006.out
+#     (1 2 3 5 55 555 -1 -2 -3)
+# endfile
+#
+# file string-001.in
+#     'asdf'
+# endfile
+#
+# file string-001.out
+#     'asdf'
+# endfile
+#
+# file string-002.in
+#     'aa  bb  '
+# endfile
+#
+# file string-002.out
+#     'aa  bb  '
+# endfile
+#
+# file string-003.lc
+#     (repr '
+#       a
+#       ccc
+#       b
+#     ')
+# endfile
+#
+# file string-003.out
+#     '\n  a\n  ccc\n  b\n'
+# endfile
+#
+# file switch-001.in
+#     (switch 1 1 :one)
+# endfile
+#
+# file switch-001.out
+#     one
+# endfile
+#
+# file switch-002.in
+#     (switch 2 1 :one)
+# endfile
+#
+# file switch-002.out
+#     ()
+# endfile
+#
+# file switch-003.in
+#     (switch 2 1 :one :other)
+# endfile
+#
+# file switch-003.out
+#     other
+# endfile
+#
+# file switch-004.in
+#     (switch 2 1 :one 2 :two)
+# endfile
+#
+# file switch-004.out
+#     two
+# endfile
+#
+# file symbols-001.in
+#     (quote asdf)
+# endfile
+#
+# file symbols-001.out
+#     asdf
+# endfile
+#
+# file symbols-002.in
+#     (quote <=>)
+# endfile
+#
+# file symbols-002.out
+#     <=>
+# endfile
+#
+# file symbols-003.in
+#     (list (quote asdf))
+# endfile
+#
+# file symbols-003.out
+#     (asdf)
+# endfile
+#
+# file symbols-004.in
+#     (list (quote asdf) 1 (quote ab))
+# endfile
+#
+# file symbols-004.out
+#     (asdf 1 ab)
+# endfile
+#
+# file symbols-005.in
+#     (list (quote a) (quote s) (quote d) (quote f) 'x' (list 1 (quote ab)))
+# endfile
+#
+# file symbols-005.out
+#     (a s d f 'x' (1 ab))
+# endfile
+#
+# file symbols-006.in
+#     (list (quote xx) 'yy')
+# endfile
+#
+# file symbols-006.out
+#     (xx 'yy')
+# endfile
+#
+# file symbols-007.in
+#     (list (quote a) (quote b))
+#     (list (quote a) (quote b))
+#     (list (quote a) (quote b))
+# endfile
+#
+# file symbols-007.out
+#     (a b)
+#     (a b)
+#     (a b)
+# endfile
+#
+# file symbols-008.in
+#     (list (quote aa) (quote bb) (quote cc))
+#       (list (quote a) (quote c))
+#     ( list (quote a) (quote b) (quote c) ) # Nothing here
+#     (list (quote cc) (quote dd))
+# endfile
+#
+# file symbols-008.out
+#     (aa bb cc)
+#     (a c)
+#     (a b c)
+#     (cc dd)
+# endfile
+#
+# file system-001.lc
+#     (ccall (dynsym 'libc.so' 'system') 'echo hello world')
+# endfile
+#
+# file system-001.out
+#     hello world
+# endfile
+#
+# file trap-001.in
+#     ($trap 4)
+#     ($trap (+ 1 2))
+#     ($trap ($entrap 5))
+#     ($trap (+ 1 2 ($entrap 'a')))
+#     ($trap (if 1 ($entrap 'b')))
+#     ($trap (if 0 ($entrap 'b') (+ 4 4)))
+#     ($trap (+ 1 2 ($entrap (+ 8 8))))
+# endfile
+#
+# file trap-001.out
+#     4
+#     3
+#     5
+#     'a'
+#     'b'
+#     8
+#     16
+# endfile
+#
+# file trap-002.lc
+#     (= f (~ (a b) ($trap (last
+#       (= ret 0)
+#       (map (range a b) (~ (a) (if (- a 10)
+#         (= ret (+ ret a))
+#         ($entrap (list 'will not go above 10' ret a))
+#       )))
+#       ret
+#     ))))
+#     
+#     (repr (f 2 20))
+#     (repr (f 2 5))
+# endfile
+#
+# file trap-002.out
+#     ('will not go above 10' 44 10)9
+# endfile
+#
+# file unicode-001.in
+#     (= ă 'litera ă mică')
+#     ă
+# endfile
+#
+# file unicode-001.out
+#     'litera ă mică'
+#     'litera ă mică'
+# endfile
+#
+# file whitespace-001.in
+#       1234 
+# endfile
+#
+# file whitespace-001.out
+#     1234
+# endfile
+#
+# file whitespace-002.in
+#          'a' 
+# endfile
+#
+# file whitespace-002.out
+#     'a'
+# endfile
+#
+# file whitespace-003.in
+#       12
+#        12345  
+#            55    
+# endfile
+#
+# file whitespace-003.out
+#     12
+#     12345
+#     55
+# endfile
+#
+# file zip-001.in
+#     (zip :(1 2) :(a b))
+#     (zip :(1 2) :(a b) :(A B))
+#     (zip :(1 2 c) :(a b) :(A B))
+#     (zip :(1 2 c) :(a b c) :(A B))
+#     (zip :(1 2 c) :(a b c) :(A B c))
+# endfile
+#
+# file zip-001.out
+#     ((1 a) (2 b))
+#     ((1 a A) (2 b B))
+#     ((1 a A) (2 b B))
+#     ((1 a A) (2 b B))
+#     ((1 a A) (2 b B) (c c c))
+# endfile

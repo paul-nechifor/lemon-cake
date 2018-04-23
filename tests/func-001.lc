@@ -1,4 +1,0 @@
-(= inc (~ (+ 1 (head $args))))
-(repr (inc 2))
-(repr (inc 5))
-(repr (inc 22))

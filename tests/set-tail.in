@@ -1,7 +1,0 @@
-(= l :(1 2 3))
-(set-tail l ())
-l
-(set-tail l :(7))
-l
-(set-tail (tail l) :(8))
-l

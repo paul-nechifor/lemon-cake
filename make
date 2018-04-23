@@ -48,6 +48,8 @@ sub_compile() {
 }
 
 run_tests() {
+    mkdir -p tests
+    extract_tests
     for test_file in tests/*.{lc,in}; do
         if [[ ! "$regex" ]] || egrep "$regex" <<<"$test_file" &>/dev/null; then
             run_test "$test_file"
@@ -55,10 +57,24 @@ run_tests() {
     done
 
     tests_done
+    rm -fr tests
 
     if [[ ${all:-} ]]; then
         check_summation 50 1000 200
     fi
+}
+
+extract_tests() {
+    local file=
+    while IFS='' read -r line || [[ -n "$line" ]]; do
+        if grep '^# file ' <<<"$line" &>/dev/null; then
+            file="${line:7}"
+        elif grep '^# endfile' <<< "$line" &>/dev/null; then
+            file=
+        elif [[ "$file" ]]; then
+            echo "${line:6}" >> tests/"$file"
+        fi
+    done < lc.lc
 }
 
 run_test() {

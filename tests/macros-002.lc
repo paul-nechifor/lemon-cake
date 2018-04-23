@@ -1,4 +1,0 @@
-(set $env :x 20)
-(set $env :y 300)
-(set $env :foo (macro :(+ x 1 y)))
-(repr (foo))

@@ -1,1 +1,0 @@
-(byte-explode :(8 0xffeeddccccddaaff) :(1 5) :(8 0xffeeddbbccddaaff))

@@ -1,5 +1,0 @@
-# Test that variables inside the function don't leak outside.
-(= f (~ (= a 100)))
-(repr a)
-(f)
-(repr a)

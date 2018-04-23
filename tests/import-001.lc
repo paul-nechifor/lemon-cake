@@ -1,2 +1,0 @@
-(= double-it (import './import-001-add.lcl'))
-(repr (double-it 23))

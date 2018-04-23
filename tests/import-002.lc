@@ -1,2 +1,0 @@
-(= double-it (import './import-002-level1.lcl'))
-(repr (double-it 5))

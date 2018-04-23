@@ -1,2 +1,0 @@
-(= X 505 A 4040 aabbaa 110000)
-(repr (+ aabbaa X A))

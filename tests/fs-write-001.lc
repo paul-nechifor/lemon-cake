@@ -1,2 +1,0 @@
-(fs-write 'tmp_test_dir/wot' 'I am a file. What are you?')
-(repr (fs-read 'tmp_test_dir/wot'))

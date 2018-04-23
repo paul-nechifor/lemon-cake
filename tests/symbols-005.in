@@ -1,1 +1,0 @@
-(list (quote a) (quote s) (quote d) (quote f) 'x' (list 1 (quote ab)))

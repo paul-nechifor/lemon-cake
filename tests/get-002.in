@@ -1,1 +1,0 @@
-(get (set (set (dict) (quote a) 1) 'a' 2) 'a')

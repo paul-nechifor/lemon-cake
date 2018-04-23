@@ -1,1 +1,0 @@
-(ccall (dynsym 'libc.so' 'system') 'echo hello world')
