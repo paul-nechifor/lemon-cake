@@ -210,46 +210,54 @@
 (= doc-code (~ (input output) (last
   (= encode (~ (d) (replace (replace d '>' '&gt;') '<' '&lt;')))
 
-  (= process-comment (~ (c) (last
-    (= surround (~ (tag line)
-      (cat '<' tag '>' (encode (substr line 2)) '</' tag '>')
-    ))
-    (= process-comment-line (~ (line) (last
-      (if
-        (is (len line) 0)
-        '<p>'
+  (= surround (~ (tag line)
+    (cat '<' tag '>' (encode (substr line 2)) '</' tag '>')
+  ))
 
-        # If it starts with 4 spaces, sorround the line with a pre tag.
-        (startswith line '    ')
-        (surround 'pre' (substr line 2))
+  (= clean (~ (l) (if
+    (startswith l '# ')
+    (substr l 2)
+    (substr l 1)
+  )))
 
-        # If it starts with 'file '
-        (startswith line 'file ')
-        (cat
-          '<div class="file">'
-            '<div class="name">'
-              (substr line 5)
-            '</div>'
-        )
+  (= process-comment-line (~ (line) (last
+    (if
+      (is (len line) 0)
+      '<p>'
 
-        # If it starts with 'endfile'
-        (startswith line 'endfile')
-        '</div>'
+      # If it starts with 4 spaces, sorround the line with a pre tag.
+      (startswith line '    ')
+      (surround 'pre' (substr line 2))
 
-        (startswith line '#')
-        (if
-          (startswith line '##')
-          (if
-            (startswith line '###')
-            (surround 'h3' (substr line 2))
-            (surround 'h2' (substr line 1))
-          )
-          (surround 'h1' line)
-        )
-
-        (encode line)
+      # If it starts with 'file '
+      (startswith line 'file ')
+      (cat
+        '<div class="file">'
+          '<div class="name">'
+            (substr line 5)
+          '</div>'
       )
-    )))
+
+      # If it starts with 'endfile'
+      (startswith line 'endfile')
+      '</div>'
+
+      (startswith line '#')
+      (if
+        (startswith line '##')
+        (if
+          (startswith line '###')
+          (surround 'h3' (substr line 2))
+          (surround 'h2' (substr line 1))
+        )
+        (surround 'h1' line)
+      )
+
+      (encode line)
+    )
+  )))
+
+  (= process-comment (~ (c) (last
     (tie '\n' (map (split '\n' c) process-comment-line))
   )))
 
@@ -258,20 +266,15 @@
     (= right (dict))
     (= n 0)
     (= prev-is-left 1)
-    (= clean (~ (cs) (last
-      (= cs2 (tail cs))
-      (apply cat (if (len cs2) (tail cs2) cs2))
-    )))
 
-    (map (split '\n' str) (~ (l) (last
-      (= lsplit (split '' l))
-      (= is-left (is (at lsplit 0) '#'))
+    (each (split '\n' str) (~ (l) (last
+      (= is-left (startswith l '#'))
       (if is-left
         (if prev-is-left
-          (set left n (cat (get left n) '\n' (clean lsplit)))
+          (set left n (cat (get left n) '\n' (clean l)))
           (last
             (= n (+ n 1))
-            (set left n (clean lsplit))
+            (set left n (clean l))
           )
         )
         (if prev-is-left

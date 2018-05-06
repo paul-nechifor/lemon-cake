@@ -83,7 +83,7 @@ Example:
 <p>
 <pre>&gt; (at :(1 2 3) 2)</pre>
 <pre>3</pre>
-= at (~ (l i) (head ((apply comp (repeat tail i)) l))))</div></div></div><div class="sect"><div class="part left"><div class="text"><h3>comp</h3>
+(= at (~ (l i) (head ((apply comp (repeat tail i)) l))))</div></div></div><div class="sect"><div class="part left"><div class="text"><h3>comp</h3>
 <p>
 Generates a function that composes multiple functions that only accept one
 argument.
@@ -182,46 +182,54 @@ Tests:
 </div></div></div><div class="sect"><div class="part left"><div class="text"><h2>Util functions</h2></div></div></div><div class="sect"><div class="part left"><div class="text"><h3>doc-code</h3></div></div><div class="part right"><div class="code">(= doc-code (~ (input output) (last
   (= encode (~ (d) (replace (replace d '&gt;' '&gt;') '&lt;' '&lt;')))
 
-  (= process-comment (~ (c) (last
-    (= surround (~ (tag line)
-      (cat '&lt;' tag '&gt;' (encode (substr line 2)) '&lt;/' tag '&gt;')
-    ))
-    (= process-comment-line (~ (line) (last
-      (if
-        (is (len line) 0)
-        '&lt;p&gt;'
+  (= surround (~ (tag line)
+    (cat '&lt;' tag '&gt;' (encode (substr line 2)) '&lt;/' tag '&gt;')
+  ))
 
-        # If it starts with 4 spaces, sorround the line with a pre tag.
-        (startswith line '    ')
-        (surround 'pre' (substr line 2))
+  (= clean (~ (l) (if
+    (startswith l '# ')
+    (substr l 2)
+    (substr l 1)
+  )))
 
-        # If it starts with 'file '
-        (startswith line 'file ')
-        (cat
-          '&lt;div class="file"&gt;'
-            '&lt;div class="name"&gt;'
-              (substr line 5)
-            '&lt;/div&gt;'
-        )
+  (= process-comment-line (~ (line) (last
+    (if
+      (is (len line) 0)
+      '&lt;p&gt;'
 
-        # If it starts with 'endfile'
-        (startswith line 'endfile')
-        '&lt;/div&gt;'
+      # If it starts with 4 spaces, sorround the line with a pre tag.
+      (startswith line '    ')
+      (surround 'pre' (substr line 2))
 
-        (startswith line '#')
-        (if
-          (startswith line '##')
-          (if
-            (startswith line '###')
-            (surround 'h3' (substr line 2))
-            (surround 'h2' (substr line 1))
-          )
-          (surround 'h1' line)
-        )
-
-        (encode line)
+      # If it starts with 'file '
+      (startswith line 'file ')
+      (cat
+        '&lt;div class="file"&gt;'
+          '&lt;div class="name"&gt;'
+            (substr line 5)
+          '&lt;/div&gt;'
       )
-    )))
+
+      # If it starts with 'endfile'
+      (startswith line 'endfile')
+      '&lt;/div&gt;'
+
+      (startswith line '#')
+      (if
+        (startswith line '##')
+        (if
+          (startswith line '###')
+          (surround 'h3' (substr line 2))
+          (surround 'h2' (substr line 1))
+        )
+        (surround 'h1' line)
+      )
+
+      (encode line)
+    )
+  )))
+
+  (= process-comment (~ (c) (last
     (tie '\n' (map (split '\n' c) process-comment-line))
   )))
 
@@ -230,20 +238,15 @@ Tests:
     (= right (dict))
     (= n 0)
     (= prev-is-left 1)
-    (= clean (~ (cs) (last
-      (= cs2 (tail cs))
-      (apply cat (if (len cs2) (tail cs2) cs2))
-    )))
 
-    (map (split '\n' str) (~ (l) (last
-      (= lsplit (split '' l))
-      (= is-left (is (at lsplit 0) '#'))
+    (each (split '\n' str) (~ (l) (last
+      (= is-left (startswith l '#'))
       (if is-left
         (if prev-is-left
-          (set left n (cat (get left n) '\n' (clean lsplit)))
+          (set left n (cat (get left n) '\n' (clean l)))
           (last
             (= n (+ n 1))
-            (set left n (clean lsplit))
+            (set left n (clean l))
           )
         )
         (if prev-is-left
