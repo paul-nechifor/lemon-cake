@@ -1,3 +1,7 @@
+# This repository has been moved to [gitlab.com/paul-nechifor/lemon-cake](http://gitlab.com/paul-nechifor/lemon-cake).
+
+Old readme:
+
 # LemonCake
 
 A programming language that combines the speed of Ruby, with the flexibility of
